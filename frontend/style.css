@@ -1,0 +1,305 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #bbdefb;
+    color: #1a237e;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    overflow: auto;
+}
+
+footer {
+    text-align: center;
+    margin-top: auto;
+    font-size: 14px;
+    color: #555;
+    padding: 14px 0;
+    width: 100%;
+}
+
+.main-container {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 1100px;
+    margin-top: 37px;
+    background: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.qr-section,
+.message-section {
+    flex: 1;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    color: #0d47a1;
+}
+
+#message {
+    width: 420px;
+    height: 120px;
+}
+
+.qr-section {
+    border-right: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.message-section {
+    background: #f5f5f5;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding-right: 10px;
+    box-sizing: border-box;
+}
+
+#numbers {
+    min-height: 120px;
+    min-width: 80%;
+}
+
+h2 {
+    font-size: 28px;
+    color: #0d47a1;
+    margin-bottom: 20px;
+}
+
+a {
+    font-size: 14px;
+    color: #1565c0;
+    margin: 0 10px 10px;
+}
+
+#matricula,
+textarea {
+    width: 100%;
+    max-width: 420px;
+    padding: 12px;
+    margin-top: 20px;
+    border: 2px solid #64b5f6;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0d47a1;
+    font-size: 16px;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+#matricula:focus,
+textarea:focus {
+    border-color: #1565c0;
+    outline: none;
+}
+
+#matricula::placeholder,
+textarea::placeholder {
+    font-size: 14px;
+    color: #1565c0;
+}
+
+button {
+    background: linear-gradient(to bottom right, #42a5f5, #1e88e5);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.3s ease, background 0.3s ease;
+    margin-top: 20px;
+}
+
+button:hover {
+    transform: scale(1.05);
+    background: #0d47a1;
+}
+
+buttonS {
+    border: none;
+    border-radius: 8px;
+    padding: 5px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.3s ease, background 0.3s ease;
+    margin-top: 20px;
+    min-width: 200px;
+    position: relative;
+}
+
+
+#qrCode {
+    max-width: 200px;
+    margin-top: 20px;
+    border: 1px solid #64b5f6;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(66, 165, 245, 0.2);
+    transition: transform 0.3s ease;
+}
+
+#qrCode:hover {
+    transform: scale(1.1);
+}
+
+#status,
+#qrStatus {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #0d47a1;
+    text-align: center;
+}
+
+#previewImage {
+    display: block;
+    max-width: 100%;
+    max-height: 150px;
+    margin: 10px auto 0 auto;
+    border-radius: 8px;
+    border: 2px solid #0d47a1;
+    /* azul claro */
+    box-shadow: 0 0 8px rgba(100, 181, 246, 0.3);
+    /* sombra azul */
+}
+
+#removeImageButton {
+    background-color: #e53935;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+#removeImageButton:hover {
+    background-color: #c62828;
+}
+
+/* Estilo para os inputs terem o mesmo visual */
+.message-box {
+    position: relative;
+}
+
+#messageBox {
+    position: relative;
+}
+
+#imageInput {
+    display: none;
+}
+
+#messageBox textarea {
+    width: 420px;
+    height: 120px;
+}
+
+.clip-button {
+    position: absolute;
+    bottom: 15px;
+    right: 5px;
+    background: none;
+    border: none;
+    font-size: 25px;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.clip-button:hover {
+    background-color: #1339b8;
+}
+
+#removeImageButton.show {
+    display: inline-block;
+}
+
+.header-with-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+.info-icon {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #1565c0;
+    padding: 0;
+    margin: 0;
+    transition: transform 0.2s ease;
+}
+
+.info-icon:hover {
+    transform: scale(1.2);
+    color: #0d47a1;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #ffffff;
+    padding: 20px 30px;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    text-align: left;
+    color: #0d47a1;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-scroll {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #1565c0;
+}
+
+.modal-content code {
+    background: #e3f2fd;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 22px;
+    cursor: pointer;
+    color: #999;
+}
+
+.close:hover {
+    color: #333;
+}

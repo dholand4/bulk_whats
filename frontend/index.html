@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bulk Whatsapp</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="../../assets/icone.png" type="image/png" />
+</head>
+
+<body>
+    <div class="main-container">
+        <div class="qr-section">
+            <h2>Autenticação</h2>
+
+            <input type="text" id="matricula" placeholder="Digite sua matrícula" required />
+            <button onclick="authenticateWithMatricula()" style=" min-width: 200px">Autenticar</button>
+
+            <img id="qrCode" style="display: none; margin-top: 20px;" alt="QR Code para login" />
+            <p id="qrStatus" class="status-message">Clique para autenticar</p>
+
+            <button id="clearAuthButton" style="display: none;" onclick="clearAuthentication()"
+                aria-label="Limpar autenticação">Limpar Autenticação</button>
+
+            <a href="../nomeReturn/index.html" class="btn" target="_blank">Converter Contatos</a>
+        </div>
+
+        <div class="message-section">
+            <div class="header-with-info">
+                <h2>Envio de Mensagens</h2>
+                <button id="infoButton" class="info-icon" title="Ajuda">ℹ️</button>
+            </div>
+
+
+            <textarea id="numbers" placeholder="Separe os números por vírgula:
+Para incluir nomes, use: Nome: número (ex: Daniel: 8897000530). 
+Se não for usar nome, insira dois pontos antes do número (ex: :8897000530). 
+Não precisa vírgula após o último número." required></textarea>
+
+            <div class=" message-box" id="messageBox">
+                <div class="message-wrapper">
+                    <textarea id="message" placeholder="Digite sua mensagem:
+Use {nome} para inserir o nome do destinatário. 
+Você também pode clicar no clipe ou arrastar uma imagem." required></textarea>
+                    <button type="button" id="uploadButton" class="clip-button">📎</button>
+                </div>
+                <input type="file" id="imageInput" accept="image/*" hidden />
+
+                <img id="previewImage" style="display: none;" alt="Preview da imagem" />
+                <button type="button" id="removeImageButton" style="display: none; margin-top: 10px;">❌ Remover
+                    imagem</button>
+            </div>
+
+            <button onclick="sendMessage()" style=" min-width: 200px">Enviar Mensagem</button>
+            <p id="status" class="status-message"></p>
+
+        </div>
+    </div>
+
+    <footer>Daniel Holanda &copy; 2025</footer>
+    <script src="script.js"></script>
+
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span id="closeModal" class="close">&times;</span>
+            <h3>Como utilizar o sistema de envio</h3>
+            <div class="modal-scroll">
+                <p>
+                    <strong>1. Autenticação:</strong><br>
+                    - Insira sua <strong>matrícula</strong> no campo indicado.<br>
+                    - Clique em <strong>"Autenticar"</strong> para gerar o QR Code.<br>
+                    - Escaneie o QR Code com o WhatsApp do seu celular.<br><br>
+                    <strong>2. Conversão de contatos (opcional):</strong><br>
+                    - Use o botão <strong>"Converter Contatos"</strong> para gerar o formato correto.<br>
+                    - O formato ideal para os contatos é:<br>
+                    <code>Nome: Número</code> ou apenas <code>:Número</code> se não quiser usar nome.<br>
+                    - <strong>Separe cada contato com vírgula</strong> para que o sistema reconheça corretamente.<br>
+                    <em>Exemplos válidos:</em><br>
+                    <code>Daniel: 8899001122, João: 8898111222</code><br>
+                    <code>:8899777666, :8899666555</code><br>
+                    <strong>3. Composição da mensagem:</strong><br>
+                    - Escreva a mensagem no campo de texto.<br>
+                    - Você pode usar <code>{nome}</code> para personalizar com o nome do contato quando disponível.<br>
+                    <em>Exemplo:</em><br>
+                    <code>Olá {nome}, sua consulta é amanhã às 14h!</code><br>
+                    - Se o nome não for informado, <code>{nome}</code> será substituído por "Usuário".<br><br>
+
+                    <strong>4. Envio de imagem (opcional):</strong><br>
+                    - Clique no botão 📎 ou arraste uma imagem para a área de mensagem.<br>
+                    - O botão de clipe desaparecerá ao anexar uma imagem, e reaparecerá ao removê-la.<br>
+                    - A imagem será enviada junto com a legenda (caso tenha texto).<br><br>
+
+                    <strong>5. Enviar mensagens:</strong><br>
+                    - Verifique os dados e clique em <strong>"Enviar Mensagem"</strong>.<br>
+                    - As mensagens são enviadas uma a uma, com 6 segundos de intervalo.<br>
+                    - Abaixo do botão será exibido o status do envio em tempo real.<br><br>
+
+                    <strong>Observações finais:</strong><br>
+                    - Sempre inclua o DDD nos números.<br>
+                    - O envio será ignorado caso o número esteja mal formatado.<br>
+                    - O sistema suporta texto, imagem ou ambos.
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+
+</body>
+
+</html>
