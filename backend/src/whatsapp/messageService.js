@@ -51,7 +51,7 @@ async function sendMessage(req, res) {
                 console.error(`❌ Erro ao enviar para ${recipient.name}:`, err.message);
             }
 
-            await new Promise(resolve => setTimeout(resolve, 6000)); // Delay entre envios
+            await new Promise(resolve => setTimeout(resolve, 4000)); // Delay entre envios
         }
 
         res.status(200).send('Envio concluído');

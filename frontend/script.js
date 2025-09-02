@@ -1,5 +1,6 @@
 const BASE_URL = 'http://172.16.0.239:3000';
 let uploadedImagePath = null;
+let pollingIntervalId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     const savedMatricula = localStorage.getItem('matricula');
@@ -42,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         previewImage.src = '';
         previewImage.style.display = 'none';
         removeImageButton.style.display = 'none';
-        uploadButton.style.display = 'inline-block'; // Mostra o botão de clipe novamente
+        uploadButton.style.display = 'inline-block';
         uploadedImagePath = null;
     });
 
@@ -53,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 previewImage.src = reader.result;
                 previewImage.style.display = 'block';
                 removeImageButton.style.display = 'inline-block';
-                uploadButton.style.display = 'none'; // Esconde o botão de clipe
+                uploadButton.style.display = 'none';
             };
             reader.readAsDataURL(file);
         }
@@ -76,14 +77,18 @@ document.addEventListener('DOMContentLoaded', () => {
             infoModal.style.display = 'none';
         }
     });
-
 });
 
+
 async function authenticateWithMatricula() {
+
+    if (pollingIntervalId) {
+        clearInterval(pollingIntervalId);
+    }
+
     const matricula = document.getElementById('matricula').value.trim();
     const statusElement = document.getElementById('qrStatus');
     const qrCodeImage = document.getElementById('qrCode');
-    const clearAuthButton = document.getElementById('clearAuthButton');
 
     if (!matricula) {
         statusElement.textContent = "Por favor, insira a matrícula.";
@@ -91,88 +96,79 @@ async function authenticateWithMatricula() {
     }
 
     localStorage.setItem('matricula', matricula);
+    statusElement.textContent = "Autenticando, por favor aguarde...";
+    qrCodeImage.style.display = 'none';
 
     try {
+
         const response = await fetch(`${BASE_URL}/authenticate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ matricula }),
         });
 
-        if (response.ok) {
-            statusElement.textContent = `Autenticação iniciada para matrícula: ${matricula}`;
+        const data = await response.json();
 
-            const interval = setInterval(async () => {
-                const status = await checkAuthenticationStatus(matricula);
-                if (status === 'authenticated') {
-                    statusElement.textContent = 'Você foi autenticado com sucesso! ✅';
-                    qrCodeImage.style.display = 'none';
-                    clearAuthButton.style.display = 'none';
-                    clearInterval(interval);
-                } else if (status === 'qr') {
-                    await generateQRCode(matricula);
-                } else {
-                    statusElement.textContent = 'Aguardando autenticação...';
-                }
-            }, 3000);
-        } else {
-            const message = await response.text();
-            statusElement.textContent = `Erro: ${message}`;
+
+        if (!response.ok) {
+
+            statusElement.textContent = `Erro: ${data.message}`;
+            return;
         }
+
+
+        statusElement.textContent = data.message;
+
+        pollingIntervalId = setInterval(() => {
+            verificarStatus(matricula);
+        }, 3000);
+
     } catch (error) {
         console.error('Erro ao autenticar:', error);
-        statusElement.textContent = 'Erro ao conectar ao servidor.';
+        statusElement.textContent = 'Erro de conexão: não foi possível conectar ao servidor.';
     }
 }
 
-async function generateQRCode(matricula) {
-    const qrCodeImage = document.getElementById('qrCode');
+async function verificarStatus(matricula) {
     const statusElement = document.getElementById('qrStatus');
+    const qrCodeImage = document.getElementById('qrCode');
     const clearAuthButton = document.getElementById('clearAuthButton');
 
     try {
         const response = await fetch(`${BASE_URL}/get-qr/${matricula}`);
-
-        if (response.ok) {
-            const data = await response.json();
-
-            if (data.qrCode) {
-                qrCodeImage.src = data.qrCode;
-                qrCodeImage.style.display = 'block';
-                statusElement.textContent = 'Escaneie o QR Code para autenticar.';
-                clearAuthButton.style.display = 'inline-block';
-            }
-        } else {
-            statusElement.textContent = 'Aguardando autenticação...';
-            qrCodeImage.style.display = 'none';
-            clearAuthButton.style.display = 'none';
-        }
-    } catch (error) {
-        console.error('Erro ao obter QR Code:', error);
-        statusElement.textContent = 'Erro ao conectar ao servidor.';
-        qrCodeImage.style.display = 'none';
-        clearAuthButton.style.display = 'none';
-    }
-}
-
-async function checkAuthenticationStatus(matricula) {
-    try {
-        const response = await fetch(`${BASE_URL}/get-qr/${matricula}`);
-        if (!response.ok) return 'pending';
+        if (!response.ok) throw new Error('Resposta do servidor não foi OK');
 
         const data = await response.json();
 
-        if (data.message === 'Já autenticado') return 'authenticated';
-        if (data.qrCode) return 'qr';
+        switch (data.status) {
+            case 'AUTHENTICATED':
+                statusElement.textContent = data.message;
+                qrCodeImage.style.display = 'none';
+                clearAuthButton.style.display = 'none';
+                clearInterval(pollingIntervalId);
+                break;
 
-        return 'pending';
+            case 'QR_CODE_READY':
+                statusElement.textContent = data.message;
+                qrCodeImage.src = data.qrCode;
+                qrCodeImage.style.display = 'block';
+                clearAuthButton.style.display = 'inline-block';
+                break;
+
+            case 'INITIALIZING':
+                statusElement.textContent = data.message;
+                break;
+        }
     } catch (error) {
         console.error('Erro ao verificar status:', error);
-        return 'pending';
+        statusElement.textContent = 'Perda de conexão com o servidor. Tentando novamente...';
     }
 }
 
 function clearAuthentication() {
+    if (pollingIntervalId) {
+        clearInterval(pollingIntervalId);
+    }
     const qrCodeImage = document.getElementById('qrCode');
     const statusElement = document.getElementById('qrStatus');
     const clearAuthButton = document.getElementById('clearAuthButton');
