@@ -7,6 +7,7 @@
     <title>Bulk Whatsapp</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="../../assets/icone.png" type="image/png" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -22,8 +23,6 @@
 
             <button id="clearAuthButton" style="display: none;" onclick="clearAuthentication()"
                 aria-label="Limpar autenticação">Limpar Autenticação</button>
-
-            <a href="../nomeReturn/index.html" class="btn" target="_blank">Converter Contatos</a>
         </div>
 
         <div class="message-section">
@@ -33,16 +32,24 @@
             </div>
 
 
+
             <textarea id="numbers" placeholder="Separe os números por vírgula:
 Para incluir nomes, use: Nome: número (ex: Daniel: 8897000530). 
 Se não for usar nome, insira dois pontos antes do número (ex: :8897000530). 
 Não precisa vírgula após o último número." required></textarea>
 
+            <div id="fileInputArea" class="input-area">
+                <input type="file" id="spreadsheet" accept=".xlsx, .xls, .csv" style="display: none;">
+                <button onclick="document.getElementById('spreadsheet').click()" class="btn-upload">Escolher
+                    Arquivo com Contatos</button>
+                <p id="fileStatus" class="status-message">Nenhum arquivo selecionado.</p>
+            </div>
+
             <div class=" message-box" id="messageBox">
                 <div class="message-wrapper">
-                    <textarea id="message" placeholder="Digite sua mensagem:
-Use {nome} para inserir o nome do destinatário. 
-Você também pode clicar no clipe ou arrastar uma imagem." required></textarea>
+                    <textarea id="message" placeholder="Digite sua mensagem.
+Use as variáveis: {nome}, {paciente}, {data}, {hora}.
+Arraste uma imagem ou clique no clipe 📎" required></textarea>
                     <button type="button" id="uploadButton" class="clip-button">📎</button>
                 </div>
                 <input type="file" id="imageInput" accept="image/*" hidden />
@@ -52,7 +59,7 @@ Você também pode clicar no clipe ou arrastar uma imagem." required></textarea>
                     imagem</button>
             </div>
 
-            <button onclick="sendMessage()" style=" min-width: 200px">Enviar Mensagem</button>
+            <button id="sendButton" onclick="sendMessage()" style=" min-width: 200px">Enviar Mensagem</button>
             <p id="status" class="status-message"></p>
 
         </div>
@@ -66,46 +73,74 @@ Você também pode clicar no clipe ou arrastar uma imagem." required></textarea>
             <span id="closeModal" class="close">&times;</span>
             <h3>Como utilizar o sistema de envio</h3>
             <div class="modal-scroll">
-                <p>
-                    <strong>1. Autenticação:</strong><br>
-                    - Insira sua <strong>matrícula</strong> no campo indicado.<br>
-                    - Clique em <strong>"Autenticar"</strong> para gerar o QR Code.<br>
-                    - Escaneie o QR Code com o WhatsApp do seu celular.<br><br>
-                    <strong>2. Conversão de contatos (opcional):</strong><br>
-                    - Use o botão <strong>"Converter Contatos"</strong> para gerar o formato correto.<br>
-                    - O formato ideal para os contatos é:<br>
-                    <code>Nome: Número</code> ou apenas <code>:Número</code> se não quiser usar nome.<br>
-                    - <strong>Separe cada contato com vírgula</strong> para que o sistema reconheça corretamente.<br>
-                    <em>Exemplos válidos:</em><br>
-                    <code>Daniel: 8899001122, João: 8898111222</code><br>
-                    <code>:8899777666, :8899666555</code><br>
-                    <strong>3. Composição da mensagem:</strong><br>
-                    - Escreva a mensagem no campo de texto.<br>
-                    - Você pode usar <code>{nome}</code> para personalizar com o nome do contato quando disponível.<br>
-                    <em>Exemplo:</em><br>
-                    <code>Olá {nome}, sua consulta é amanhã às 14h!</code><br>
-                    - Se o nome não for informado, <code>{nome}</code> será substituído por "Usuário".<br><br>
 
-                    <strong>4. Envio de imagem (opcional):</strong><br>
-                    - Clique no botão 📎 ou arraste uma imagem para a área de mensagem.<br>
-                    - O botão de clipe desaparecerá ao anexar uma imagem, e reaparecerá ao removê-la.<br>
-                    - A imagem será enviada junto com a legenda (caso tenha texto).<br><br>
+                <div class="step">
+                    <h4><span class="step-icon">🔑</span> 1. Autenticação</h4>
+                    <ul>
+                        <li>Insira sua <strong>matrícula</strong> e clique em <strong>"Autenticar"</strong>.</li>
+                        <li>Escaneie o QR Code que aparecer com o WhatsApp do seu celular.</li>
+                    </ul>
+                </div>
 
-                    <strong>5. Enviar mensagens:</strong><br>
-                    - Verifique os dados e clique em <strong>"Enviar Mensagem"</strong>.<br>
-                    - As mensagens são enviadas uma a uma, com 6 segundos de intervalo.<br>
-                    - Abaixo do botão será exibido o status do envio em tempo real.<br><br>
+                <div class="step">
+                    <h4><span class="step-icon">👥</span> 2. Inserir Contatos</h4>
+                    <p>
+                        Você tem duas opções. O sistema dará prioridade à <strong>planilha</strong> se ambas as fontes
+                        forem preenchidas.
+                    </p>
 
-                    <strong>Observações finais:</strong><br>
-                    - Sempre inclua o DDD nos números.<br>
-                    - O envio será ignorado caso o número esteja mal formatado.<br>
-                    - O sistema suporta texto, imagem ou ambos.
-                </p>
+                    <div class="sub-step">
+                        <h5>Opção A: Colar Texto</h5>
+                        <p>Ideal para envios rápidos. Use o formato abaixo, com um contato por linha:</p>
+                        <div class="code-example">
+                            <code>Nome:Numero;Paciente;Data;Hora</code>
+                            <code><strong>Ex:</strong> Daniel:88997000530;Pedro;05/09/2025;19h</code>
+                        </div>
+                    </div>
+
+                    <div class="sub-step">
+                        <h5>Opção B: Carregar Planilha (.xlsx, .csv)</h5>
+                        <p>Perfeito para listas grandes. A planilha <strong>não deve ter cabeçalho</strong> (títulos) e
+                            deve seguir a estrutura:</p>
+                        <ul>
+                            <li><strong>Coluna A:</strong> Nome do Contato</li>
+                            <li><strong>Coluna B:</strong> Número do WhatsApp</li>
+                            <li><strong>Coluna C:</strong> Nome do Paciente</li>
+                            <li><strong>Coluna D:</strong> Data</li>
+                            <li><strong>Coluna E:</strong> Hora</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <h4><span class="step-icon">✍️</span> 3. Escrever a Mensagem</h4>
+                    <p>Digite sua mensagem e use as variáveis abaixo para personalizar:</p>
+                    <div class="code-example">
+                        <code>{nome}</code> <code>{paciente}</code> <code>{data}</code> <code>{hora}</code>
+                    </div>
+                    <p><em>Exemplo de template:</em><br>
+                        <code>Olá, {nome}. Lembrete da consulta de {paciente} no dia {data} às {hora}.</code>
+                    </p>
+                </div>
+
+                <div class="step">
+                    <h4><span class="step-icon">🖼️</span> 4. Anexar Imagem (Opcional)</h4>
+                    <ul>
+                        <li>Clique no ícone de clipe 📎 ou arraste uma imagem para a área da mensagem.</li>
+                        <li>A imagem será enviada junto com o texto como legenda.</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h4><span class="step-icon">🚀</span> 5. Enviar</h4>
+                    <ul>
+                        <li>Com tudo pronto, clique em <strong>"Enviar Mensagem"</strong> e acompanhe o status do
+                            processo.</li>
+                    </ul>
+                </div>
+
             </div>
         </div>
-    </div>
-
-
 
 </body>
 
