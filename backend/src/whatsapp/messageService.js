@@ -18,7 +18,15 @@ async function sendMessage(req, res) {
         for (let recipient of recipients) {
             const formattedNumber = helpers.formatPhoneNumber(recipient.number);
             const chatId = `${formattedNumber}${WHATSAPP_SUFFIX}`;
-            const personalizedMessage = messageTemplate?.replace('{nome}', recipient.name);
+
+            // --- ALTERAÇÃO PRINCIPAL AQUI ---
+            // Encadeie vários .replace() para cada variável
+            const personalizedMessage = messageTemplate
+                ?.replace('{nome}', recipient.name)
+                ?.replace('{paciente}', recipient.paciente)
+                ?.replace('{data}', recipient.data)
+                ?.replace('{hora}', recipient.hora);
+            // Você pode adicionar quantos .replace() quiser!
 
             try {
                 // Enviar imagem (local ou via URL)
@@ -51,7 +59,7 @@ async function sendMessage(req, res) {
                 console.error(`❌ Erro ao enviar para ${recipient.name}:`, err.message);
             }
 
-            await new Promise(resolve => setTimeout(resolve, 4000)); // Delay entre envios
+            await new Promise(resolve => setTimeout(resolve, 6000)); // Delay entre envios
         }
 
         res.status(200).send('Envio concluído');
