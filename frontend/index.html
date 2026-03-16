@@ -5,14 +5,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bulk Whatsapp</title>
+    <meta name="theme-color" content="#0f766e" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Source+Sans+3:wght@400;500;600&display=swap"
+        rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="../../assets/icone.png" type="image/png" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 
 <body>
-    <div class="main-container">
-        <div class="qr-section">
+    <div class="main-container surface">
+        <div class="qr-section panel">
             <h2>Autenticação</h2>
 
             <input type="text" id="matricula" placeholder="Digite sua matrícula" required />
@@ -25,10 +31,10 @@
                 aria-label="Limpar autenticação">Limpar Autenticação</button>
         </div>
 
-        <div class="message-section">
+        <div class="message-section panel">
             <div class="header-with-info">
                 <h2>Envio de Mensagens</h2>
-                <button id="infoButton" class="info-icon" title="Ajuda">ℹ️</button>
+                <button id="infoButton" class="info-icon" title="Ajuda">ℹ</button>
             </div>
             <textarea id="numbers" placeholder="Separe os números por vírgula:
 Para incluir nomes, use: Nome: número (ex: Daniel: 8897000530). 
@@ -42,17 +48,17 @@ Não precisa vírgula após o último número." required></textarea>
                 <p id="fileStatus" class="status-message">Nenhum arquivo selecionado.</p>
             </div>
 
-            <div class=" message-box" id="messageBox">
+            <div class="message-box" id="messageBox">
                 <div class="message-wrapper">
                     <textarea id="message" placeholder="Digite sua mensagem.
 Use as variáveis: {nome}, {paciente}, {data}, {hora}.
-Arraste uma imagem ou clique no clipe 📎" required></textarea>
+Arraste uma imagem ou clique no clipe ??" required></textarea>
                     <button type="button" id="uploadButton" class="clip-button">📎</button>
                 </div>
                 <input type="file" id="imageInput" accept="image/*" hidden />
 
                 <img id="previewImage" style="display: none;" alt="Preview da imagem" />
-                <button type="button" id="removeImageButton" style="display: none; margin-top: 10px;">❌ Remover
+                <button type="button" id="removeImageButton" style="display: none; margin-top: 10px;">? Remover
                     imagem</button>
             </div>
 
@@ -62,7 +68,7 @@ Arraste uma imagem ou clique no clipe 📎" required></textarea>
         </div>
     </div>
 
-    <footer>Daniel Holanda &copy; 2025</footer>
+    <footer>Desenvolvido por Daniel Holanda</footer>
     <script src="script.js"></script>
 
     <div id="infoModal" class="modal">
@@ -72,7 +78,7 @@ Arraste uma imagem ou clique no clipe 📎" required></textarea>
             <div class="modal-scroll">
 
                 <div class="step">
-                    <h4><span class="step-icon">🔑</span> 1. Autenticação</h4>
+                    <h4><span class="step-icon"></span> 1. Autenticação</h4>
                     <ul>
                         <li>Insira sua <strong>matrícula</strong> e clique em <strong>"Autenticar"</strong>.</li>
                         <li>Escaneie o QR Code que aparecer com o WhatsApp do seu celular.</li>
@@ -80,7 +86,7 @@ Arraste uma imagem ou clique no clipe 📎" required></textarea>
                 </div>
 
                 <div class="step">
-                    <h4><span class="step-icon">👥</span> 2. Inserir Contatos</h4>
+                    <h4><span class="step-icon"></span> 2. Inserir Contatos</h4>
                     <p>
                         Você tem duas opções. O sistema dará prioridade à <strong>planilha</strong> se ambas as fontes
                         forem preenchidas.
@@ -110,7 +116,7 @@ Arraste uma imagem ou clique no clipe 📎" required></textarea>
                 </div>
 
                 <div class="step">
-                    <h4><span class="step-icon">✍️</span> 3. Escrever a Mensagem</h4>
+                    <h4><span class="step-icon"></span> 3. Escrever a Mensagem</h4>
                     <p>Digite sua mensagem e use as variáveis abaixo para personalizar:</p>
                     <div class="code-example">
                         <code>{nome}</code> <code>{paciente}</code> <code>{data}</code> <code>{hora}</code>
@@ -121,15 +127,15 @@ Arraste uma imagem ou clique no clipe 📎" required></textarea>
                 </div>
 
                 <div class="step">
-                    <h4><span class="step-icon">🖼️</span> 4. Anexar Imagem (Opcional)</h4>
+                    <h4><span class="step-icon"></span> 4. Anexar Imagem (Opcional)</h4>
                     <ul>
-                        <li>Clique no ícone de clipe 📎 ou arraste uma imagem para a área da mensagem.</li>
+                        <li>Clique no ícone de clipe ?? ou arraste uma imagem para a área da mensagem.</li>
                         <li>A imagem será enviada junto com o texto como legenda.</li>
                     </ul>
                 </div>
 
                 <div class="step">
-                    <h4><span class="step-icon">🚀</span> 5. Enviar</h4>
+                    <h4><span class="step-icon"></span> 5. Enviar</h4>
                     <ul>
                         <li>Com tudo pronto, clique em <strong>"Enviar Mensagem"</strong> e acompanhe o status do
                             processo.</li>
@@ -142,4 +148,3 @@ Arraste uma imagem ou clique no clipe 📎" required></textarea>
 </body>
 
 </html>
-
