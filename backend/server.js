@@ -21,6 +21,7 @@ app.use('/', express.static(frontendDir));
 app.post('/authenticate', authService.authenticate);
 app.get('/get-qr/:matricula', authService.getQrCode);
 app.post('/send-message', messageService.sendMessage);
+app.post('/stop-message', messageService.stopMessage);
 
 function openBrowser(url) {
     const platform = process.platform;
