@@ -1,4 +1,4 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
+﻿const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
 const path = require('path');
 const fs = require('fs');
@@ -33,7 +33,6 @@ async function handleDisconnection(matricula, client, dataPath) {
     authenticatedUsers.delete(matricula);
 
     try {
-
         await client.destroy();
     } catch (error) {
         console.warn(`⚠️ Erro ao destruir o cliente ${matricula}:`, error.message);
@@ -52,7 +51,7 @@ async function handleDisconnection(matricula, client, dataPath) {
  */
 function initializeClient(matricula) {
     if (clients.has(matricula)) {
-        console.log(`ℹ️ Cliente para a matrícula ${matricula} já está em processo de inicialização.`);
+        console.log(`ℹ Cliente para a matrícula ${matricula} já está em processo de inicialização.`);
         return;
     }
 
@@ -75,6 +74,12 @@ function initializeClient(matricula) {
             if (err) return console.error('Erro ao gerar QR Code:', err);
             qrCodes.set(matricula, url);
         });
+    });
+
+    client.on('authenticated', () => {
+        authenticatedUsers.add(matricula);
+        qrCodes.delete(matricula);
+        console.log(`✅ Cliente autenticado para a matrícula ${matricula}.`);
     });
 
     client.on('ready', () => {
@@ -113,11 +118,15 @@ async function logoutClient(matricula) {
     console.log(`🚪 Realizando logout para a matrícula: ${matricula}...`);
     try {
         await client.logout();
-        console.error(`Erro durante o logout do cliente ${matricula}:`, error.message);
+    } catch (error) {
+        console.warn(`⚠️ Erro durante o logout do cliente ${matricula}:`, error.message);
+    }
 
+    try {
         await client.destroy();
+    } catch (error) {
+        console.warn(`⚠️ Erro ao destruir o cliente ${matricula}:`, error.message);
     } finally {
-
         clients.delete(matricula);
         qrCodes.delete(matricula);
         authenticatedUsers.delete(matricula);

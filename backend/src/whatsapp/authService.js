@@ -1,24 +1,24 @@
-const { initializeClient, qrCodes, authenticatedUsers } = require('./clientManager');
-const axios = require('axios');
-
-const PLANILHA_URL = 'https://script.google.com/macros/s/AKfycbzfxn8ntzKyAKlWNAtvOUBA9tUpeSVlSfQSLP5O9gi3M8cd7mxsDM8CTtUs6eLhD7CkJw/exec';
+﻿const { initializeClient, qrCodes, authenticatedUsers } = require('./clientManager');
+const fs = require('fs');
+const path = require('path');
 
 let usuariosAutorizadosCache = [];
 let ultimoCarregamento = 0;
 const TEMPO_CACHE_MS = 1000 * 60 * 2;
+const AUTH_USERS_PATH = path.resolve(__dirname, './authorizedUsers.json');
 
 async function carregarUsuariosAutorizados() {
     const agora = Date.now();
     if (usuariosAutorizadosCache.length === 0 || (agora - ultimoCarregamento) > TEMPO_CACHE_MS) {
         try {
-            console.log('Buscando dados atualizados da planilha...');
-            const response = await axios.get(PLANILHA_URL);
-            usuariosAutorizadosCache = response.data.usuarios || [];
+            const fileContent = await fs.promises.readFile(AUTH_USERS_PATH, 'utf8');
+            const parsed = JSON.parse(fileContent);
+            usuariosAutorizadosCache = parsed.usuarios || [];
             ultimoCarregamento = agora;
-            console.log('Cache de usuários atualizado com sucesso.');
+            console.log('Cache de usuarios locais atualizado com sucesso.');
         } catch (error) {
-            console.error('Erro CRÍTICO ao carregar dados da planilha:', error.message);
-            throw new Error('Não foi possível conectar ao serviço de autorização.');
+            console.error('Erro critico ao carregar usuarios locais:', error.message);
+            throw new Error('Nao foi possivel carregar a lista local de usuarios autorizados.');
         }
     }
     return usuariosAutorizadosCache;

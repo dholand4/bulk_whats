@@ -1,4 +1,4 @@
-const { MessageMedia } = require('whatsapp-web.js');
+﻿const { MessageMedia } = require('whatsapp-web.js');
 const { WHATSAPP_SUFFIX } = require('../config');
 const { clients } = require('./clientManager');
 const helpers = require('../utils/helpers');
@@ -19,16 +19,18 @@ async function sendMessage(req, res) {
             const formattedNumber = helpers.formatPhoneNumber(recipient.number);
             const chatId = `${formattedNumber}${WHATSAPP_SUFFIX}`;
 
-            // --- ALTERAÇÃO PRINCIPAL AQUI ---
-            // Encadeie vários .replace() para cada variável
             const personalizedMessage = messageTemplate
                 ?.replace('{nome}', recipient.name)
                 ?.replace('{paciente}', recipient.paciente)
                 ?.replace('{data}', recipient.data)
                 ?.replace('{hora}', recipient.hora);
-            // Você pode adicionar quantos .replace() quiser!
-
             try {
+                const isRegistered = await client.isRegisteredUser(chatId);
+                if (!isRegistered) {
+                    console.warn(`⚠️ Número não registrado no WhatsApp: ${formattedNumber}`);
+                    continue;
+                }
+
                 // Enviar imagem (local ou via URL)
                 if (mediaUrl) {
                     let media;
@@ -44,14 +46,15 @@ async function sendMessage(req, res) {
                     }
 
                     await client.sendMessage(chatId, media, {
-                        caption: personalizedMessage || ''
+                        caption: personalizedMessage || '',
+                        sendSeen: false
                     });
                     console.log(`🖼️ Imagem enviada para ${recipient.name} (${formattedNumber})`);
                 }
 
                 // Enviar texto, se houver e não estiver com imagem
                 if (!mediaUrl && personalizedMessage) {
-                    await client.sendMessage(chatId, personalizedMessage);
+                    await client.sendMessage(chatId, personalizedMessage, { sendSeen: false });
                     console.log(`📨 Texto enviado para ${recipient.name} (${formattedNumber})`);
                 }
 

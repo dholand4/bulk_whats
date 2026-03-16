@@ -1,4 +1,4 @@
-function formatPhoneNumber(number) {
+﻿function formatPhoneNumber(number) {
     number = number.replace(/[^\d]/g, '');
     if (!/^\d+$/.test(number)) {
         throw new Error('Número inválido. Use apenas dígitos.');
