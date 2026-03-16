@@ -1,4 +1,4 @@
-// Define a URL base da sua API
+﻿// Define a URL base da sua API
 const BASE_URL = 'http://172.16.0.239:3000';
 let pollingIntervalId = null;
 let loadedRecipients = []; // Armazena contatos da planilha, se houver
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('matricula').value = savedMatricula;
     }
 
-    // --- Lógica para upload e pré-visualização de imagem ---
+    // --- Upload e pré-visualização de imagem ---
     const messageBox = document.getElementById('messageBox');
     const uploadButton = document.getElementById('uploadButton');
     const imageInput = document.getElementById('imageInput');
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Lógica para o modal de informações ---
+    // --- Modal de informações ---
     const infoButton = document.getElementById('infoButton');
     const infoModal = document.getElementById('infoModal');
     const closeModal = document.getElementById('closeModal');
@@ -58,8 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModal.addEventListener('click', () => { infoModal.style.display = 'none'; });
     window.addEventListener('click', (e) => { if (e.target === infoModal) { infoModal.style.display = 'none'; } });
 
-
-    // --- Lógica CORRIGIDA E VERIFICADA para ler a planilha ---
+    // --- Leitura da planilha ---
     const fileInput = document.getElementById('spreadsheet');
     const fileStatus = document.getElementById('fileStatus');
     fileInput.addEventListener('change', (event) => {
@@ -103,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// --- FUNÇÕES DE AUTENTICAÇÃO (Completas) ---
+// --- Autenticação ---
 async function authenticateWithMatricula() {
     if (pollingIntervalId) { clearInterval(pollingIntervalId); }
     const matricula = document.getElementById('matricula').value.trim();
@@ -163,7 +162,7 @@ function clearAuthentication() {
     document.getElementById('qrStatus').textContent = 'Autenticação limpa. Insira a matrícula novamente.';
 }
 
-// --- FUNÇÃO DE ENVIO DE MENSAGEM (Com a Lógica de Prioridade) ---
+// --- Envio de mensagem ---
 async function sendMessage() {
     const matricula = document.getElementById('matricula').value.trim();
     const messageTemplate = document.getElementById('message').value.trim();
@@ -229,3 +228,4 @@ async function sendMessage() {
         sendButton.disabled = false;
     }
 }
+
