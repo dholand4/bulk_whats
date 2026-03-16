@@ -36,7 +36,7 @@
                 <h2>Envio de Mensagens</h2>
                 <button id="infoButton" class="info-icon" title="Ajuda">ℹ</button>
             </div>
-            <textarea id="numbers" placeholder="Separe os números por vírgula:
+            <textarea id="numbers" placeholder="Separe os números por vírgula ou por linha:
 Para incluir nomes, use: Nome: número (ex: Daniel: 8897000530). 
 Se não for usar nome, insira dois pontos antes do número (ex: :8897000530). 
 Não precisa vírgula após o último número." required></textarea>
@@ -62,7 +62,11 @@ Arraste uma imagem ou clique no clipe ??" required></textarea>
                     imagem</button>
             </div>
 
-            <button id="sendButton" onclick="sendMessage()" style=" min-width: 200px">Enviar Mensagem</button>
+            <div class="send-actions">
+                <button id="sendButton" onclick="sendMessage()" style=" min-width: 200px">Enviar Mensagem</button>
+                <button id="stopButton" type="button" onclick="stopSending()" title="Parar envio"
+                    aria-label="Parar envio" disabled>-</button>
+            </div>
             <p id="status" class="status-message"></p>
 
         </div>
@@ -88,13 +92,15 @@ Arraste uma imagem ou clique no clipe ??" required></textarea>
                 <div class="step">
                     <h4><span class="step-icon"></span> 2. Inserir Contatos</h4>
                     <p>
-                        Você tem duas opções. O sistema dará prioridade à <strong>planilha</strong> se ambas as fontes
+                        Você tem duas opções. O sistema dará prioridade ao <strong>texto digitado</strong> se ambas as
+                        fontes
                         forem preenchidas.
                     </p>
 
                     <div class="sub-step">
                         <h5>Opção A: Colar Texto</h5>
-                        <p>Ideal para envios rápidos. Use o formato abaixo, com um contato por linha:</p>
+                        <p>Ideal para envios rápidos. Use o formato abaixo, com um contato por linha ou separado por
+                            vírgula:</p>
                         <div class="code-example">
                             <code>Nome:Numero;Paciente;Data;Hora</code>
                             <code><strong>Ex:</strong> Daniel:88997000530;Pedro;05/09/2025;19h</code>

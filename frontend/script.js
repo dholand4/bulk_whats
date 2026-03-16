@@ -2,6 +2,33 @@
 const BASE_URL = 'http://172.16.0.239:3000';
 let pollingIntervalId = null;
 let loadedRecipients = []; // Armazena contatos da planilha, se houver
+let isSending = false;
+let stopRequested = false;
+
+async function readResponseMessage(response, fallbackMessage) {
+    const contentType = response.headers.get('content-type') || '';
+
+    try {
+        if (contentType.includes('application/json')) {
+            const data = await response.json();
+            return data.message || fallbackMessage;
+        }
+
+        const text = await response.text();
+        if (!text || text.trim() === '') {
+            return fallbackMessage;
+        }
+
+        // Evita exibir HTML de erro bruto na tela.
+        if (text.trim().startsWith('<!DOCTYPE html>')) {
+            return fallbackMessage;
+        }
+
+        return text;
+    } catch (_error) {
+        return fallbackMessage;
+    }
+}
 
 // Executa quando o conteúdo da página é carregado
 document.addEventListener('DOMContentLoaded', () => {
@@ -61,6 +88,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Leitura da planilha ---
     const fileInput = document.getElementById('spreadsheet');
     const fileStatus = document.getElementById('fileStatus');
+    const stopButton = document.getElementById('stopButton');
+    stopButton.disabled = true;
     fileInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
 
@@ -169,22 +198,32 @@ async function sendMessage() {
     const imageInput = document.getElementById('imageInput');
     const statusElement = document.getElementById('status');
     const sendButton = document.getElementById('sendButton');
+    const stopButton = document.getElementById('stopButton');
 
     let recipients = [];
     const rawNumbers = document.getElementById('numbers').value.trim();
 
-    // LÓGICA DE PRIORIDADE: Planilha > Texto
-    if (loadedRecipients.length > 0) {
-        recipients = loadedRecipients;
-    } else if (rawNumbers) {
-        recipients = rawNumbers.split('\n').filter(line => line.trim() !== '').map(line => {
+    // LÓGICA DE PRIORIDADE: Texto > Planilha
+    if (rawNumbers) {
+        const entries = rawNumbers
+            .split(/\n|,/)
+            .map(line => line.trim())
+            .filter(line => line !== '');
+
+        recipients = entries.map(line => {
             const [contactPart, ...detailsParts] = line.split(';');
             const [name, number] = contactPart.split(':').map(item => item.trim());
             const details = detailsParts.map(item => item.trim());
             return {
-                name: name || 'Contato', number: number ? number.replace(/\D/g, '') : '', paciente: details[0] || '', data: details[1] || '', hora: details[2] || ''
+                name: name || 'Contato',
+                number: number ? number.replace(/\D/g, '') : '',
+                paciente: details[0] || '',
+                data: details[1] || '',
+                hora: details[2] || ''
             };
         }).filter(r => r.number);
+    } else if (loadedRecipients.length > 0) {
+        recipients = loadedRecipients;
     }
 
     // Validação
@@ -194,6 +233,9 @@ async function sendMessage() {
     }
 
     sendButton.disabled = true;
+    stopButton.disabled = false;
+    isSending = true;
+    stopRequested = false;
     statusElement.textContent = "Iniciando processo de envio...";
 
     try {
@@ -215,9 +257,13 @@ async function sendMessage() {
                 matricula, recipients, messageTemplate, mediaUrl: uploadedImagePath
             }),
         });
-        const responseData = await response.text();
+        const responseData = await readResponseMessage(response, 'Resposta do servidor recebida.');
         if (response.ok) {
-            statusElement.textContent = `✅ Sucesso! ${responseData}`;
+            if (stopRequested || responseData.toLowerCase().includes('interrompido')) {
+                statusElement.textContent = 'Cancelada!';
+            } else {
+                statusElement.textContent = `✅ Sucesso! ${responseData}`;
+            }
         } else {
             statusElement.textContent = `❌ Erro no servidor: ${responseData}`;
         }
@@ -225,7 +271,54 @@ async function sendMessage() {
         console.error('Erro no envio geral:', error);
         statusElement.textContent = `❌ Erro: ${error.message}`;
     } finally {
+        isSending = false;
         sendButton.disabled = false;
+        stopButton.disabled = true;
+    }
+}
+
+async function stopSending() {
+    const matricula = document.getElementById('matricula').value.trim();
+    const statusElement = document.getElementById('status');
+    const stopButton = document.getElementById('stopButton');
+
+    if (!isSending) {
+        statusElement.textContent = 'Nao ha envio em andamento.';
+        return;
+    }
+
+    if (!matricula) {
+        statusElement.textContent = 'Informe a matricula para interromper o envio.';
+        return;
+    }
+
+    stopButton.disabled = true;
+    stopRequested = true;
+    statusElement.textContent = 'Cancelando envio...';
+
+    try {
+        const response = await fetch(`${BASE_URL}/stop-message`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ matricula }),
+        });
+
+        const fallbackMessage = response.status === 404
+            ? 'Cancelamento indisponivel: reinicie o backend para ativar a rota /stop-message.'
+            : 'Nao foi possivel cancelar o envio agora.';
+        const responseText = await readResponseMessage(response, fallbackMessage);
+
+        if (response.ok) {
+            statusElement.textContent = 'Cancelada!';
+        } else {
+            statusElement.textContent = `❌ ${responseText}`;
+            stopButton.disabled = false;
+            stopRequested = false;
+        }
+    } catch (error) {
+        statusElement.textContent = `❌ Falha ao solicitar parada: ${error.message}`;
+        stopButton.disabled = false;
+        stopRequested = false;
     }
 }
 
