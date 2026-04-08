@@ -10,7 +10,6 @@ Thumbs.db
 .env.*
 !.env.example
 
-uploads/
 backend/uploads/
 backend/data/
 frontend/dist/
