@@ -87,12 +87,12 @@ export function AdminView() {
             </InputGroup>
 
             <InputGroup>
-              <span>{editingUserMatricula ? 'Nova senha' : 'Senha'}</span>
+              <span>{editingUserMatricula ? 'Senha provisoria' : 'Senha inicial'}</span>
               <input
                 type="password"
                 value={form.password}
                 onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-                placeholder={editingUserMatricula ? 'Preencha so para trocar' : 'Defina uma senha'}
+                placeholder={editingUserMatricula ? 'Preencha para redefinir o primeiro acesso' : 'Defina a senha inicial'}
                 required={!editingUserMatricula}
               />
             </InputGroup>

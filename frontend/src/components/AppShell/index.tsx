@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom';
+import { PasswordChangeModal } from '../PasswordChangeModal';
 import { navigationItems } from '../../constants/navigation';
 import { useApp } from '../../providers/AppProvider';
 import {
@@ -22,6 +23,7 @@ export function AppShell() {
 
   return (
     <Shell>
+      <PasswordChangeModal />
       <Sidebar>
         <SidebarHeader>
           <Eyebrow>Gestão</Eyebrow>

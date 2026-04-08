@@ -3,6 +3,8 @@ export type UserRole = 'user' | 'admin';
 export interface AuthUser {
   matricula: string;
   role: UserRole;
+  dataExpiracao?: string;
+  mustChangePassword?: boolean;
 }
 
 export interface Summary {

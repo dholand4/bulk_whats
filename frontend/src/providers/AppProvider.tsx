@@ -35,6 +35,7 @@ interface AppContextValue {
   historyGroups: CampaignGroup[];
   loginStatus: string;
   login: (matricula: string, password: string) => Promise<void>;
+  changeOwnPassword: (currentPassword: string, newPassword: string) => Promise<string>;
   logout: () => Promise<void>;
   refreshData: (overrideToken?: string) => Promise<void>;
   connectDevice: (deviceId: string) => Promise<void>;
@@ -257,6 +258,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setActiveContactListName('');
     setLoginStatus('');
     localStorage.removeItem('authToken');
+  }
+
+  async function changeOwnPassword(currentPassword: string, newPassword: string) {
+    const response = await apiRequest<{ message: string; user: AuthUser }>(
+      '/api/auth/change-password',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      },
+      token,
+    );
+
+    setUser(response.user);
+    return response.message;
   }
 
   async function connectDevice(deviceId: string) {
@@ -561,6 +577,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         historyGroups,
         loginStatus,
         login,
+        changeOwnPassword,
         logout,
         refreshData,
         connectDevice,
