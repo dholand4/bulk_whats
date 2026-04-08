@@ -18,6 +18,16 @@ async function me(req, res, next) {
     }
 }
 
+async function changePassword(req, res, next) {
+    try {
+        const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
+        const result = await authService.changePassword(req.auth, req.body, token);
+        res.status(result.statusCode).json(result.body);
+    } catch (error) {
+        next(error);
+    }
+}
+
 async function logout(req, res, next) {
     try {
         const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
@@ -31,5 +41,6 @@ async function logout(req, res, next) {
 module.exports = {
     login,
     me,
+    changePassword,
     logout,
 };

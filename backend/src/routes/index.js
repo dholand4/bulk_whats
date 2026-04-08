@@ -17,6 +17,7 @@ router.post('/api/auth/login', authController.login);
 router.use('/api', authMiddleware);
 
 router.get('/api/auth/me', authController.me);
+router.post('/api/auth/change-password', authController.changePassword);
 router.post('/api/auth/logout', authController.logout);
 
 router.get('/api/contacts', contactController.listContacts);

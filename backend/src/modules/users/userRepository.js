@@ -12,6 +12,7 @@ function mapUser(row) {
         dataExpiracao: row.expiration_date instanceof Date
             ? row.expiration_date.toISOString().slice(0, 10)
             : String(row.expiration_date),
+        mustChangePassword: Boolean(row.force_password_change),
         active: row.active,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
@@ -20,7 +21,7 @@ function mapUser(row) {
 
 async function listUsers() {
     const result = await postgres.query(`
-        SELECT matricula, role, expiration_date, active, created_at, updated_at
+        SELECT matricula, role, expiration_date, force_password_change, active, created_at, updated_at
         FROM users
         ORDER BY role DESC, matricula ASC
     `);
@@ -30,7 +31,7 @@ async function listUsers() {
 
 async function findByMatricula(matricula) {
     const result = await postgres.query(`
-        SELECT matricula, role, expiration_date, active, created_at, updated_at
+        SELECT matricula, role, expiration_date, force_password_change, active, created_at, updated_at
         FROM users
         WHERE matricula = $1
         LIMIT 1
@@ -41,7 +42,7 @@ async function findByMatricula(matricula) {
 
 async function upsertUser({ matricula, role = 'user', dataExpiracao, password, active = true }) {
     const result = await postgres.query(`
-        INSERT INTO users (matricula, role, expiration_date, password_hash, active, updated_at)
+        INSERT INTO users (matricula, role, expiration_date, password_hash, force_password_change, active, updated_at)
         VALUES (
             $1,
             $2,
@@ -49,6 +50,10 @@ async function upsertUser({ matricula, role = 'user', dataExpiracao, password, a
             CASE
                 WHEN NULLIF($4, '') IS NULL THEN NULL
                 ELSE crypt($4, gen_salt('bf'))
+            END,
+            CASE
+                WHEN NULLIF($4, '') IS NULL THEN FALSE
+                ELSE TRUE
             END,
             $5,
             NOW()
@@ -61,9 +66,13 @@ async function upsertUser({ matricula, role = 'user', dataExpiracao, password, a
                 WHEN NULLIF($4, '') IS NULL THEN users.password_hash
                 ELSE crypt($4, gen_salt('bf'))
             END,
+            force_password_change = CASE
+                WHEN NULLIF($4, '') IS NULL THEN users.force_password_change
+                ELSE TRUE
+            END,
             active = EXCLUDED.active,
             updated_at = NOW()
-        RETURNING matricula, role, expiration_date, active, created_at, updated_at
+        RETURNING matricula, role, expiration_date, force_password_change, active, created_at, updated_at
     `, [matricula, role, dataExpiracao, password || '', active]);
 
     return mapUser(result.rows[0]);
@@ -93,6 +102,20 @@ async function verifyPassword(matricula, password) {
     }
 
     return Boolean(row.password_matches);
+}
+
+async function updatePassword(matricula, password) {
+    const result = await postgres.query(`
+        UPDATE users
+        SET
+            password_hash = crypt($2, gen_salt('bf')),
+            force_password_change = FALSE,
+            updated_at = NOW()
+        WHERE matricula = $1
+        RETURNING matricula, role, expiration_date, force_password_change, active, created_at, updated_at
+    `, [matricula, password]);
+
+    return mapUser(result.rows[0]);
 }
 
 async function deleteUser(matricula) {
@@ -142,6 +165,7 @@ module.exports = {
     findByMatricula,
     upsertUser,
     verifyPassword,
+    updatePassword,
     deleteUser,
     bootstrapUsersFromLegacy,
 };

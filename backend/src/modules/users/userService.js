@@ -46,11 +46,18 @@ async function saveUser(payload) {
         throw new Error('Informe a matricula.');
     }
 
+    const existingUser = await userRepository.findByMatricula(matricula);
+    const normalizedPassword = normalizePassword(payload?.password);
+
+    if (!existingUser && !normalizedPassword) {
+        throw new Error('Informe a senha inicial do usuario.');
+    }
+
     const user = await userRepository.upsertUser({
         matricula,
         role: normalizeRole(payload?.role),
         dataExpiracao: normalizeExpirationDate(payload?.dataExpiracao),
-        password: normalizePassword(payload?.password),
+        password: normalizedPassword,
         active: payload?.active !== false,
     });
 

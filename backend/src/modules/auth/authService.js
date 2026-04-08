@@ -89,12 +89,71 @@ async function me(session) {
         matricula: session.matricula,
         role: session.role || 'user',
         dataExpiracao: session.dataExpiracao || '',
+        mustChangePassword: Boolean(session.mustChangePassword),
     };
 
     return {
         statusCode: 200,
         body: {
             user,
+        },
+    };
+}
+
+async function changePassword(session, payload, token) {
+    const currentPassword = normalizePassword(payload?.currentPassword);
+    const newPassword = normalizePassword(payload?.newPassword);
+
+    if (!currentPassword) {
+        return {
+            statusCode: 400,
+            body: {
+                message: 'Informe a senha atual.',
+            },
+        };
+    }
+
+    if (!newPassword || newPassword.trim().length < 4) {
+        return {
+            statusCode: 400,
+            body: {
+                message: 'Informe uma nova senha com pelo menos 4 caracteres.',
+            },
+        };
+    }
+
+    const passwordMatches = await userRepository.verifyPassword(session.matricula, currentPassword);
+    if (!passwordMatches) {
+        return {
+            statusCode: 403,
+            body: {
+                message: 'A senha atual informada esta incorreta.',
+            },
+        };
+    }
+
+    if (currentPassword === newPassword) {
+        return {
+            statusCode: 400,
+            body: {
+                message: 'A nova senha precisa ser diferente da senha atual.',
+            },
+        };
+    }
+
+    const user = await userRepository.updatePassword(session.matricula, newPassword);
+    sessionStore.update(token, { mustChangePassword: false });
+
+    return {
+        statusCode: 200,
+        body: {
+            message: 'Senha alterada com sucesso.',
+            user: {
+                matricula: user.matricula,
+                role: user.role,
+                dataExpiracao: user.dataExpiracao,
+                mustChangePassword: user.mustChangePassword,
+            },
         },
     };
 }
@@ -112,5 +171,6 @@ async function logout(token) {
 module.exports = {
     login,
     me,
+    changePassword,
     logout,
 };

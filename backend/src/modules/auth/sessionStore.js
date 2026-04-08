@@ -10,6 +10,7 @@ function create(user) {
         matricula: user.matricula,
         role: user.role || 'user',
         dataExpiracao: user.dataExpiracao || '',
+        mustChangePassword: Boolean(user.mustChangePassword),
         createdAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + SESSION_TTL_MS).toISOString(),
     };
@@ -33,6 +34,21 @@ function get(token) {
     return session;
 }
 
+function update(token, updates) {
+    const session = get(token);
+    if (!session) {
+        return null;
+    }
+
+    const nextSession = {
+        ...session,
+        ...updates,
+    };
+
+    sessions.set(token, nextSession);
+    return nextSession;
+}
+
 function remove(token) {
     sessions.delete(token);
 }
@@ -40,5 +56,6 @@ function remove(token) {
 module.exports = {
     create,
     get,
+    update,
     remove,
 };
