@@ -1,0 +1,20 @@
+export const theme = {
+  colors: {
+    bg: '#f4efe6',
+    bgStrong: '#e6dccf',
+    surface: 'rgba(255, 250, 245, 0.88)',
+    surfaceStrong: '#fffdfa',
+    surfaceMuted: '#f1eadf',
+    text: '#1b1714',
+    muted: '#6b6258',
+    primary: '#123524',
+    primarySoft: '#2d5a44',
+    accent: '#d96c3f',
+    accentSoft: '#f2b392',
+    border: 'rgba(18, 53, 36, 0.12)',
+    danger: '#a12d2f',
+    warning: '#8c5a17',
+  },
+  shadow: '0 14px 34px rgba(33, 24, 16, 0.11)',
+  radius: '16px',
+};
