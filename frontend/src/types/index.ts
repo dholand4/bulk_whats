@@ -45,6 +45,7 @@ export interface AdminUser {
   matricula: string;
   role: UserRole;
   dataExpiracao: string;
+  password?: string;
 }
 
 export interface CampaignItem {

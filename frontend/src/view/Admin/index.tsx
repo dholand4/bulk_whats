@@ -22,6 +22,7 @@ export function AdminView() {
     matricula: '',
     role: 'user',
     dataExpiracao: '',
+    password: '',
   });
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -33,12 +34,13 @@ export function AdminView() {
           matricula: form.matricula.trim(),
           role: form.role as 'user' | 'admin',
           dataExpiracao: form.dataExpiracao,
+          password: form.password,
         },
         editingUserMatricula,
       );
       setStatus('Matricula salva com sucesso.');
       setEditingUserMatricula(null);
-      setForm({ matricula: '', role: 'user', dataExpiracao: '' });
+      setForm({ matricula: '', role: 'user', dataExpiracao: '', password: '' });
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Falha ao salvar matricula.');
     }
@@ -84,6 +86,17 @@ export function AdminView() {
               />
             </InputGroup>
 
+            <InputGroup>
+              <span>{editingUserMatricula ? 'Nova senha' : 'Senha'}</span>
+              <input
+                type="password"
+                value={form.password}
+                onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                placeholder={editingUserMatricula ? 'Preencha so para trocar' : 'Defina uma senha'}
+                required={!editingUserMatricula}
+              />
+            </InputGroup>
+
             <InlineActions>
               <button type="submit">Salvar acesso</button>
               {editingUserMatricula ? (
@@ -91,7 +104,7 @@ export function AdminView() {
                   type="button"
                   onClick={() => {
                     setEditingUserMatricula(null);
-                    setForm({ matricula: '', role: 'user', dataExpiracao: '' });
+                    setForm({ matricula: '', role: 'user', dataExpiracao: '', password: '' });
                     setStatus('');
                   }}
                 >
@@ -131,6 +144,7 @@ export function AdminView() {
                         matricula: user.matricula,
                         role: user.role,
                         dataExpiracao: user.dataExpiracao,
+                        password: '',
                       });
                       setStatus('');
                     }}

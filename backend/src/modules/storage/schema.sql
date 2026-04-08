@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     matricula TEXT PRIMARY KEY,
     role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user')),
     expiration_date DATE NOT NULL,
+    password_hash TEXT,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);
 CREATE INDEX IF NOT EXISTS idx_users_expiration_date ON users (expiration_date);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 
 CREATE TABLE IF NOT EXISTS stored_files (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

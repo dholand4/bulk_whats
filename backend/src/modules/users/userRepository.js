@@ -39,20 +39,60 @@ async function findByMatricula(matricula) {
     return mapUser(result.rows[0]);
 }
 
-async function upsertUser({ matricula, role = 'user', dataExpiracao, active = true }) {
+async function upsertUser({ matricula, role = 'user', dataExpiracao, password, active = true }) {
     const result = await postgres.query(`
-        INSERT INTO users (matricula, role, expiration_date, active, updated_at)
-        VALUES ($1, $2, $3::date, $4, NOW())
+        INSERT INTO users (matricula, role, expiration_date, password_hash, active, updated_at)
+        VALUES (
+            $1,
+            $2,
+            $3::date,
+            CASE
+                WHEN NULLIF($4, '') IS NULL THEN NULL
+                ELSE crypt($4, gen_salt('bf'))
+            END,
+            $5,
+            NOW()
+        )
         ON CONFLICT (matricula)
         DO UPDATE SET
             role = EXCLUDED.role,
             expiration_date = EXCLUDED.expiration_date,
+            password_hash = CASE
+                WHEN NULLIF($4, '') IS NULL THEN users.password_hash
+                ELSE crypt($4, gen_salt('bf'))
+            END,
             active = EXCLUDED.active,
             updated_at = NOW()
         RETURNING matricula, role, expiration_date, active, created_at, updated_at
-    `, [matricula, role, dataExpiracao, active]);
+    `, [matricula, role, dataExpiracao, password || '', active]);
 
     return mapUser(result.rows[0]);
+}
+
+async function verifyPassword(matricula, password) {
+    const result = await postgres.query(`
+        SELECT
+            matricula,
+            password_hash,
+            CASE
+                WHEN password_hash IS NULL THEN FALSE
+                ELSE password_hash = crypt($2, password_hash)
+            END AS password_matches
+        FROM users
+        WHERE matricula = $1
+        LIMIT 1
+    `, [matricula, password]);
+
+    const row = result.rows[0];
+    if (!row) {
+        return false;
+    }
+
+    if (!row.password_hash) {
+        return password === matricula;
+    }
+
+    return Boolean(row.password_matches);
 }
 
 async function deleteUser(matricula) {
@@ -101,6 +141,7 @@ module.exports = {
     listUsers,
     findByMatricula,
     upsertUser,
+    verifyPassword,
     deleteUser,
     bootstrapUsersFromLegacy,
 };

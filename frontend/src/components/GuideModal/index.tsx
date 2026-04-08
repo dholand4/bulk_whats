@@ -27,7 +27,7 @@ export function GuideModal({ open, onClose }: GuideModalProps) {
           <Step>
             <h4>1. Autenticacao</h4>
             <ul>
-              <li>Insira sua matricula e clique em Entrar.</li>
+              <li>Insira sua matricula, senha e clique em Entrar.</li>
               <li>Na aba Dispositivos, conecte a sessao WhatsApp da sua matricula.</li>
               <li>Escaneie o QR Code com o WhatsApp do seu celular.</li>
             </ul>

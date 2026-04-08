@@ -34,7 +34,7 @@ interface AppContextValue {
   queueGroups: CampaignGroup[];
   historyGroups: CampaignGroup[];
   loginStatus: string;
-  login: (matricula: string) => Promise<void>;
+  login: (matricula: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshData: (overrideToken?: string) => Promise<void>;
   connectDevice: (deviceId: string) => Promise<void>;
@@ -211,14 +211,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function login(matricula: string) {
+  async function login(matricula: string, password: string) {
     setLoginStatus('Validando acesso...');
 
     try {
       const response = await apiRequest<{ token: string; user: AuthUser }>('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ matricula }),
+        body: JSON.stringify({ matricula, password }),
       });
 
       setToken(response.token);

@@ -6,6 +6,7 @@ import { LoginCard, LoginLayout, LoginTitle } from './styled';
 
 export function LoginView() {
   const [matricula, setMatricula] = useState('');
+  const [password, setPassword] = useState('');
   const { login, loginStatus } = useApp();
   const navigate = useNavigate();
 
@@ -13,7 +14,7 @@ export function LoginView() {
     event.preventDefault();
 
     try {
-      await login(matricula.trim());
+      await login(matricula.trim(), password);
       navigate('/overview', { replace: true });
     } catch {
       // O status ja e atualizado no provider.
@@ -27,7 +28,7 @@ export function LoginView() {
           <Eyebrow style={{ color: 'var(--muted)' }}>Bulk Whats</Eyebrow>
           <LoginTitle>Entrar no painel</LoginTitle>
           <p style={{ color: 'var(--muted)', margin: '8px 0 0' }}>
-            A matricula entra no sistema e tambem identifica a sessao WhatsApp do seu painel.
+            Entre com sua matricula e senha para acessar o painel e a sessao WhatsApp associada.
           </p>
         </div>
 
@@ -40,6 +41,16 @@ export function LoginView() {
                 value={matricula}
                 onChange={(event) => setMatricula(event.target.value)}
                 placeholder="Digite sua matricula"
+                required
+              />
+            </InputGroup>
+            <InputGroup>
+              <span>Senha</span>
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Digite sua senha"
                 required
               />
             </InputGroup>

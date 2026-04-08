@@ -17,6 +17,20 @@ function normalizeRole(value) {
     return String(value || 'user').trim() === 'admin' ? 'admin' : 'user';
 }
 
+function normalizePassword(value) {
+    const parsed = String(value || '');
+
+    if (!parsed.trim()) {
+        return '';
+    }
+
+    if (parsed.trim().length < 4) {
+        throw new Error('Informe uma senha com pelo menos 4 caracteres.');
+    }
+
+    return parsed;
+}
+
 async function listUsers() {
     return {
         statusCode: 200,
@@ -36,6 +50,7 @@ async function saveUser(payload) {
         matricula,
         role: normalizeRole(payload?.role),
         dataExpiracao: normalizeExpirationDate(payload?.dataExpiracao),
+        password: normalizePassword(payload?.password),
         active: payload?.active !== false,
     });
 

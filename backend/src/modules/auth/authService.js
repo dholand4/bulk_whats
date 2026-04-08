@@ -6,6 +6,10 @@ function normalizeMatricula(value) {
     return String(value || '').trim();
 }
 
+function normalizePassword(value) {
+    return String(value || '');
+}
+
 function isExpired(expirationDate) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -14,12 +18,22 @@ function isExpired(expirationDate) {
 
 async function login(payload) {
     const matricula = normalizeMatricula(payload?.matricula);
+    const password = normalizePassword(payload?.password);
 
     if (!matricula) {
         return {
             statusCode: 400,
             body: {
                 message: 'O campo matricula e obrigatorio.',
+            },
+        };
+    }
+
+    if (!password) {
+        return {
+            statusCode: 400,
+            body: {
+                message: 'O campo senha e obrigatorio.',
             },
         };
     }
@@ -40,6 +54,16 @@ async function login(payload) {
             statusCode: 403,
             body: {
                 message: 'Sua licenca de uso para o sistema expirou.',
+            },
+        };
+    }
+
+    const passwordMatches = await userRepository.verifyPassword(matricula, password);
+    if (!passwordMatches) {
+        return {
+            statusCode: 403,
+            body: {
+                message: 'Matricula ou senha invalidas.',
             },
         };
     }
