@@ -34,6 +34,7 @@ router.post('/api/devices', deviceController.createDevice);
 router.delete('/api/devices/:id', deviceController.removeDevice);
 router.post('/api/devices/:id/connect', deviceController.connectDevice);
 router.post('/api/devices/:id/reconnect', deviceController.reconnectDevice);
+router.post('/api/devices/:id/disconnect', deviceController.disconnectDevice);
 router.get('/api/devices/:id/auth', deviceController.getDeviceAuth);
 router.post('/api/devices/:id/pairing-code', deviceController.generatePairingCode);
 

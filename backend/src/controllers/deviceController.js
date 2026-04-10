@@ -36,6 +36,15 @@ async function reconnectDevice(req, res, next) {
     }
 }
 
+async function disconnectDevice(req, res, next) {
+    try {
+        const result = await deviceService.disconnectDevice(req.params.id, req.auth);
+        res.status(result.statusCode).json(result.body);
+    } catch (error) {
+        next(error);
+    }
+}
+
 async function getDeviceAuth(req, res, next) {
     try {
         const result = await deviceService.getDeviceAuth(req.params.id, req.auth);
@@ -68,6 +77,7 @@ module.exports = {
     createDevice,
     connectDevice,
     reconnectDevice,
+    disconnectDevice,
     getDeviceAuth,
     generatePairingCode,
     removeDevice,

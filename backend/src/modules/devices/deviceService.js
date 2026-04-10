@@ -106,6 +106,28 @@ async function reconnectDevice(deviceId, auth) {
     };
 }
 
+async function disconnectDevice(deviceId, auth) {
+    if (deviceId !== auth.matricula) {
+        throw new Error('Dispositivo invalido para este usuario.');
+    }
+
+    await clientManager.destroyClient(deviceId, { removeSession: true, logout: true });
+
+    const updatedDevice = await updateDevice(deviceId, {
+        status: 'disconnected',
+        lastKnownStatus: 'Desconectado pelo usuario',
+        connectedNumber: null,
+    });
+
+    return {
+        statusCode: 200,
+        body: {
+            message: 'Dispositivo desconectado com sucesso.',
+            device: decorateDevice(updatedDevice || getDeviceOrThrow(database.load(), deviceId)),
+        },
+    };
+}
+
 async function getDeviceAuth(deviceId, auth) {
     if (deviceId !== auth.matricula) {
         throw new Error('Dispositivo invalido para este usuario.');
@@ -179,6 +201,7 @@ module.exports = {
     createDevice,
     connectDevice,
     reconnectDevice,
+    disconnectDevice,
     getDeviceAuth,
     generatePairingCode,
     removeDevice,
