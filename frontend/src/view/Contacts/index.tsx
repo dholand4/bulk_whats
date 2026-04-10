@@ -1,4 +1,5 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { ConfirmModal } from '../../components/ConfirmModal';
 import { GuideModal } from '../../components/GuideModal';
 import {
   Badge,
@@ -36,6 +37,14 @@ import {
 } from './styled';
 
 type ContactModalMode = 'create' | 'edit' | 'bulk-edit';
+
+interface ConfirmState {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  action: 'delete-list' | 'delete-selected' | 'delete-contact';
+  contact?: Contact;
+}
 
 const emptyDraft = {
   name: '',
@@ -79,6 +88,8 @@ export function ContactsView() {
   const [editingContactId, setEditingContactId] = useState<string | null>(null);
   const [contactStatus, setContactStatus] = useState('');
   const [draft, setDraft] = useState(emptyDraft);
+  const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
 
   const pageSize = 10;
   const listsPageCount = Math.max(1, Math.ceil(Math.max(contactGroups.length, 1) / pageSize));
@@ -220,6 +231,68 @@ export function ContactsView() {
     }
   }
 
+  function handleRemoveList() {
+    if (!activeContactListName) {
+      return;
+    }
+
+    setConfirmState({
+      title: 'Apagar lista',
+      description: `Tem certeza que deseja apagar a lista "${activeContactListName}"? Essa acao remove a lista e todos os contatos dela.`,
+      confirmLabel: 'Apagar lista',
+      action: 'delete-list',
+    });
+  }
+
+  function handleDeleteSelectedContacts() {
+    if (selectedContactIds.size === 0) {
+      return;
+    }
+
+    setConfirmState({
+      title: 'Apagar contatos selecionados',
+      description: `Tem certeza que deseja apagar ${selectedContactIds.size} contato(s) selecionado(s)?`,
+      confirmLabel: 'Apagar contatos',
+      action: 'delete-selected',
+    });
+  }
+
+  function handleDeleteContact(contact: Contact) {
+    setConfirmState({
+      title: 'Apagar contato',
+      description: `Tem certeza que deseja apagar o contato "${contact.name}"?`,
+      confirmLabel: 'Apagar contato',
+      action: 'delete-contact',
+      contact,
+    });
+  }
+
+  async function handleConfirmAction() {
+    if (!confirmState) {
+      return;
+    }
+
+    setConfirmBusy(true);
+
+    try {
+      if (confirmState.action === 'delete-list' && activeContactListName) {
+        await removeContactList(activeContactListName);
+      }
+
+      if (confirmState.action === 'delete-selected') {
+        await deleteContacts(Array.from(selectedContactIds));
+      }
+
+      if (confirmState.action === 'delete-contact' && confirmState.contact) {
+        await deleteContact(confirmState.contact.id);
+      }
+
+      setConfirmState(null);
+    } finally {
+      setConfirmBusy(false);
+    }
+  }
+
   return (
     <>
       <HeroPanel>
@@ -339,7 +412,7 @@ export function ContactsView() {
                 <GhostButton type="button" onClick={() => fileInputRef.current?.click()}>
                   Importar lista
                 </GhostButton>
-                <DangerButton type="button" onClick={() => void removeContactList(activeContactListName)}>
+                <DangerButton type="button" onClick={() => void handleRemoveList()}>
                   Excluir lista
                 </DangerButton>
               </InlineActions>
@@ -361,7 +434,7 @@ export function ContactsView() {
                 <GhostButton type="button" onClick={openBulkEdit}>
                   Editar selecionados
                 </GhostButton>
-                <DangerButton type="button" onClick={() => void deleteContacts(Array.from(selectedContactIds))}>
+                <DangerButton type="button" onClick={() => void handleDeleteSelectedContacts()}>
                   Excluir selecionados
                 </DangerButton>
               </InlineActions>
@@ -410,7 +483,7 @@ export function ContactsView() {
                             type="button"
                             onClick={(event) => {
                               event.stopPropagation();
-                              void deleteContact(contact.id);
+                              void handleDeleteContact(contact);
                             }}
                           >
                             Excluir
@@ -575,6 +648,19 @@ export function ContactsView() {
       ) : null}
 
       <GuideModal open={guideOpen} onClose={() => setGuideOpen(false)} />
+      <ConfirmModal
+        open={Boolean(confirmState)}
+        title={confirmState?.title || ''}
+        description={confirmState?.description || ''}
+        confirmLabel={confirmState?.confirmLabel || 'Confirmar'}
+        busy={confirmBusy}
+        onConfirm={handleConfirmAction}
+        onClose={() => {
+          if (!confirmBusy) {
+            setConfirmState(null);
+          }
+        }}
+      />
     </>
   );
 }
