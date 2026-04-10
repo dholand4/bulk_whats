@@ -1,4 +1,5 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { GuideModal } from '../../components/GuideModal';
 import {
   Badge,
   DangerButton,
@@ -68,6 +69,7 @@ export function ContactsView() {
   const [createListOpen, setCreateListOpen] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [createListStatus, setCreateListStatus] = useState('');
+  const [guideOpen, setGuideOpen] = useState(false);
   const [importStatus, setImportStatus] = useState('');
   const [contactListsPage, setContactListsPage] = useState(1);
   const [contactsPage, setContactsPage] = useState(1);
@@ -231,9 +233,14 @@ export function ContactsView() {
               Crie uma lista primeiro e depois adicione contatos manualmente ou por planilha.
             </p>
           </div>
-          <IconButton type="button" onClick={() => setCreateListOpen((current) => !current)}>
-            {createListOpen ? '×' : '+'}
-          </IconButton>
+          <InlineActions>
+            <GhostButton type="button" onClick={() => setGuideOpen(true)}>
+              Guia rapido
+            </GhostButton>
+            <IconButton type="button" onClick={() => setCreateListOpen((current) => !current)}>
+              {createListOpen ? '×' : '+'}
+            </IconButton>
+          </InlineActions>
         </HeroHeader>
 
         {createListOpen ? (
@@ -566,6 +573,8 @@ export function ContactsView() {
           </ModalCard>
         </ModalOverlay>
       ) : null}
+
+      <GuideModal open={guideOpen} onClose={() => setGuideOpen(false)} />
     </>
   );
 }
