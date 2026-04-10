@@ -39,6 +39,7 @@ interface AppContextValue {
   logout: () => Promise<void>;
   refreshData: (overrideToken?: string) => Promise<void>;
   connectDevice: (deviceId: string) => Promise<void>;
+  disconnectDevice: (deviceId: string) => Promise<string>;
   submitCompose: (payload: ComposePayload) => Promise<string>;
   cancelQueueItem: (itemId: string) => Promise<void>;
   cancelCampaign: (groupKey: string) => Promise<void>;
@@ -288,6 +289,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await apiRequest(`/api/devices/${deviceId}/connect`, { method: 'POST' }, token);
     await apiRequest(`/api/devices/${deviceId}/auth`, {}, token);
     await refreshData();
+  }
+
+  async function disconnectDevice(deviceId: string) {
+    const response = await apiRequest<{ message: string }>(`/api/devices/${deviceId}/disconnect`, { method: 'POST' }, token);
+    await refreshData();
+    return response.message;
   }
 
   async function uploadAttachments(files: File[]) {
@@ -581,6 +588,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         logout,
         refreshData,
         connectDevice,
+        disconnectDevice,
         submitCompose,
         cancelQueueItem,
         cancelCampaign,

@@ -4,7 +4,7 @@ import { useApp } from '../../providers/AppProvider';
 import { HeroText } from './styled';
 
 export function DevicesView() {
-  const { devices, expandedDeviceId, connectDevice } = useApp();
+  const { devices, expandedDeviceId, connectDevice, disconnectDevice } = useApp();
 
   return (
     <Panel>
@@ -12,14 +12,15 @@ export function DevicesView() {
         <h3>Dispositivo da matricula</h3>
       </PanelHeading>
       <HeroText>
-        Clique em conectar para autenticar. Se o dispositivo ja estiver pronto para envio, o sistema avisa; caso
-        contrario, exibe o QR Code para escanear.
+        Quando o dispositivo ja estiver autenticado, a tela mostra que ele esta pronto para enviar. Se ainda precisar
+        conectar, o QR Code sera exibido para escanear.
       </HeroText>
       <div style={{ marginTop: 18 }}>
         <DeviceCardList
           devices={devices}
           expandedDeviceId={expandedDeviceId}
           onConnect={(deviceId) => void connectDevice(deviceId)}
+          onDisconnect={disconnectDevice}
         />
       </div>
     </Panel>
