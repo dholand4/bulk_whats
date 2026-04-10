@@ -5,6 +5,7 @@ import { useApp } from '../../providers/AppProvider';
 import {
   Eyebrow,
   GhostButton,
+  GhostButtonS,
   Main,
   NavButton,
   NavList,
@@ -43,9 +44,9 @@ export function AppShell() {
         </NavList>
 
         <SidebarFooter>
-          <GhostButton type="button" onClick={() => void logout()}>
+          <GhostButtonS type="button" onClick={() => void logout()}>
             Sair
-          </GhostButton>
+          </GhostButtonS>
         </SidebarFooter>
       </Sidebar>
 

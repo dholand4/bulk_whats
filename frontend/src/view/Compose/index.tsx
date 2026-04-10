@@ -1,15 +1,21 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { GuideModal } from '../../components/GuideModal';
 import {
+  Badge,
   EmptyState,
   GhostButton,
   InlineActions,
   InputGroup,
+  PanelHeading,
   StatusText,
 } from '../../components/AppShell/styled';
 import { useApp } from '../../providers/AppProvider';
 import {
   AttachmentPreview,
+  ContactPreviewCard,
+  ContactPreviewHeader,
+  ContactPreviewMeta,
+  ContactsPreviewList,
   ComposeCard,
   ComposeForm,
   ComposeHeader,
@@ -18,7 +24,11 @@ import {
   HeroPanel,
   HiddenCheckbox,
   ListItem,
+  ListCardHeader,
+  ListTitleButton,
   ListsStrip,
+  ModalCard,
+  ModalOverlay,
   PlaceholderChip,
   PlaceholderRow,
   SectionLabel,
@@ -31,6 +41,7 @@ const placeholderTokens = ['{nome}', '{paciente}', '{profissional}', '{data}', '
 export function ComposeView() {
   const {
     devices,
+    contacts,
     contactGroups,
     selectedContactListNames,
     toggleComposeList,
@@ -39,12 +50,14 @@ export function ComposeView() {
     submitCompose,
   } = useApp();
   const [guideOpen, setGuideOpen] = useState(false);
+  const [previewListName, setPreviewListName] = useState('');
   const [campaignName, setCampaignName] = useState('');
   const [deviceId, setDeviceId] = useState(devices[0]?.id || '');
   const [message, setMessage] = useState('');
   const [scheduleAt, setScheduleAt] = useState('');
   const [delaySeconds, setDelaySeconds] = useState('3');
   const [files, setFiles] = useState<File[]>([]);
+  const [excludedContactIds, setExcludedContactIds] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -54,26 +67,87 @@ export function ComposeView() {
     }
   }, [deviceId, devices]);
 
+  useEffect(() => {
+    setExcludedContactIds((current) => new Set(
+      Array.from(current).filter((contactId) => contacts.some((contact) => contact.id === contactId)),
+    ));
+  }, [contacts]);
+
+  useEffect(() => {
+    if (previewListName && !contactGroups.some((group) => group.listName === previewListName)) {
+      setPreviewListName('');
+    }
+  }, [contactGroups, previewListName]);
+
+  const selectedGroups = useMemo(
+    () => contactGroups.filter((group) => selectedContactListNames.has(group.listName)),
+    [contactGroups, selectedContactListNames],
+  );
+
   const recipients = useMemo(
     () =>
-      contactGroups
-        .filter((group) => selectedContactListNames.has(group.listName))
+      selectedGroups
         .flatMap((group) =>
-          group.contacts.map((contact) => ({
-            name: contact.name,
-            number: contact.phone,
-            listName: contact.listName,
-            paciente: contact.paciente,
-            profissional: contact.profissional,
-            data: contact.data,
-            hora: contact.hora,
-          })),
+          group.contacts
+            .filter((contact) => !excludedContactIds.has(contact.id))
+            .map((contact) => ({
+              name: contact.name,
+              number: contact.phone,
+              listName: contact.listName,
+              paciente: contact.paciente,
+              profissional: contact.profissional,
+              data: contact.data,
+              hora: contact.hora,
+            })),
         ),
-    [contactGroups, selectedContactListNames],
+    [excludedContactIds, selectedGroups],
+  );
+
+  const previewGroup = useMemo(
+    () => contactGroups.find((group) => group.listName === previewListName) || null,
+    [contactGroups, previewListName],
   );
 
   function handleFiles(event: ChangeEvent<HTMLInputElement>) {
     setFiles(Array.from(event.target.files || []));
+  }
+
+  function handleToggleList(listName: string, checked: boolean) {
+    toggleComposeList(listName, checked);
+    if (!checked && previewListName === listName) {
+      setPreviewListName('');
+    }
+  }
+
+  function handleClearComposeLists() {
+    clearComposeLists();
+    setExcludedContactIds(new Set());
+    setPreviewListName('');
+  }
+
+  function toggleExcludedContact(contactId: string) {
+    setExcludedContactIds((current) => {
+      const next = new Set(current);
+      if (next.has(contactId)) {
+        next.delete(contactId);
+      } else {
+        next.add(contactId);
+      }
+      return next;
+    });
+  }
+
+  function clearExcludedFromList(listName: string) {
+    const group = contactGroups.find((item) => item.listName === listName);
+    if (!group) {
+      return;
+    }
+
+    setExcludedContactIds((current) => {
+      const next = new Set(current);
+      group.contacts.forEach((contact) => next.delete(contact.id));
+      return next;
+    });
   }
 
   function insertPlaceholder(token: string) {
@@ -225,7 +299,7 @@ export function ComposeView() {
                 <GhostButton type="button" onClick={selectAllComposeLists}>
                   Selecionar todas
                 </GhostButton>
-                <GhostButton type="button" onClick={clearComposeLists}>
+                <GhostButton type="button" onClick={handleClearComposeLists}>
                   Limpar selecao
                 </GhostButton>
               </InlineActions>
@@ -239,6 +313,11 @@ export function ComposeView() {
                     ? `${selectedContactListNames.size} lista(s) selecionada(s).`
                     : 'Nenhuma lista selecionada.'}
                 </p>
+                {selectedContactListNames.size ? (
+                  <p style={{ margin: 0, color: 'var(--muted)' }}>
+                    {recipients.length} contato(s) seguirao para este envio apos os ajustes.
+                  </p>
+                ) : null}
               </div>
 
               {contactGroups.length === 0 ? (
@@ -247,15 +326,65 @@ export function ComposeView() {
                 <ListsStrip>
                   {contactGroups.map((group) => {
                     const active = selectedContactListNames.has(group.listName);
+                    const excludedCount = group.contacts.filter((contact) => excludedContactIds.has(contact.id)).length;
+                    const includedCount = group.contacts.length - excludedCount;
                     return (
                       <ListItem key={group.listName} $active={active}>
                         <HiddenCheckbox
                           type="checkbox"
                           checked={active}
-                          onChange={(event) => toggleComposeList(group.listName, event.target.checked)}
+                          onChange={(event) => handleToggleList(group.listName, event.target.checked)}
                         />
-                        <strong>{group.listName}</strong>
-                        <p style={{ margin: 0, color: 'var(--muted)' }}>{group.contacts.length} contato(s)</p>
+                        <ListCardHeader>
+                          <div>
+                            <ListTitleButton
+                              type="button"
+                              onClick={() => {
+                                if (!active) {
+                                  handleToggleList(group.listName, true);
+                                }
+                                setPreviewListName(group.listName);
+                              }}
+                            >
+                              <strong>{group.listName}</strong>
+                            </ListTitleButton>
+                            <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>
+                              {group.contacts.length} contato(s)
+                            </p>
+                          </div>
+                          {excludedCount > 0 ? <Badge>{excludedCount} removido(s)</Badge> : null}
+                        </ListCardHeader>
+
+                        <p style={{ margin: 0, color: 'var(--muted)' }}>
+                          {active
+                            ? `${includedCount} contato(s) serao usados neste envio.`
+                            : 'Selecione para usar esta lista no envio.'}
+                        </p>
+
+                        <InlineActions>
+                          <GhostButton
+                            type="button"
+                            onClick={() => handleToggleList(group.listName, !active)}
+                          >
+                            {active ? 'Desmarcar lista' : 'Selecionar lista'}
+                          </GhostButton>
+                          <GhostButton
+                            type="button"
+                            onClick={() => {
+                              if (!active) {
+                                handleToggleList(group.listName, true);
+                              }
+                              setPreviewListName(group.listName);
+                            }}
+                          >
+                            Ver contatos
+                          </GhostButton>
+                          {active && excludedCount > 0 ? (
+                            <GhostButton type="button" onClick={() => clearExcludedFromList(group.listName)}>
+                              Restaurar lista
+                            </GhostButton>
+                          ) : null}
+                        </InlineActions>
                       </ListItem>
                     );
                   })}
@@ -346,6 +475,65 @@ export function ComposeView() {
       </ComposeForm>
 
       <GuideModal open={guideOpen} onClose={() => setGuideOpen(false)} />
+
+      {previewGroup ? (
+        <ModalOverlay onClick={() => setPreviewListName('')}>
+          <ModalCard onClick={(event) => event.stopPropagation()}>
+            <PanelHeading>
+              <div>
+                <h3 style={{ margin: 0 }}>{previewGroup.listName}</h3>
+                <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>
+                  Remova contatos apenas deste envio. A lista original continua salva normalmente.
+                </p>
+              </div>
+              <GhostButton type="button" onClick={() => setPreviewListName('')}>
+                Fechar
+              </GhostButton>
+            </PanelHeading>
+
+            <InlineActions>
+              <Badge>{previewGroup.contacts.length} contato(s)</Badge>
+              <Badge>
+                {previewGroup.contacts.filter((contact) => !excludedContactIds.has(contact.id)).length} ativo(s) no envio
+              </Badge>
+              <Badge>
+                {previewGroup.contacts.filter((contact) => excludedContactIds.has(contact.id)).length} removido(s)
+              </Badge>
+            </InlineActions>
+
+            {previewGroup.contacts.length === 0 ? (
+              <EmptyState>Essa lista ainda nao possui contatos.</EmptyState>
+            ) : (
+              <ContactsPreviewList>
+                {previewGroup.contacts.map((contact) => {
+                  const excluded = excludedContactIds.has(contact.id);
+                  return (
+                    <ContactPreviewCard key={contact.id} $excluded={excluded}>
+                      <ContactPreviewHeader>
+                        <div>
+                          <strong>{contact.name}</strong>
+                          <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>{contact.phone}</p>
+                        </div>
+                        <GhostButton type="button" onClick={() => toggleExcludedContact(contact.id)}>
+                          {excluded ? 'Reincluir no envio' : 'Remover deste envio'}
+                        </GhostButton>
+                      </ContactPreviewHeader>
+
+                      <ContactPreviewMeta>
+                        <span><strong>Paciente:</strong> {contact.paciente || '-'}</span>
+                        <span><strong>Profissional:</strong> {contact.profissional || '-'}</span>
+                        <span><strong>Data:</strong> {contact.data || '-'}</span>
+                        <span><strong>Hora:</strong> {contact.hora || '-'}</span>
+                        <span><strong>Status:</strong> {excluded ? 'Removido deste envio' : 'Incluido neste envio'}</span>
+                      </ContactPreviewMeta>
+                    </ContactPreviewCard>
+                  );
+                })}
+              </ContactsPreviewList>
+            )}
+          </ModalCard>
+        </ModalOverlay>
+      ) : null}
     </>
   );
 }

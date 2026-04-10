@@ -77,7 +77,6 @@ export const NavButton = styled(NavLink)`
 `;
 
 export const SidebarFooter = styled.div`
-  margin-top: auto;
 `;
 
 export const Main = styled.main`
@@ -187,6 +186,14 @@ export const GhostButton = styled.button`
   color: var(--primary);
   border: 1px solid rgba(18, 53, 36, 0.18);
   box-shadow: none;
+`;
+
+export const GhostButtonS = styled.button`
+  background: #90292c;
+  color: white;
+  border: 1px solid rgba(18, 53, 36, 0.18);
+  box-shadow: none;
+  width: 100%;
 `;
 
 export const DangerButton = styled.button`
