@@ -2,37 +2,34 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 're
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { GuideModal } from '../../components/GuideModal';
 import {
-  Badge,
-  DangerButton,
   EmptyState,
   FieldLabel,
   GhostButton,
   IconButton,
   InlineActions,
   InputGroup,
-  MiniButton,
   Panel,
-  PanelHeading,
-  PaginationRow,
   Stack,
   StatusText,
 } from '../../components/AppShell/styled';
-import { Contact } from '../../types';
 import { useApp } from '../../providers/AppProvider';
+import { Contact } from '../../types';
 import {
-  CardHeader,
-  CardMeta,
-  ContactCard,
-  ContactsGrid,
+  ContactListsSection,
+  ContactsHeader,
+  ContactsList,
+  ContactsPagination,
+  ContactsSelectionBar,
+  ContactsToolbar,
+} from './components';
+import {
+  ContactsSection,
   CreateListForm,
   HeroHeader,
   HeroPanel,
   HiddenFileInput,
-  ListButton,
-  ListsOverview,
   ModalCard,
   ModalOverlay,
-  SearchField,
   SelectedBanner,
 } from './styled';
 
@@ -42,7 +39,7 @@ interface ConfirmState {
   title: string;
   description: string;
   confirmLabel: string;
-  action: 'delete-list' | 'delete-selected' | 'delete-contact' | 'delete-selected-lists';
+  action: 'delete-selected' | 'delete-contact' | 'delete-selected-lists';
   contact?: Contact;
 }
 
@@ -74,6 +71,7 @@ export function ContactsView() {
     selectContactIds,
     clearSelectedContacts,
   } = useApp();
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [createListOpen, setCreateListOpen] = useState(false);
   const [newListName, setNewListName] = useState('');
@@ -93,8 +91,9 @@ export function ContactsView() {
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
 
+  const listPageSize = 10;
+  const contactsPageSize = 10;
 
-  const pageSize = 10;
   const filteredContactGroups = useMemo(() => {
     const normalizedSearch = listSearchTerm.trim().toLocaleLowerCase('pt-BR');
 
@@ -105,8 +104,11 @@ export function ContactsView() {
     return contactGroups.filter((group) => group.listName.toLocaleLowerCase('pt-BR').includes(normalizedSearch));
   }, [contactGroups, listSearchTerm]);
 
-  const listsPageCount = Math.max(1, Math.ceil(Math.max(filteredContactGroups.length, 1) / pageSize));
-  const pagedLists = filteredContactGroups.slice((contactListsPage - 1) * pageSize, contactListsPage * pageSize);
+  const listsPageCount = Math.max(1, Math.ceil(Math.max(filteredContactGroups.length, 1) / listPageSize));
+  const pagedLists = filteredContactGroups.slice(
+    (contactListsPage - 1) * listPageSize,
+    contactListsPage * listPageSize,
+  );
 
   const filteredContacts = useMemo(() => {
     const normalizedSearch = contactSearchTerm.trim().toLocaleLowerCase('pt-BR');
@@ -131,8 +133,12 @@ export function ContactsView() {
     );
   }, [activeListContacts, contactSearchTerm]);
 
-  const contactsPageCount = Math.max(1, Math.ceil(Math.max(filteredContacts.length, 1) / pageSize));
-  const pageItems = filteredContacts.slice((contactsPage - 1) * pageSize, contactsPage * pageSize);
+  const contactsPageCount = Math.max(1, Math.ceil(Math.max(filteredContacts.length, 1) / contactsPageSize));
+  const pageItems = filteredContacts.slice(
+    (contactsPage - 1) * contactsPageSize,
+    contactsPage * contactsPageSize,
+  );
+  const allVisibleContactsSelected = pageItems.length > 0 && pageItems.every((contact) => selectedContactIds.has(contact.id));
 
   useEffect(() => {
     setContactListsPage((current) => Math.min(current, listsPageCount));
@@ -333,7 +339,7 @@ export function ContactsView() {
               Guia rapido
             </GhostButton>
             <IconButton type="button" onClick={() => setCreateListOpen((current) => !current)}>
-              {createListOpen ? '×' : '+'}
+              {createListOpen ? 'x' : '+'}
             </IconButton>
           </InlineActions>
         </HeroHeader>
@@ -364,240 +370,118 @@ export function ContactsView() {
       </HeroPanel>
 
       <Panel>
-        <PanelHeading>
-          <div>
-            <h3>Suas Listas</h3>
-          </div>
-          <InlineActions>
-            <GhostButton
-              type="button"
-              onClick={() => {
-                setSelectedListNames(new Set(filteredContactGroups.map((group) => group.listName)));
-                setActiveContactListName('');
-                setContactSearchTerm('');
-                setContactsPage(1);
-                clearSelectedContacts();
-                setCreateListOpen(false);
-              }}
-            >
-              Selecionar Todas
-            </GhostButton>
-            <GhostButton
-              type="button"
-              onClick={() => {
-                setSelectedListNames(new Set());
-                setActiveContactListName('');
-                setContactSearchTerm('');
-                setContactsPage(1);
-                clearSelectedContacts();
-              }}
-            >
-              Limpar Seleção
-            </GhostButton>
-            <DangerButton type="button" onClick={() => void handleRemoveList()}>
-              Apagar Selecionadas
-            </DangerButton>
-          </InlineActions>
-        </PanelHeading>
-
-        <SearchField style={{ marginBottom: 18 }}>
-          <span>Buscar lista</span>
-          <input
-            type="text"
-            placeholder="Pesquisar pelo nome da lista"
-            value={listSearchTerm}
-            onChange={(event) => {
-              setListSearchTerm(event.target.value);
-              setContactListsPage(1);
-            }}
-          />
-        </SearchField>
-
         {contactGroups.length === 0 && !createListOpen ? (
           <EmptyState>Nenhuma lista criada ainda. Use o botao + para comecar.</EmptyState>
         ) : filteredContactGroups.length === 0 ? (
           <EmptyState>Nenhuma lista encontrada para essa busca.</EmptyState>
         ) : (
-          <ListsOverview>
-            {pagedLists.map((group) => (
-              <ListButton
-                key={group.listName}
-                type="button"
-                $active={
-                  group.listName === activeContactListName
-                  || selectedListNames.has(group.listName)
+          <ContactListsSection
+            groups={pagedLists}
+            selectedListNames={selectedListNames}
+            activeContactListName={activeContactListName}
+            searchTerm={listSearchTerm}
+            page={contactListsPage}
+            pageCount={listsPageCount}
+            onSearchChange={(value) => {
+              setListSearchTerm(value);
+              setContactListsPage(1);
+            }}
+            onToggleList={(listName) => {
+              setSelectedListNames((current) => {
+                const next = new Set(current);
+                if (next.has(listName)) {
+                  next.delete(listName);
+                } else {
+                  next.add(listName);
                 }
-                onClick={() => {
-                  setSelectedListNames((current) => {
-                    const next = new Set(current);
-                    if (next.has(group.listName)) {
-                      next.delete(group.listName);
-                    } else {
-                      next.add(group.listName);
-                    }
 
-                    const nextSelectedNames = Array.from(next);
-                    const nextActiveListName = nextSelectedNames.length === 1 ? nextSelectedNames[0] : '';
+                const nextSelectedNames = Array.from(next);
+                const nextActiveListName = nextSelectedNames.length === 1 ? nextSelectedNames[0] : '';
 
-                    setActiveContactListName(nextActiveListName);
-                    setContactsPage(1);
-                    setContactSearchTerm('');
-                    clearSelectedContacts();
-                    setCreateListOpen(false);
+                setActiveContactListName(nextActiveListName);
+                setContactsPage(1);
+                setContactSearchTerm('');
+                clearSelectedContacts();
+                setCreateListOpen(false);
 
-                    return next;
-                  });
-                }}
-              >
-                <div>
-                  <strong>{group.listName}</strong>
-                  <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>{group.contacts.length} contato(s)</p>
-                </div>
-                <InlineActions>
-                  <Badge>{group.contacts.length}</Badge>
-                  {selectedListNames.has(group.listName) ? <Badge>Selecionada</Badge> : null}
-                </InlineActions>
-              </ListButton>
-            ))}
-          </ListsOverview>
+                return next;
+              });
+            }}
+            onSelectAll={() => {
+              const nextSelectedNames = filteredContactGroups.map((group) => group.listName);
+              setSelectedListNames(new Set(nextSelectedNames));
+              setActiveContactListName(nextSelectedNames.length === 1 ? nextSelectedNames[0] : '');
+              setContactSearchTerm('');
+              setContactsPage(1);
+              clearSelectedContacts();
+              setCreateListOpen(false);
+            }}
+            onClearSelection={() => {
+              setSelectedListNames(new Set());
+              setActiveContactListName('');
+              setContactSearchTerm('');
+              setContactsPage(1);
+              clearSelectedContacts();
+            }}
+            onDeleteSelected={() => void handleRemoveList()}
+            onPrevPage={() => setContactListsPage((current) => Math.max(1, current - 1))}
+            onNextPage={() => setContactListsPage((current) => Math.min(listsPageCount, current + 1))}
+          />
         )}
-
-        <PaginationRow>
-          <GhostButton type="button" onClick={() => setContactListsPage((current) => Math.max(1, current - 1))}>
-            Anterior
-          </GhostButton>
-          <span style={{ color: 'var(--muted)' }}>Pagina {contactListsPage} de {listsPageCount}</span>
-          <GhostButton
-            type="button"
-            onClick={() => setContactListsPage((current) => Math.min(listsPageCount, current + 1))}
-          >
-            Proxima
-          </GhostButton>
-        </PaginationRow>
       </Panel>
 
       <Panel>
         {!activeContactListName ? (
           <EmptyState>Selecione uma lista para ver os contatos, cadastrar novos itens e importar planilhas.</EmptyState>
         ) : (
-          <>
-            <PanelHeading>
-              <div>
-                <p style={{ margin: 0, color: 'var(--muted)', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.18em' }}>
-                  Lista ativa
-                </p>
-                <h3 style={{ margin: '8px 0 4px' }}>{activeContactListName}</h3>
-                <p style={{ margin: 0, color: 'var(--muted)' }}>{activeListContacts.length} contato(s) nesta lista.</p>
-              </div>
-              <InlineActions>
-                <GhostButton type="button" onClick={openCreateContact}>
-                  Novo Contato
-                </GhostButton>
-                <GhostButton type="button" onClick={() => fileInputRef.current?.click()}>
-                  Importar Contatos
-                </GhostButton>
-              </InlineActions>
-            </PanelHeading>
+          <ContactsSection>
+            <ContactsHeader
+              listName={activeContactListName}
+              totalContacts={activeListContacts.length}
+              onCreateContact={openCreateContact}
+              onImportContacts={() => fileInputRef.current?.click()}
+            />
 
-            <SelectedBanner>
-              <FieldLabel>Resumo da lista</FieldLabel>
-              <strong>{activeContactListName}</strong>
-              <span style={{ color: 'var(--muted)' }}>
-                {filteredContacts.length} de {activeListContacts.length} contato(s) visivel(is).
-              </span>
-              <InlineActions>
-                <GhostButton type="button" onClick={() => selectContactIds(pageItems.map((contact) => contact.id))}>
-                  Selecionar todos
-                </GhostButton>
-                <GhostButton type="button" onClick={clearSelectedContacts}>
-                  Limpar selecao
-                </GhostButton>
-                <GhostButton type="button" onClick={openBulkEdit}>
-                  Editar selecionados
-                </GhostButton>
-                <DangerButton type="button" onClick={() => void handleDeleteSelectedContacts()}>
-                  Excluir selecionados
-                </DangerButton>
-              </InlineActions>
+            <ContactsToolbar
+              searchTerm={contactSearchTerm}
+              allVisibleSelected={allVisibleContactsSelected}
+              visibleCount={pageItems.length}
+              onSearchChange={(value) => {
+                setContactSearchTerm(value);
+                setContactsPage(1);
+              }}
+              onToggleSelectAll={(checked) => {
+                if (checked) {
+                  selectContactIds(pageItems.map((contact) => contact.id));
+                  return;
+                }
 
-              <SearchField>
-                <span>Filtrar contatos</span>
-                <input
-                  type="text"
-                  placeholder="Pesquisar por nome, numero, paciente..."
-                  value={contactSearchTerm}
-                  onChange={(event) => {
-                    setContactSearchTerm(event.target.value);
-                    setContactsPage(1);
-                  }}
-                />
-              </SearchField>
-            </SelectedBanner>
+                clearSelectedContacts();
+              }}
+            />
 
-            <div style={{ marginTop: 18 }}>
-              {filteredContacts.length === 0 ? (
-                <EmptyState>Lista criada. Agora adicione os contatos manualmente ou por planilha.</EmptyState>
-              ) : (
-                <ContactsGrid>
-                  {pageItems.map((contact) => (
-                    <ContactCard
-                      key={contact.id}
-                      $selected={selectedContactIds.has(contact.id)}
-                      onClick={() => toggleContactSelection(contact.id)}
-                    >
-                      <CardHeader>
-                        <div>
-                          <strong>{contact.name}</strong>
-                          <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>{contact.phone}</p>
-                        </div>
-                        <InlineActions>
-                          <MiniButton
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              openEditContact(contact);
-                            }}
-                          >
-                            Editar
-                          </MiniButton>
-                          <DangerButton
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              void handleDeleteContact(contact);
-                            }}
-                          >
-                            Excluir
-                          </DangerButton>
-                        </InlineActions>
-                      </CardHeader>
+            <ContactsSelectionBar
+              selectedCount={selectedContactIds.size}
+              onClearSelection={clearSelectedContacts}
+              onBulkEdit={openBulkEdit}
+              onDeleteSelected={() => void handleDeleteSelectedContacts()}
+            />
 
-                      <CardMeta>
-                        <span><strong>Paciente:</strong> {contact.paciente || '-'}</span>
-                        <span><strong>Profissional:</strong> {contact.profissional || '-'}</span>
-                        <span><strong>Data:</strong> {contact.data || '-'}</span>
-                        <span><strong>Hora:</strong> {contact.hora || '-'}</span>
-                        <span><strong>Observacoes:</strong> {contact.notes || '-'}</span>
-                      </CardMeta>
-                    </ContactCard>
-                  ))}
-                </ContactsGrid>
-              )}
-            </div>
+            <ContactsList
+              contacts={pageItems}
+              selectedContactIds={selectedContactIds}
+              onToggleContact={toggleContactSelection}
+              onEditContact={openEditContact}
+              onDeleteContact={(contact) => void handleDeleteContact(contact)}
+            />
 
-            <PaginationRow>
-              <GhostButton type="button" onClick={() => setContactsPage((current) => Math.max(1, current - 1))}>
-                Anterior
-              </GhostButton>
-              <span style={{ color: 'var(--muted)' }}>Pagina {contactsPage} de {contactsPageCount}</span>
-              <GhostButton
-                type="button"
-                onClick={() => setContactsPage((current) => Math.min(contactsPageCount, current + 1))}
-              >
-                Proxima
-              </GhostButton>
-            </PaginationRow>
-          </>
+            <ContactsPagination
+              page={contactsPage}
+              pageCount={contactsPageCount}
+              onPrev={() => setContactsPage((current) => Math.max(1, current - 1))}
+              onNext={() => setContactsPage((current) => Math.min(contactsPageCount, current + 1))}
+            />
+          </ContactsSection>
         )}
 
         <HiddenFileInput ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleImport} />
@@ -607,7 +491,7 @@ export function ContactsView() {
       {contactModalOpen ? (
         <ModalOverlay onClick={() => setContactModalOpen(false)}>
           <ModalCard onClick={(event) => event.stopPropagation()}>
-            <PanelHeading>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
               <div>
                 <h3 style={{ margin: 0 }}>
                   {contactModalMode === 'bulk-edit'
@@ -625,7 +509,7 @@ export function ContactsView() {
               <GhostButton type="button" onClick={() => setContactModalOpen(false)}>
                 Fechar
               </GhostButton>
-            </PanelHeading>
+            </div>
 
             <form onSubmit={handleSaveContact}>
               <Stack>
