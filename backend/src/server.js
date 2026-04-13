@@ -11,8 +11,8 @@ process.on('unhandledRejection', (error) => {
 });
 
 async function startServer() {
-    const legacyState = await database.bootstrap();
-    await userRepository.bootstrapUsersFromLegacy(legacyState);
+    await database.bootstrap();
+    await userRepository.ensureSeedAdmin();
     await fileBackfillService.backfillAttachments();
 
     const app = createApp();

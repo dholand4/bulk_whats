@@ -122,23 +122,7 @@ async function deleteUser(matricula) {
     await postgres.query('DELETE FROM users WHERE matricula = $1', [matricula]);
 }
 
-async function bootstrapUsersFromLegacy(legacyState) {
-    const countResult = await postgres.query('SELECT COUNT(*)::int AS count FROM users');
-    const currentCount = countResult.rows[0]?.count || 0;
-    const legacyUsers = Array.isArray(legacyState?.users) ? legacyState.users : [];
-
-    if (currentCount === 0 && legacyUsers.length > 0) {
-        for (const user of legacyUsers) {
-            // eslint-disable-next-line no-await-in-loop
-            await upsertUser({
-                matricula: user.matricula,
-                role: user.matricula === seed.adminMatricula ? 'admin' : 'user',
-                dataExpiracao: user.dataExpiracao || seed.adminExpirationDate,
-                active: true,
-            });
-        }
-    }
-
+async function ensureSeedAdmin() {
     const adminUser = await findByMatricula(seed.adminMatricula);
     if (!adminUser) {
         await upsertUser({
@@ -167,5 +151,5 @@ module.exports = {
     verifyPassword,
     updatePassword,
     deleteUser,
-    bootstrapUsersFromLegacy,
+    ensureSeedAdmin,
 };

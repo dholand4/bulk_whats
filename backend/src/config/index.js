@@ -23,22 +23,14 @@ function getDatabaseConfig() {
 
 module.exports = {
     port: Number(process.env.PORT) || 3000,
-    authorizedUsersUrl:
-        process.env.AUTHORIZED_USERS_URL ||
-        'https://script.google.com/macros/s/AKfycbzfxn8ntzKyAKlWNAtvOUBA9tUpeSVlSfQSLP5O9gi3M8cd7mxsDM8CTtUs6eLhD7CkJw/exec',
     whatsapp: {
         countryCode: '55',
         suffix: '@c.us',
     },
-    cache: {
-        authorizedUsersTtlMs: 1000 * 60 * 2,
-    },
     rootDirectory,
     dataDirectory,
-    databaseFile: path.join(dataDirectory, 'db.json'),
     uploadsDirectory: path.join(rootDirectory, 'uploads'),
     frontendDirectory: path.join(rootDirectory, '../frontend/dist'),
-    authorizedUsersFile: path.join(rootDirectory, 'src/modules/auth/authorizedUsers.json'),
     whatsappAuthDirectory: path.join(dataDirectory, 'whatsapp_auth_data'),
     postgres: getDatabaseConfig(),
     seed: {

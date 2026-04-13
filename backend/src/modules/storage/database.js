@@ -1,6 +1,3 @@
-const fs = require('fs');
-
-const { databaseFile } = require('../../config');
 const postgres = require('./postgres');
 
 const defaultDatabase = {
@@ -33,21 +30,12 @@ function normalizeDatabase(database) {
     };
 }
 
-async function readLegacyJsonFile() {
-    if (!fs.existsSync(databaseFile)) {
-        return clone(defaultDatabase);
-    }
-
-    const fileContent = await fs.promises.readFile(databaseFile, 'utf8');
-    return normalizeDatabase(JSON.parse(fileContent));
-}
-
 async function bootstrap() {
     await postgres.ensureSchema();
     const existingState = await postgres.query('SELECT state FROM app_state WHERE id = 1');
 
     if (existingState.rowCount === 0) {
-        const initialState = await readLegacyJsonFile();
+        const initialState = clone(defaultDatabase);
         await postgres.query(
             'INSERT INTO app_state (id, state, updated_at) VALUES (1, $1::jsonb, NOW())',
             [JSON.stringify(initialState)],
