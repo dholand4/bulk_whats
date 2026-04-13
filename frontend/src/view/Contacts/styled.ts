@@ -27,7 +27,7 @@ export const ListButton = styled.button<{ $active: boolean }>`
   border: 1px solid ${({ $active }) => ($active ? 'rgba(18, 53, 36, 0.32)' : 'var(--border)')};
   box-shadow: none;
   border-radius: 18px;
-  padding: 16px;
+  /* padding: 16px; */
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -37,7 +37,7 @@ export const ListButton = styled.button<{ $active: boolean }>`
 export const SelectedBanner = styled.div`
   display: grid;
   gap: 10px;
-  padding: 16px;
+  padding: 10px;
   border-radius: 18px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.48);

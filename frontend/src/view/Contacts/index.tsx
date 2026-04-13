@@ -92,6 +92,7 @@ export function ContactsView() {
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
 
+
   const pageSize = 10;
   const filteredContactGroups = useMemo(() => {
     const normalizedSearch = listSearchTerm.trim().toLocaleLowerCase('pt-BR');
@@ -355,10 +356,7 @@ export function ContactsView() {
       <Panel>
         <PanelHeading>
           <div>
-            <h3>Suas listas</h3>
-            <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>
-              Mostrando 10 por vez. Selecione uma lista para abrir os contatos.
-            </p>
+            <h3>Suas Listas</h3>
           </div>
         </PanelHeading>
 

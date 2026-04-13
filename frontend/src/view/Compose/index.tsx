@@ -6,6 +6,7 @@ import {
   GhostButton,
   InlineActions,
   InputGroup,
+  PaginationRow,
   PanelHeading,
   StatusText,
 } from '../../components/AppShell/styled';
@@ -31,6 +32,7 @@ import {
   ModalOverlay,
   PlaceholderChip,
   PlaceholderRow,
+  SearchField,
   SectionLabel,
   SubmitPanel,
   UploadPanel,
@@ -51,6 +53,8 @@ export function ComposeView() {
   } = useApp();
   const [guideOpen, setGuideOpen] = useState(false);
   const [previewListName, setPreviewListName] = useState('');
+  const [listsPage, setListsPage] = useState(1);
+  const [listSearchTerm, setListSearchTerm] = useState('');
   const [campaignName, setCampaignName] = useState('');
   const [deviceId, setDeviceId] = useState(devices[0]?.id || '');
   const [message, setMessage] = useState('');
@@ -84,6 +88,21 @@ export function ComposeView() {
     [contactGroups, selectedContactListNames],
   );
 
+  const pageSize = 10;
+
+  const filteredContactGroups = useMemo(() => {
+    const normalizedSearch = listSearchTerm.trim().toLocaleLowerCase('pt-BR');
+
+    if (!normalizedSearch) {
+      return contactGroups;
+    }
+
+    return contactGroups.filter((group) => group.listName.toLocaleLowerCase('pt-BR').includes(normalizedSearch));
+  }, [contactGroups, listSearchTerm]);
+
+  const listsPageCount = Math.max(1, Math.ceil(Math.max(filteredContactGroups.length, 1) / pageSize));
+  const pagedContactGroups = filteredContactGroups.slice((listsPage - 1) * pageSize, listsPage * pageSize);
+
   const recipients = useMemo(
     () =>
       selectedGroups
@@ -107,6 +126,10 @@ export function ComposeView() {
     () => contactGroups.find((group) => group.listName === previewListName) || null,
     [contactGroups, previewListName],
   );
+
+  useEffect(() => {
+    setListsPage((current) => Math.min(current, listsPageCount));
+  }, [listsPageCount]);
 
   function handleFiles(event: ChangeEvent<HTMLInputElement>) {
     setFiles(Array.from(event.target.files || []));
@@ -318,13 +341,32 @@ export function ComposeView() {
                     {recipients.length} contato(s) seguirao para este envio apos os ajustes.
                   </p>
                 ) : null}
+                <p style={{ margin: 0, color: 'var(--muted)' }}>
+                  Exibindo 3 listas por vez com rolagem interna de ate 10 por pagina.
+                </p>
               </div>
+
+              <SearchField>
+                <span>Buscar lista</span>
+                <input
+                  type="text"
+                  placeholder="Pesquisar pelo nome da lista"
+                  value={listSearchTerm}
+                  onChange={(event) => {
+                    setListSearchTerm(event.target.value);
+                    setListsPage(1);
+                  }}
+                />
+              </SearchField>
 
               {contactGroups.length === 0 ? (
                 <EmptyState>Cadastre listas e contatos na aba Contatos para montar campanhas.</EmptyState>
+              ) : filteredContactGroups.length === 0 ? (
+                <EmptyState>Nenhuma lista encontrada para essa busca.</EmptyState>
               ) : (
-                <ListsStrip>
-                  {contactGroups.map((group) => {
+                <>
+                  <ListsStrip>
+                    {pagedContactGroups.map((group) => {
                     const active = selectedContactListNames.has(group.listName);
                     const excludedCount = group.contacts.filter((contact) => excludedContactIds.has(contact.id)).length;
                     const includedCount = group.contacts.length - excludedCount;
@@ -387,8 +429,22 @@ export function ComposeView() {
                         </InlineActions>
                       </ListItem>
                     );
-                  })}
-                </ListsStrip>
+                    })}
+                  </ListsStrip>
+
+                  <PaginationRow>
+                    <GhostButton type="button" onClick={() => setListsPage((current) => Math.max(1, current - 1))}>
+                      Anterior
+                    </GhostButton>
+                    <span style={{ color: 'var(--muted)' }}>Pagina {listsPage} de {listsPageCount}</span>
+                    <GhostButton
+                      type="button"
+                      onClick={() => setListsPage((current) => Math.min(listsPageCount, current + 1))}
+                    >
+                      Proxima
+                    </GhostButton>
+                  </PaginationRow>
+                </>
               )}
             </UploadPanel>
           </ComposeCard>

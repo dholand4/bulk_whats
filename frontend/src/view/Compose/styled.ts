@@ -41,6 +41,9 @@ export const UploadPanel = styled.div`
 
 export const ListsStrip = styled(ContactListStrip)`
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  max-height: 540px;
+  overflow-y: auto;
+  padding-right: 6px;
 `;
 
 export const ListItem = styled.div<{ $active: boolean }>`
@@ -105,6 +108,11 @@ export const AttachmentPreview = styled.div`
 `;
 
 export const SectionLabel = styled(FieldLabel)``;
+
+export const SearchField = styled.label`
+  display: grid;
+  gap: 6px;
+`;
 
 export const ModalOverlay = styled.div`
   position: fixed;
