@@ -89,6 +89,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [loginStatus, setLoginStatus] = useState('');
   const authPrefetchRef = useRef<Set<string>>(new Set());
 
+  function mergeDevice(nextDevice: Device) {
+    setDevices((current) => {
+      const index = current.findIndex((item) => item.id === nextDevice.id);
+      if (index === -1) {
+        return [nextDevice, ...current];
+      }
+
+      const next = [...current];
+      next[index] = nextDevice;
+      return next;
+    });
+  }
+
   const contactGroups = getContactGroups(contacts, draftContactLists);
   const activeListContacts = getActiveListContacts(contacts, activeContactListName);
   const queueGroups = groupCampaignItems(queue, 'queue');
@@ -148,16 +161,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     void apiRequest<{ device: Device }>(`/api/devices/${device.id}/auth`, {}, token)
       .then((response) => {
-        setDevices((current) => {
-          const index = current.findIndex((item) => item.id === response.device.id);
-          if (index === -1) {
-            return [response.device, ...current];
-          }
-
-          const next = [...current];
-          next[index] = response.device;
-          return next;
-        });
+        mergeDevice(response.device);
       })
       .catch((error: Error) => {
         console.error(error);
@@ -166,6 +170,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
         authPrefetchRef.current.delete(device.id);
       });
   }, [devices, token]);
+
+  useEffect(() => {
+    if (!token || !expandedDeviceId) {
+      return;
+    }
+
+    const activeDevice = devices.find((device) => device.id === expandedDeviceId);
+    if (!activeDevice) {
+      return;
+    }
+
+    if (!['initializing', 'qr_ready', 'pairing_code_ready', 'auth_failure', 'disconnected', 'error'].includes(activeDevice.status)) {
+      return;
+    }
+
+    const pollId = window.setInterval(() => {
+      void apiRequest<{ device: Device }>(`/api/devices/${expandedDeviceId}/auth`, {}, token)
+        .then((response) => {
+          mergeDevice(response.device);
+        })
+        .catch((error: Error) => {
+          console.error(error);
+        });
+    }, 2000);
+
+    return () => {
+      window.clearInterval(pollId);
+    };
+  }, [devices, expandedDeviceId, token]);
 
   async function refreshData(overrideToken?: string) {
     const authToken = overrideToken || token;

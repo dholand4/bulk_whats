@@ -17,6 +17,7 @@ export interface Summary {
 export interface DeviceRuntime {
   initializing?: boolean;
   lastError?: string;
+  hasClient?: boolean;
 }
 
 export interface Device {
@@ -27,6 +28,7 @@ export interface Device {
   lastKnownStatus?: string;
   connectedNumber?: string;
   qrCode?: string;
+  pairingCode?: string;
   createdAt?: string;
   runtime?: DeviceRuntime;
 }

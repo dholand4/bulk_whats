@@ -38,8 +38,16 @@ function isBenignRuntimeError(error?: string) {
 }
 
 function renderDeviceStatus(device: Device) {
-  if (device.status === 'connected' || device.status === 'authenticated' || isBenignRuntimeError(device.runtime?.lastError)) {
+  if (device.status === 'connected' || device.status === 'authenticated') {
     return 'Dispositivo autenticado e pronto para enviar mensagens.';
+  }
+
+  if (device.status === 'qr_ready') {
+    return 'QR Code disponivel. Escaneie com o WhatsApp do seu celular.';
+  }
+
+  if (device.status === 'pairing_code_ready') {
+    return 'Codigo de pareamento disponivel para autenticacao.';
   }
 
   if (device.runtime?.initializing || device.status === 'initializing') {
@@ -54,7 +62,7 @@ function renderDeviceStatus(device: Device) {
 }
 
 function getVisibleRuntimeError(device: Device) {
-  if (!device.runtime?.lastError || isBenignRuntimeError(device.runtime.lastError)) {
+  if (!device.runtime?.lastError) {
     return '';
   }
 
