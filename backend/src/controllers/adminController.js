@@ -14,7 +14,7 @@ async function saveUser(req, res, next) {
         const result = await userService.saveUser({
             ...req.body,
             email: req.params.email || req.body?.email,
-        });
+        }, req.auth);
         res.status(result.statusCode).json(result.body);
     } catch (error) {
         next(error);

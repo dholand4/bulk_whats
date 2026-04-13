@@ -39,7 +39,7 @@ async function findByEmail(email) {
     return mapUser(result.rows[0]);
 }
 
-async function upsertUser({ email, role = 'user', dataExpiracao, password, active = true }) {
+async function upsertUser({ email, role = 'user', dataExpiracao, password, forcePasswordChange = true, active = true }) {
     const result = await postgres.query(`
         INSERT INTO users (email, role, expiration_date, password_hash, force_password_change, active, updated_at)
         VALUES (
@@ -52,9 +52,9 @@ async function upsertUser({ email, role = 'user', dataExpiracao, password, activ
             END,
             CASE
                 WHEN NULLIF($4, '') IS NULL THEN FALSE
-                ELSE TRUE
+                ELSE $5
             END,
-            $5,
+            $6,
             NOW()
         )
         ON CONFLICT (email)
@@ -67,12 +67,12 @@ async function upsertUser({ email, role = 'user', dataExpiracao, password, activ
             END,
             force_password_change = CASE
                 WHEN NULLIF($4, '') IS NULL THEN users.force_password_change
-                ELSE TRUE
+                ELSE $5
             END,
             active = EXCLUDED.active,
             updated_at = NOW()
         RETURNING email, role, expiration_date, force_password_change, active, created_at, updated_at
-    `, [email, role, dataExpiracao, password || '', active]);
+    `, [email, role, dataExpiracao, password || '', forcePasswordChange, active]);
 
     return mapUser(result.rows[0]);
 }

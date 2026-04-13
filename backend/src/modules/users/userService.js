@@ -49,7 +49,7 @@ async function listUsers() {
     };
 }
 
-async function saveUser(payload) {
+async function saveUser(payload, auth) {
     const email = normalizeEmail(payload?.email);
     if (!email) {
         throw new Error('Informe o email.');
@@ -57,6 +57,7 @@ async function saveUser(payload) {
 
     const existingUser = await userRepository.findByEmail(email);
     const normalizedPassword = normalizePassword(payload?.password);
+    const shouldForcePasswordChange = Boolean(normalizedPassword) && auth?.email !== email;
 
     if (!existingUser && !normalizedPassword) {
         throw new Error('Informe a senha inicial do usuario.');
@@ -67,6 +68,7 @@ async function saveUser(payload) {
         role: normalizeRole(payload?.role),
         dataExpiracao: normalizeExpirationDate(payload?.dataExpiracao),
         password: normalizedPassword,
+        forcePasswordChange: shouldForcePasswordChange,
         active: payload?.active !== false,
     });
 
