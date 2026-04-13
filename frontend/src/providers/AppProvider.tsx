@@ -95,11 +95,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const historyGroups = groupCampaignItems(history, 'history');
 
   useEffect(() => {
-    if (!activeContactListName && contactGroups.length > 0) {
-      setActiveContactListName(contactGroups[0].listName);
-      return;
-    }
-
     if (activeContactListName && !contactGroups.some((group) => group.listName === activeContactListName)) {
       setActiveContactListName(contactGroups[0]?.listName || '');
     }
@@ -358,7 +353,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return '';
     }
 
-    setActiveContactListName(normalized);
     setSelectedContactIds(new Set());
 
     if (!draftContactLists.includes(normalized) && !contacts.some((contact) => (contact.listName || 'Geral') === normalized)) {

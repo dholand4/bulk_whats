@@ -42,7 +42,7 @@ interface ConfirmState {
   title: string;
   description: string;
   confirmLabel: string;
-  action: 'delete-list' | 'delete-selected' | 'delete-contact';
+  action: 'delete-list' | 'delete-selected' | 'delete-contact' | 'delete-selected-lists';
   contact?: Contact;
 }
 
@@ -82,6 +82,7 @@ export function ContactsView() {
   const [importStatus, setImportStatus] = useState('');
   const [contactListsPage, setContactListsPage] = useState(1);
   const [listSearchTerm, setListSearchTerm] = useState('');
+  const [selectedListNames, setSelectedListNames] = useState<Set<string>>(new Set());
   const [contactsPage, setContactsPage] = useState(1);
   const [contactSearchTerm, setContactSearchTerm] = useState('');
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -140,6 +141,12 @@ export function ContactsView() {
   useEffect(() => {
     setContactsPage((current) => Math.min(current, contactsPageCount));
   }, [contactsPageCount]);
+
+  useEffect(() => {
+    setSelectedListNames((current) => new Set(
+      Array.from(current).filter((listName) => contactGroups.some((group) => group.listName === listName)),
+    ));
+  }, [contactGroups]);
 
   function resetDraft() {
     setDraft(emptyDraft);
@@ -244,15 +251,15 @@ export function ContactsView() {
   }
 
   function handleRemoveList() {
-    if (!activeContactListName) {
+    if (selectedListNames.size === 0) {
       return;
     }
 
     setConfirmState({
-      title: 'Apagar lista',
-      description: `Tem certeza que deseja apagar a lista "${activeContactListName}"? Essa acao remove a lista e todos os contatos dela.`,
-      confirmLabel: 'Apagar lista',
-      action: 'delete-list',
+      title: 'Apagar listas selecionadas',
+      description: `Tem certeza que deseja apagar ${selectedListNames.size} lista(s) selecionada(s)? Essa acao remove as listas e todos os contatos delas.`,
+      confirmLabel: 'Apagar listas',
+      action: 'delete-selected-lists',
     });
   }
 
@@ -287,12 +294,15 @@ export function ContactsView() {
     setConfirmBusy(true);
 
     try {
-      if (confirmState.action === 'delete-list' && activeContactListName) {
-        await removeContactList(activeContactListName);
-      }
-
       if (confirmState.action === 'delete-selected') {
         await deleteContacts(Array.from(selectedContactIds));
+      }
+
+      if (confirmState.action === 'delete-selected-lists') {
+        for (const listName of selectedListNames) {
+          await removeContactList(listName);
+        }
+        setSelectedListNames(new Set());
       }
 
       if (confirmState.action === 'delete-contact' && confirmState.contact) {
@@ -358,6 +368,36 @@ export function ContactsView() {
           <div>
             <h3>Suas Listas</h3>
           </div>
+          <InlineActions>
+            <GhostButton
+              type="button"
+              onClick={() => {
+                setSelectedListNames(new Set(filteredContactGroups.map((group) => group.listName)));
+                setActiveContactListName('');
+                setContactSearchTerm('');
+                setContactsPage(1);
+                clearSelectedContacts();
+                setCreateListOpen(false);
+              }}
+            >
+              Selecionar Todas
+            </GhostButton>
+            <GhostButton
+              type="button"
+              onClick={() => {
+                setSelectedListNames(new Set());
+                setActiveContactListName('');
+                setContactSearchTerm('');
+                setContactsPage(1);
+                clearSelectedContacts();
+              }}
+            >
+              Limpar Seleção
+            </GhostButton>
+            <DangerButton type="button" onClick={() => void handleRemoveList()}>
+              Apagar Selecionadas
+            </DangerButton>
+          </InlineActions>
         </PanelHeading>
 
         <SearchField style={{ marginBottom: 18 }}>
@@ -383,20 +423,40 @@ export function ContactsView() {
               <ListButton
                 key={group.listName}
                 type="button"
-                $active={group.listName === activeContactListName}
+                $active={
+                  group.listName === activeContactListName
+                  || selectedListNames.has(group.listName)
+                }
                 onClick={() => {
-                  setActiveContactListName(group.listName);
-                  setContactsPage(1);
-                  setContactSearchTerm('');
-                  clearSelectedContacts();
-                  setCreateListOpen(false);
+                  setSelectedListNames((current) => {
+                    const next = new Set(current);
+                    if (next.has(group.listName)) {
+                      next.delete(group.listName);
+                    } else {
+                      next.add(group.listName);
+                    }
+
+                    const nextSelectedNames = Array.from(next);
+                    const nextActiveListName = nextSelectedNames.length === 1 ? nextSelectedNames[0] : '';
+
+                    setActiveContactListName(nextActiveListName);
+                    setContactsPage(1);
+                    setContactSearchTerm('');
+                    clearSelectedContacts();
+                    setCreateListOpen(false);
+
+                    return next;
+                  });
                 }}
               >
                 <div>
                   <strong>{group.listName}</strong>
                   <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>{group.contacts.length} contato(s)</p>
                 </div>
-                <Badge>{group.contacts.length}</Badge>
+                <InlineActions>
+                  <Badge>{group.contacts.length}</Badge>
+                  {selectedListNames.has(group.listName) ? <Badge>Selecionada</Badge> : null}
+                </InlineActions>
               </ListButton>
             ))}
           </ListsOverview>
@@ -431,14 +491,11 @@ export function ContactsView() {
               </div>
               <InlineActions>
                 <GhostButton type="button" onClick={openCreateContact}>
-                  Novo contato
+                  Novo Contato
                 </GhostButton>
                 <GhostButton type="button" onClick={() => fileInputRef.current?.click()}>
-                  Importar lista
+                  Importar Contatos
                 </GhostButton>
-                <DangerButton type="button" onClick={() => void handleRemoveList()}>
-                  Excluir lista
-                </DangerButton>
               </InlineActions>
             </PanelHeading>
 
