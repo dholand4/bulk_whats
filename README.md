@@ -20,7 +20,7 @@ Projeto **Bulk Whats**, um painel para operacao de envios em massa via WhatsApp 
 
 O sistema permite:
 
-- autenticar usuarios por matricula
+- autenticar usuarios por email
 - conectar uma sessao WhatsApp por usuario
 - cadastrar e importar listas de contatos
 - criar campanhas com mensagem personalizada
@@ -65,7 +65,7 @@ bulk_whats/
 
 ## Funcionalidades
 
-- Login por matricula
+- Login por email
 - Controle de usuarios e perfis
 - Conexao de dispositivo WhatsApp por usuario
 - Geracao e exibicao de QR Code para autenticacao
@@ -168,16 +168,20 @@ Crie o arquivo `backend/.env` com base em `backend/.env.example`.
 Exemplo:
 
 ```
-PORT=3000
-PGHOST=localhost
-PGPORT=5432
-PGDATABASE=bulk_whats
-PGUSER=postgres
-PGPASSWORD=sua_senha
-ADMIN_MATRICULA=123456
-ADMIN_EXPIRATION_DATE=2099-12-31
+PORT=
+PGHOST=
+PGPORT=
+PGDATABASE=
+PGUSER=
+PGPASSWORD=
 CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
 ```
+
+Observacoes:
+
+- voce pode deixar no `.env` apenas o que quiser sobrescrever
+- se preferir, pode usar apenas `PGPASSWORD` e `CHROME_PATH` no ambiente local
+- o administrador inicial deve ser criado diretamente no banco de dados
 
 ### 3. Criar as tabelas
 
@@ -209,9 +213,26 @@ Arquivo base: `backend/.env.example`
 - `PGDATABASE`: nome do banco
 - `PGUSER`: usuario do banco
 - `PGPASSWORD`: senha do banco
-- `ADMIN_MATRICULA`: matricula inicial do administrador
-- `ADMIN_EXPIRATION_DATE`: data de expiracao do admin inicial
 - `CHROME_PATH`: caminho do executavel do Chrome
+
+Modelo recomendado para projeto compartilhado:
+
+```env
+PORT=3000
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=bulk_whats
+PGUSER=postgres
+PGPASSWORD=sua_senha
+CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
+```
+
+Minimo recomendado para ambiente local:
+
+```env
+PGPASSWORD=sua_senha
+CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
+```
 
 ### Frontend
 
@@ -252,4 +273,3 @@ npm run preview
 - a autenticacao do WhatsApp depende do Chrome ou Edge instalado
 - sessoes do WhatsApp e arquivos locais do backend nao devem ser versionados
 - o projeto foi organizado para desenvolvimento com frontend e backend rodando separadamente
-
