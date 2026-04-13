@@ -81,6 +81,7 @@ export function ContactsView() {
   const [guideOpen, setGuideOpen] = useState(false);
   const [importStatus, setImportStatus] = useState('');
   const [contactListsPage, setContactListsPage] = useState(1);
+  const [listSearchTerm, setListSearchTerm] = useState('');
   const [contactsPage, setContactsPage] = useState(1);
   const [contactSearchTerm, setContactSearchTerm] = useState('');
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -92,8 +93,18 @@ export function ContactsView() {
   const [confirmBusy, setConfirmBusy] = useState(false);
 
   const pageSize = 10;
-  const listsPageCount = Math.max(1, Math.ceil(Math.max(contactGroups.length, 1) / pageSize));
-  const pagedLists = contactGroups.slice((contactListsPage - 1) * pageSize, contactListsPage * pageSize);
+  const filteredContactGroups = useMemo(() => {
+    const normalizedSearch = listSearchTerm.trim().toLocaleLowerCase('pt-BR');
+
+    if (!normalizedSearch) {
+      return contactGroups;
+    }
+
+    return contactGroups.filter((group) => group.listName.toLocaleLowerCase('pt-BR').includes(normalizedSearch));
+  }, [contactGroups, listSearchTerm]);
+
+  const listsPageCount = Math.max(1, Math.ceil(Math.max(filteredContactGroups.length, 1) / pageSize));
+  const pagedLists = filteredContactGroups.slice((contactListsPage - 1) * pageSize, contactListsPage * pageSize);
 
   const filteredContacts = useMemo(() => {
     const normalizedSearch = contactSearchTerm.trim().toLocaleLowerCase('pt-BR');
@@ -351,8 +362,23 @@ export function ContactsView() {
           </div>
         </PanelHeading>
 
+        <SearchField style={{ marginBottom: 18 }}>
+          <span>Buscar lista</span>
+          <input
+            type="text"
+            placeholder="Pesquisar pelo nome da lista"
+            value={listSearchTerm}
+            onChange={(event) => {
+              setListSearchTerm(event.target.value);
+              setContactListsPage(1);
+            }}
+          />
+        </SearchField>
+
         {contactGroups.length === 0 && !createListOpen ? (
           <EmptyState>Nenhuma lista criada ainda. Use o botao + para comecar.</EmptyState>
+        ) : filteredContactGroups.length === 0 ? (
+          <EmptyState>Nenhuma lista encontrada para essa busca.</EmptyState>
         ) : (
           <ListsOverview>
             {pagedLists.map((group) => (
