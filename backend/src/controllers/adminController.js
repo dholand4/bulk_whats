@@ -13,7 +13,7 @@ async function saveUser(req, res, next) {
     try {
         const result = await userService.saveUser({
             ...req.body,
-            matricula: req.params.matricula || req.body?.matricula,
+            email: req.params.email || req.body?.email,
         });
         res.status(result.statusCode).json(result.body);
     } catch (error) {
@@ -23,7 +23,7 @@ async function saveUser(req, res, next) {
 
 async function removeUser(req, res, next) {
     try {
-        const result = await userService.removeUser(req.params.matricula);
+        const result = await userService.removeUser(req.params.email);
         res.status(result.statusCode).json(result.body);
     } catch (error) {
         next(error);

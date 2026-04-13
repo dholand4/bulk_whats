@@ -34,7 +34,7 @@ interface AppContextValue {
   queueGroups: CampaignGroup[];
   historyGroups: CampaignGroup[];
   loginStatus: string;
-  login: (matricula: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   changeOwnPassword: (currentPassword: string, newPassword: string) => Promise<string>;
   logout: () => Promise<void>;
   refreshData: (overrideToken?: string) => Promise<void>;
@@ -51,8 +51,8 @@ interface AppContextValue {
   deleteContact: (contactId: string) => Promise<void>;
   deleteContacts: (contactIds: string[]) => Promise<void>;
   importContactsFromSpreadsheet: (file: File) => Promise<string>;
-  saveAdminUser: (payload: AdminUser, currentMatricula?: string | null) => Promise<void>;
-  deleteAdminUser: (matricula: string) => Promise<void>;
+  saveAdminUser: (payload: AdminUser, currentEmail?: string | null) => Promise<void>;
+  deleteAdminUser: (email: string) => Promise<void>;
   toggleComposeList: (listName: string, checked: boolean) => void;
   selectAllComposeLists: () => void;
   clearComposeLists: () => void;
@@ -208,14 +208,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function login(matricula: string, password: string) {
+  async function login(email: string, password: string) {
     setLoginStatus('Validando acesso...');
 
     try {
       const response = await apiRequest<{ token: string; user: AuthUser }>('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ matricula, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       setToken(response.token);
@@ -490,9 +490,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return response.message;
   }
 
-  async function saveAdminUser(payload: AdminUser, currentMatricula?: string | null) {
-    const path = currentMatricula ? `/api/admin/users/${currentMatricula}` : '/api/admin/users';
-    const method = currentMatricula ? 'PUT' : 'POST';
+  async function saveAdminUser(payload: AdminUser, currentEmail?: string | null) {
+    const path = currentEmail ? `/api/admin/users/${encodeURIComponent(currentEmail)}` : '/api/admin/users';
+    const method = currentEmail ? 'PUT' : 'POST';
 
     await apiRequest(
       path,
@@ -507,8 +507,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await refreshData();
   }
 
-  async function deleteAdminUser(matricula: string) {
-    await apiRequest(`/api/admin/users/${matricula}`, { method: 'DELETE' }, token);
+  async function deleteAdminUser(email: string) {
+    await apiRequest(`/api/admin/users/${encodeURIComponent(email)}`, { method: 'DELETE' }, token);
     await refreshData();
   }
 

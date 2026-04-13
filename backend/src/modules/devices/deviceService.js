@@ -1,11 +1,11 @@
 const database = require('../storage/database');
 const clientManager = require('../whatsapp/clientManager');
 
-function buildPersonalDevice(matricula) {
+function buildPersonalDevice(email) {
     const now = new Date().toISOString();
     return {
-        id: matricula,
-        name: matricula,
+        id: email,
+        name: email,
         description: '',
         createdAt: now,
         updatedAt: now,
@@ -23,17 +23,17 @@ function getDeviceOrThrow(databaseState, deviceId) {
     return device;
 }
 
-async function ensurePersonalDevice(matricula) {
+async function ensurePersonalDevice(email) {
     let device = null;
 
     await database.update((current) => {
-        device = current.devices.find((item) => item.id === matricula);
+        device = current.devices.find((item) => item.id === email);
         if (device) {
             return;
         }
 
-        device = buildPersonalDevice(matricula);
-        current.devices = current.devices.filter((item) => item.id !== matricula);
+        device = buildPersonalDevice(email);
+        current.devices = current.devices.filter((item) => item.id !== email);
         current.devices.unshift(device);
     });
 
@@ -51,9 +51,9 @@ function decorateDevice(device) {
 }
 
 async function listDevices(auth) {
-    await ensurePersonalDevice(auth.matricula);
+    await ensurePersonalDevice(auth.email);
     const current = database.load();
-    const ownDevice = current.devices.find((item) => item.id === auth.matricula);
+    const ownDevice = current.devices.find((item) => item.id === auth.email);
     return {
         statusCode: 200,
         body: {
@@ -66,13 +66,13 @@ async function createDevice(_payload, auth) {
     return {
         statusCode: 200,
         body: {
-            device: await ensurePersonalDevice(auth.matricula),
+            device: await ensurePersonalDevice(auth.email),
         },
     };
 }
 
 async function connectDevice(deviceId, auth) {
-    if (deviceId !== auth.matricula) {
+    if (deviceId !== auth.email) {
         throw new Error('Dispositivo invalido para este usuario.');
     }
     const current = database.load();
@@ -89,7 +89,7 @@ async function connectDevice(deviceId, auth) {
 }
 
 async function reconnectDevice(deviceId, auth) {
-    if (deviceId !== auth.matricula) {
+    if (deviceId !== auth.email) {
         throw new Error('Dispositivo invalido para este usuario.');
     }
     const current = database.load();
@@ -107,7 +107,7 @@ async function reconnectDevice(deviceId, auth) {
 }
 
 async function disconnectDevice(deviceId, auth) {
-    if (deviceId !== auth.matricula) {
+    if (deviceId !== auth.email) {
         throw new Error('Dispositivo invalido para este usuario.');
     }
 
@@ -129,7 +129,7 @@ async function disconnectDevice(deviceId, auth) {
 }
 
 async function getDeviceAuth(deviceId, auth) {
-    if (deviceId !== auth.matricula) {
+    if (deviceId !== auth.email) {
         throw new Error('Dispositivo invalido para este usuario.');
     }
     const current = database.load();
@@ -149,7 +149,7 @@ async function getDeviceAuth(deviceId, auth) {
 }
 
 async function generatePairingCode(deviceId, payload, auth) {
-    if (deviceId !== auth.matricula) {
+    if (deviceId !== auth.email) {
         throw new Error('Dispositivo invalido para este usuario.');
     }
     const current = database.load();
@@ -166,7 +166,7 @@ async function generatePairingCode(deviceId, payload, auth) {
 }
 
 async function removeDevice(deviceId, auth) {
-    if (deviceId !== auth.matricula) {
+    if (deviceId !== auth.email) {
         throw new Error('Dispositivo invalido para este usuario.');
     }
     await clientManager.destroyClient(deviceId, { removeSession: true, logout: true });

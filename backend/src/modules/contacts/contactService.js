@@ -36,14 +36,14 @@ async function listContacts(auth) {
     return {
         statusCode: 200,
         body: {
-            contacts: await contactRepository.listContacts(auth.matricula),
+            contacts: await contactRepository.listContacts(auth.email),
         },
     };
 }
 
 async function createContact(payload, auth) {
     const contact = await contactRepository.createContact({
-        ownerMatricula: auth.matricula,
+        ownerEmail: auth.email,
         ...normalizePayload(payload),
     });
 
@@ -58,7 +58,7 @@ async function createContact(payload, auth) {
 async function updateContact(contactId, payload, auth) {
     const contact = await contactRepository.updateContact({
         id: contactId,
-        ownerMatricula: auth.matricula,
+        ownerEmail: auth.email,
         ...normalizePayload(payload),
     });
 
@@ -75,7 +75,7 @@ async function updateContact(contactId, payload, auth) {
 }
 
 async function deleteContact(contactId, auth) {
-    await contactRepository.deleteContact(contactId, auth.matricula);
+    await contactRepository.deleteContact(contactId, auth.email);
     return {
         statusCode: 200,
         body: {
@@ -90,7 +90,7 @@ async function deleteContactList(listName, auth) {
         throw new Error('Informe a lista que deseja remover.');
     }
 
-    const removedCount = await contactRepository.deleteContactList(auth.matricula, normalizedListName);
+    const removedCount = await contactRepository.deleteContactList(auth.email, normalizedListName);
     return {
         statusCode: 200,
         body: {
@@ -110,7 +110,7 @@ async function importContacts(payload, auth) {
         const normalized = normalizePayload(item);
         // eslint-disable-next-line no-await-in-loop
         const contact = await contactRepository.createContact({
-            ownerMatricula: auth.matricula,
+            ownerEmail: auth.email,
             ...normalized,
         });
         createdContacts.push(contact);

@@ -5,7 +5,7 @@ import { useApp } from '../../providers/AppProvider';
 import { LoginCard, LoginLayout, LoginTitle } from './styled';
 
 export function LoginView() {
-  const [matricula, setMatricula] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, loginStatus } = useApp();
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ export function LoginView() {
     event.preventDefault();
 
     try {
-      await login(matricula.trim(), password);
+      await login(email.trim(), password);
       navigate('/overview', { replace: true });
     } catch {
       // O status ja e atualizado no provider.
@@ -28,19 +28,19 @@ export function LoginView() {
           <Eyebrow style={{ color: 'var(--muted)' }}>Bulk Whats</Eyebrow>
           <LoginTitle>Entrar no painel</LoginTitle>
           <p style={{ color: 'var(--muted)', margin: '8px 0 0' }}>
-            Entre com sua matricula e senha para acessar o painel e a sessao WhatsApp associada.
+            Entre com seu email e senha para acessar o painel e a sessao WhatsApp associada.
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <Stack>
             <InputGroup>
-              <span>Matricula</span>
+              <span>Email</span>
               <input
-                type="text"
-                value={matricula}
-                onChange={(event) => setMatricula(event.target.value)}
-                placeholder="Digite sua matricula"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="Digite seu email"
                 required
               />
             </InputGroup>

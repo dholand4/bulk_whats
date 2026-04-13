@@ -124,7 +124,7 @@ function archiveAndRemoveQueueItem(current, queueItemId, changes = {}) {
 
 async function createItems(payload, auth) {
     const current = database.load();
-    const selectedDeviceId = auth?.matricula || payload?.deviceId;
+    const selectedDeviceId = auth?.email || payload?.deviceId;
     ensureDeviceExists(current, selectedDeviceId);
 
     const recipients = Array.isArray(payload?.recipients) ? payload.recipients : [];
@@ -148,7 +148,7 @@ async function createItems(payload, auth) {
             attachments: payload.attachments,
             scheduleAt: payload.scheduleAt,
             delaySeconds: payload.delaySeconds,
-            createdBy: auth?.matricula || '',
+            createdBy: auth?.email || '',
         }),
     );
 
@@ -196,7 +196,7 @@ async function listQueue(auth) {
         statusCode: 200,
         body: {
             items: current.queue
-                .filter((item) => item.deviceId === auth.matricula && ['pending', 'processing'].includes(item.status))
+                .filter((item) => item.deviceId === auth.email && ['pending', 'processing'].includes(item.status))
                 .sort((a, b) => new Date(a.scheduleAt) - new Date(b.scheduleAt)),
         },
     };
@@ -208,7 +208,7 @@ async function listHistory(auth) {
         statusCode: 200,
         body: {
             items: current.history
-                .filter((item) => item.deviceId === auth.matricula)
+                .filter((item) => item.deviceId === auth.email)
                 .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)),
         },
     };
@@ -222,7 +222,7 @@ async function cancelItem(queueItemId, auth) {
         if (!item) {
             throw new Error('Item nao encontrado.');
         }
-        if (item.deviceId !== auth.matricula) {
+        if (item.deviceId !== auth.email) {
             throw new Error('Item nao pertence a este usuario.');
         }
 
@@ -263,7 +263,7 @@ async function reprocessItem(queueItemId, auth) {
         if (!item) {
             throw new Error('Item nao encontrado.');
         }
-        if (item.deviceId !== auth.matricula) {
+        if (item.deviceId !== auth.email) {
             throw new Error('Item nao pertence a este usuario.');
         }
 
@@ -285,7 +285,7 @@ async function reprocessItem(queueItemId, auth) {
             attachments: item.attachments,
             scheduleAt: nowIso(),
             delaySeconds: item.delaySeconds,
-            createdBy: auth.matricula,
+            createdBy: auth.email,
         });
 
         current.queue.unshift(reprocessedItem);
@@ -310,7 +310,7 @@ async function deleteQueueItem(queueItemId, auth) {
         }
 
         const item = current.queue[itemIndex];
-        if (item.deviceId !== auth.matricula) {
+        if (item.deviceId !== auth.email) {
             throw new Error('Item nao pertence a este usuario.');
         }
 
@@ -485,10 +485,10 @@ function startWorker() {
 
 async function getSummary(auth) {
     const current = database.load();
-    const connectedDevices = current.devices.filter((item) => item.id === auth.matricula && item.status === 'connected').length;
-    const pendingQueue = current.queue.filter((item) => item.deviceId === auth.matricula && item.status === 'pending').length;
-    const completedSends = current.history.filter((item) => item.deviceId === auth.matricula && item.status === 'sent').length;
-    const recentFailures = current.history.filter((item) => item.deviceId === auth.matricula && item.status === 'error').slice(0, 10).length;
+    const connectedDevices = current.devices.filter((item) => item.id === auth.email && item.status === 'connected').length;
+    const pendingQueue = current.queue.filter((item) => item.deviceId === auth.email && item.status === 'pending').length;
+    const completedSends = current.history.filter((item) => item.deviceId === auth.email && item.status === 'sent').length;
+    const recentFailures = current.history.filter((item) => item.deviceId === auth.email && item.status === 'error').slice(0, 10).length;
 
     return {
         statusCode: 200,

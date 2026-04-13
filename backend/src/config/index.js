@@ -33,8 +33,4 @@ module.exports = {
     frontendDirectory: path.join(rootDirectory, '../frontend/dist'),
     whatsappAuthDirectory: path.join(dataDirectory, 'whatsapp_auth_data'),
     postgres: getDatabaseConfig(),
-    seed: {
-        adminMatricula: String(process.env.ADMIN_MATRICULA || 'fcrs2245'),
-        adminExpirationDate: String(process.env.ADMIN_EXPIRATION_DATE || '2099-12-31'),
-    },
 };

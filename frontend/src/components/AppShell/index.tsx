@@ -4,7 +4,6 @@ import { navigationItems } from '../../constants/navigation';
 import { useApp } from '../../providers/AppProvider';
 import {
   Eyebrow,
-  GhostButton,
   GhostButtonS,
   Main,
   NavButton,
@@ -15,8 +14,6 @@ import {
   SidebarHeader,
   SidebarMuted,
   SidebarTitle,
-  Topbar,
-  TopbarTitle,
 } from './styled';
 
 export function AppShell() {
@@ -27,10 +24,10 @@ export function AppShell() {
       <PasswordChangeModal />
       <Sidebar>
         <SidebarHeader>
-          <Eyebrow>Gestão</Eyebrow>
+          <Eyebrow>Gestao</Eyebrow>
           <SidebarTitle>Bulk Whats</SidebarTitle>
           <SidebarMuted>
-            {user ? `${user.matricula} • ${user.role === 'admin' ? 'Admin' : 'Usuario'}` : ''}
+            {user ? `${user.email} • ${user.role === 'admin' ? 'Admin' : 'Usuario'}` : ''}
           </SidebarMuted>
         </SidebarHeader>
 

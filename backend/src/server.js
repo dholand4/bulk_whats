@@ -4,7 +4,6 @@ const clientManager = require('./modules/whatsapp/clientManager');
 const queueService = require('./modules/queue/queueService');
 const database = require('./modules/storage/database');
 const fileBackfillService = require('./modules/storage/fileBackfillService');
-const userRepository = require('./modules/users/userRepository');
 
 process.on('unhandledRejection', (error) => {
     console.error('Promessa rejeitada sem tratamento:', error);
@@ -12,7 +11,6 @@ process.on('unhandledRejection', (error) => {
 
 async function startServer() {
     await database.bootstrap();
-    await userRepository.ensureSeedAdmin();
     await fileBackfillService.backfillAttachments();
 
     const app = createApp();

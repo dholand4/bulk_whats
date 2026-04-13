@@ -1,5 +1,4 @@
 const postgres = require('../storage/postgres');
-const { seed } = require('../../config');
 
 function mapUser(row) {
     if (!row) {
@@ -7,7 +6,7 @@ function mapUser(row) {
     }
 
     return {
-        matricula: row.matricula,
+        email: row.email,
         role: row.role,
         dataExpiracao: row.expiration_date instanceof Date
             ? row.expiration_date.toISOString().slice(0, 10)
@@ -21,28 +20,28 @@ function mapUser(row) {
 
 async function listUsers() {
     const result = await postgres.query(`
-        SELECT matricula, role, expiration_date, force_password_change, active, created_at, updated_at
+        SELECT email, role, expiration_date, force_password_change, active, created_at, updated_at
         FROM users
-        ORDER BY role DESC, matricula ASC
+        ORDER BY CASE WHEN role = 'admin' THEN 0 ELSE 1 END, email ASC
     `);
 
     return result.rows.map(mapUser);
 }
 
-async function findByMatricula(matricula) {
+async function findByEmail(email) {
     const result = await postgres.query(`
-        SELECT matricula, role, expiration_date, force_password_change, active, created_at, updated_at
+        SELECT email, role, expiration_date, force_password_change, active, created_at, updated_at
         FROM users
-        WHERE matricula = $1
+        WHERE email = $1
         LIMIT 1
-    `, [matricula]);
+    `, [email]);
 
     return mapUser(result.rows[0]);
 }
 
-async function upsertUser({ matricula, role = 'user', dataExpiracao, password, active = true }) {
+async function upsertUser({ email, role = 'user', dataExpiracao, password, active = true }) {
     const result = await postgres.query(`
-        INSERT INTO users (matricula, role, expiration_date, password_hash, force_password_change, active, updated_at)
+        INSERT INTO users (email, role, expiration_date, password_hash, force_password_change, active, updated_at)
         VALUES (
             $1,
             $2,
@@ -58,7 +57,7 @@ async function upsertUser({ matricula, role = 'user', dataExpiracao, password, a
             $5,
             NOW()
         )
-        ON CONFLICT (matricula)
+        ON CONFLICT (email)
         DO UPDATE SET
             role = EXCLUDED.role,
             expiration_date = EXCLUDED.expiration_date,
@@ -72,25 +71,25 @@ async function upsertUser({ matricula, role = 'user', dataExpiracao, password, a
             END,
             active = EXCLUDED.active,
             updated_at = NOW()
-        RETURNING matricula, role, expiration_date, force_password_change, active, created_at, updated_at
-    `, [matricula, role, dataExpiracao, password || '', active]);
+        RETURNING email, role, expiration_date, force_password_change, active, created_at, updated_at
+    `, [email, role, dataExpiracao, password || '', active]);
 
     return mapUser(result.rows[0]);
 }
 
-async function verifyPassword(matricula, password) {
+async function verifyPassword(email, password) {
     const result = await postgres.query(`
         SELECT
-            matricula,
+            email,
             password_hash,
             CASE
                 WHEN password_hash IS NULL THEN FALSE
                 ELSE password_hash = crypt($2, password_hash)
             END AS password_matches
         FROM users
-        WHERE matricula = $1
+        WHERE email = $1
         LIMIT 1
-    `, [matricula, password]);
+    `, [email, password]);
 
     const row = result.rows[0];
     if (!row) {
@@ -98,58 +97,35 @@ async function verifyPassword(matricula, password) {
     }
 
     if (!row.password_hash) {
-        return password === matricula;
+        return password === email;
     }
 
     return Boolean(row.password_matches);
 }
 
-async function updatePassword(matricula, password) {
+async function updatePassword(email, password) {
     const result = await postgres.query(`
         UPDATE users
         SET
             password_hash = crypt($2, gen_salt('bf')),
             force_password_change = FALSE,
             updated_at = NOW()
-        WHERE matricula = $1
-        RETURNING matricula, role, expiration_date, force_password_change, active, created_at, updated_at
-    `, [matricula, password]);
+        WHERE email = $1
+        RETURNING email, role, expiration_date, force_password_change, active, created_at, updated_at
+    `, [email, password]);
 
     return mapUser(result.rows[0]);
 }
 
-async function deleteUser(matricula) {
-    await postgres.query('DELETE FROM users WHERE matricula = $1', [matricula]);
-}
-
-async function ensureSeedAdmin() {
-    const adminUser = await findByMatricula(seed.adminMatricula);
-    if (!adminUser) {
-        await upsertUser({
-            matricula: seed.adminMatricula,
-            role: 'admin',
-            dataExpiracao: seed.adminExpirationDate,
-            active: true,
-        });
-        return;
-    }
-
-    if (adminUser.role !== 'admin') {
-        await upsertUser({
-            matricula: adminUser.matricula,
-            role: 'admin',
-            dataExpiracao: adminUser.dataExpiracao,
-            active: adminUser.active,
-        });
-    }
+async function deleteUser(email) {
+    await postgres.query('DELETE FROM users WHERE email = $1', [email]);
 }
 
 module.exports = {
     listUsers,
-    findByMatricula,
+    findByEmail,
     upsertUser,
     verifyPassword,
     updatePassword,
     deleteUser,
-    ensureSeedAdmin,
 };

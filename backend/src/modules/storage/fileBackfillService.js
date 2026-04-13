@@ -21,11 +21,11 @@ async function backfillAttachments() {
 
         for (const items of collections) {
             for (const item of items) {
-                const ownerMatricula = item.createdBy || item.deviceId || '';
+                const ownerEmail = item.createdBy || item.deviceId || '';
                 const attachments = Array.isArray(item.attachments) ? item.attachments : [];
 
                 for (const attachment of attachments) {
-                    if (!shouldBackfillAttachment(attachment) || !ownerMatricula) {
+                    if (!shouldBackfillAttachment(attachment) || !ownerEmail) {
                         continue;
                     }
 
@@ -34,12 +34,12 @@ async function backfillAttachments() {
                         continue;
                     }
 
-                    const cacheKey = `${ownerMatricula}:${absolutePath}`;
+                    const cacheKey = `${ownerEmail}:${absolutePath}`;
                     let storedFile = cacheByOwnerAndPath.get(cacheKey);
 
                     if (!storedFile) {
                         storedFile = await fileStore.saveFile({
-                            ownerMatricula,
+                            ownerEmail,
                             category: 'legacy_attachment',
                             fileName: attachment.fileName || path.basename(absolutePath),
                             mimeType: attachment.mimeType || getMimeTypeFromExtension(absolutePath),

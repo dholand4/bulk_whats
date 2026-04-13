@@ -7,7 +7,7 @@ function create(user) {
     const token = crypto.randomUUID();
     const session = {
         token,
-        matricula: user.matricula,
+        email: user.email,
         role: user.role || 'user',
         dataExpiracao: user.dataExpiracao || '',
         mustChangePassword: Boolean(user.mustChangePassword),

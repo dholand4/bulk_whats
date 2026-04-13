@@ -1,7 +1,7 @@
 export type UserRole = 'user' | 'admin';
 
 export interface AuthUser {
-  matricula: string;
+  email: string;
   role: UserRole;
   dataExpiracao?: string;
   mustChangePassword?: boolean;
@@ -44,7 +44,7 @@ export interface Contact {
 }
 
 export interface AdminUser {
-  matricula: string;
+  email: string;
   role: UserRole;
   dataExpiracao: string;
   password?: string;

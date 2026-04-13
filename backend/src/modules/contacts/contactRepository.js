@@ -7,7 +7,7 @@ function mapContact(row) {
 
     return {
         id: row.id,
-        ownerMatricula: row.owner_matricula,
+        ownerEmail: row.owner_email,
         listName: row.list_name,
         name: row.name,
         phone: row.phone,
@@ -21,28 +21,28 @@ function mapContact(row) {
     };
 }
 
-async function listContacts(ownerMatricula) {
+async function listContacts(ownerEmail) {
     const result = await postgres.query(`
-        SELECT id, owner_matricula, list_name, name, phone, paciente, profissional, data, hora, notes, created_at, updated_at
+        SELECT id, owner_email, list_name, name, phone, paciente, profissional, data, hora, notes, created_at, updated_at
         FROM contacts
-        WHERE owner_matricula = $1
+        WHERE owner_email = $1
         ORDER BY list_name ASC, name ASC, created_at DESC
-    `, [ownerMatricula]);
+    `, [ownerEmail]);
 
     return result.rows.map(mapContact);
 }
 
-async function createContact({ ownerMatricula, listName = 'Geral', name, phone, paciente = '', profissional = '', data = '', hora = '', notes = '' }) {
+async function createContact({ ownerEmail, listName = 'Geral', name, phone, paciente = '', profissional = '', data = '', hora = '', notes = '' }) {
     const result = await postgres.query(`
-        INSERT INTO contacts (owner_matricula, list_name, name, phone, paciente, profissional, data, hora, notes)
+        INSERT INTO contacts (owner_email, list_name, name, phone, paciente, profissional, data, hora, notes)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING id, owner_matricula, list_name, name, phone, paciente, profissional, data, hora, notes, created_at, updated_at
-    `, [ownerMatricula, listName, name, phone, paciente, profissional, data, hora, notes]);
+        RETURNING id, owner_email, list_name, name, phone, paciente, profissional, data, hora, notes, created_at, updated_at
+    `, [ownerEmail, listName, name, phone, paciente, profissional, data, hora, notes]);
 
     return mapContact(result.rows[0]);
 }
 
-async function updateContact({ id, ownerMatricula, listName = 'Geral', name, phone, paciente = '', profissional = '', data = '', hora = '', notes = '' }) {
+async function updateContact({ id, ownerEmail, listName = 'Geral', name, phone, paciente = '', profissional = '', data = '', hora = '', notes = '' }) {
     const result = await postgres.query(`
         UPDATE contacts
         SET
@@ -55,22 +55,22 @@ async function updateContact({ id, ownerMatricula, listName = 'Geral', name, pho
             hora = $9,
             notes = $10,
             updated_at = NOW()
-        WHERE id = $1 AND owner_matricula = $2
-        RETURNING id, owner_matricula, list_name, name, phone, paciente, profissional, data, hora, notes, created_at, updated_at
-    `, [id, ownerMatricula, listName, name, phone, paciente, profissional, data, hora, notes]);
+        WHERE id = $1 AND owner_email = $2
+        RETURNING id, owner_email, list_name, name, phone, paciente, profissional, data, hora, notes, created_at, updated_at
+    `, [id, ownerEmail, listName, name, phone, paciente, profissional, data, hora, notes]);
 
     return mapContact(result.rows[0]);
 }
 
-async function deleteContact(id, ownerMatricula) {
-    await postgres.query('DELETE FROM contacts WHERE id = $1 AND owner_matricula = $2', [id, ownerMatricula]);
+async function deleteContact(id, ownerEmail) {
+    await postgres.query('DELETE FROM contacts WHERE id = $1 AND owner_email = $2', [id, ownerEmail]);
 }
 
-async function deleteContactList(ownerMatricula, listName) {
+async function deleteContactList(ownerEmail, listName) {
     const result = await postgres.query(`
         DELETE FROM contacts
-        WHERE owner_matricula = $1 AND list_name = $2
-    `, [ownerMatricula, listName]);
+        WHERE owner_email = $1 AND list_name = $2
+    `, [ownerEmail, listName]);
 
     return result.rowCount || 0;
 }

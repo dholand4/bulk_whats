@@ -21,7 +21,7 @@ async function buildUploadResponse(files, auth) {
     const storedFiles = await Promise.all(
         normalizedFiles.map(async (file) => {
             const storedFile = await fileStore.saveFile({
-                ownerMatricula: auth.matricula,
+                ownerEmail: auth.email,
                 category: 'campaign_attachment',
                 fileName: file.originalname,
                 mimeType: file.mimetype,

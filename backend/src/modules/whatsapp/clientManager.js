@@ -171,7 +171,7 @@ async function persistSessionSnapshot(device) {
     try {
         await sessionStore.saveSessionArchive({
             deviceId: device.id,
-            ownerMatricula: device.id,
+            ownerEmail: device.id,
             sessionPath,
         });
     } catch (error) {
@@ -319,7 +319,7 @@ async function initializeDevice(device) {
     if (!fs.existsSync(getSessionPath(device.id))) {
         await sessionStore.restoreSessionArchive({
             deviceId: device.id,
-            ownerMatricula: device.id,
+            ownerEmail: device.id,
             sessionPath: getSessionPath(device.id),
         });
     }

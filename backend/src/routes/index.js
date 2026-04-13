@@ -52,7 +52,7 @@ router.get('/api/files/:id', uploadController.downloadFile);
 
 router.get('/api/admin/users', adminMiddleware, adminController.listUsers);
 router.post('/api/admin/users', adminMiddleware, adminController.saveUser);
-router.put('/api/admin/users/:matricula', adminMiddleware, adminController.saveUser);
-router.delete('/api/admin/users/:matricula', adminMiddleware, adminController.removeUser);
+router.put('/api/admin/users/:email', adminMiddleware, adminController.saveUser);
+router.delete('/api/admin/users/:email', adminMiddleware, adminController.removeUser);
 
 module.exports = router;

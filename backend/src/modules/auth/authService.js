@@ -2,8 +2,8 @@ const sessionStore = require('./sessionStore');
 const deviceService = require('../devices/deviceService');
 const userRepository = require('../users/userRepository');
 
-function normalizeMatricula(value) {
-    return String(value || '').trim();
+function normalizeEmail(value) {
+    return String(value || '').trim().toLowerCase();
 }
 
 function normalizePassword(value) {
@@ -17,14 +17,14 @@ function isExpired(expirationDate) {
 }
 
 async function login(payload) {
-    const matricula = normalizeMatricula(payload?.matricula);
+    const email = normalizeEmail(payload?.email);
     const password = normalizePassword(payload?.password);
 
-    if (!matricula) {
+    if (!email) {
         return {
             statusCode: 400,
             body: {
-                message: 'O campo matricula e obrigatorio.',
+                message: 'O campo email e obrigatorio.',
             },
         };
     }
@@ -38,13 +38,13 @@ async function login(payload) {
         };
     }
 
-    const user = await userRepository.findByMatricula(matricula);
+    const user = await userRepository.findByEmail(email);
 
     if (!user || !user.active) {
         return {
             statusCode: 403,
             body: {
-                message: `A matricula ${matricula} nao foi autorizada.`,
+                message: `O email ${email} nao foi autorizado.`,
             },
         };
     }
@@ -58,17 +58,17 @@ async function login(payload) {
         };
     }
 
-    const passwordMatches = await userRepository.verifyPassword(matricula, password);
+    const passwordMatches = await userRepository.verifyPassword(email, password);
     if (!passwordMatches) {
         return {
             statusCode: 403,
             body: {
-                message: 'Matricula ou senha invalidas.',
+                message: 'Email ou senha invalidos.',
             },
         };
     }
 
-    await deviceService.ensurePersonalDevice(user.matricula);
+    await deviceService.ensurePersonalDevice(user.email);
     const session = sessionStore.create(user);
 
     return {
@@ -76,7 +76,7 @@ async function login(payload) {
         body: {
             token: session.token,
             user: {
-                matricula: user.matricula,
+                email: user.email,
                 role: user.role,
                 dataExpiracao: user.dataExpiracao,
             },
@@ -85,8 +85,8 @@ async function login(payload) {
 }
 
 async function me(session) {
-    const user = await userRepository.findByMatricula(session.matricula) || {
-        matricula: session.matricula,
+    const user = await userRepository.findByEmail(session.email) || {
+        email: session.email,
         role: session.role || 'user',
         dataExpiracao: session.dataExpiracao || '',
         mustChangePassword: Boolean(session.mustChangePassword),
@@ -122,7 +122,7 @@ async function changePassword(session, payload, token) {
         };
     }
 
-    const passwordMatches = await userRepository.verifyPassword(session.matricula, currentPassword);
+    const passwordMatches = await userRepository.verifyPassword(session.email, currentPassword);
     if (!passwordMatches) {
         return {
             statusCode: 403,
@@ -141,7 +141,7 @@ async function changePassword(session, payload, token) {
         };
     }
 
-    const user = await userRepository.updatePassword(session.matricula, newPassword);
+    const user = await userRepository.updatePassword(session.email, newPassword);
     sessionStore.update(token, { mustChangePassword: false });
 
     return {
@@ -149,7 +149,7 @@ async function changePassword(session, payload, token) {
         body: {
             message: 'Senha alterada com sucesso.',
             user: {
-                matricula: user.matricula,
+                email: user.email,
                 role: user.role,
                 dataExpiracao: user.dataExpiracao,
                 mustChangePassword: user.mustChangePassword,

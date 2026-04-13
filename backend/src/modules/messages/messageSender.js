@@ -14,8 +14,8 @@ function fillTemplate(template, recipient) {
         .replaceAll('{hora}', recipient.hora || '');
 }
 
-async function createMedia(attachment, ownerMatricula) {
-    const resolved = await loadAttachmentContent(attachment, ownerMatricula);
+async function createMedia(attachment, ownerEmail) {
+    const resolved = await loadAttachmentContent(attachment, ownerEmail);
 
     if (resolved.kind === 'url') {
         return MessageMedia.fromUrl(resolved.url);
@@ -46,10 +46,10 @@ async function sendQueueItem(queueItem) {
     }
 
     const attachments = Array.isArray(queueItem.attachments) ? queueItem.attachments : [];
-    const ownerMatricula = queueItem.createdBy || queueItem.deviceId;
+    const ownerEmail = queueItem.createdBy || queueItem.deviceId;
     if (attachments.length > 0) {
         for (let index = 0; index < attachments.length; index += 1) {
-            const media = await createMedia(attachments[index], ownerMatricula);
+            const media = await createMedia(attachments[index], ownerEmail);
             await client.sendMessage(chatId, media, {
                 caption: index === 0 ? personalizedMessage : '',
                 sendSeen: false,

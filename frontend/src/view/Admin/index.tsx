@@ -16,10 +16,10 @@ import { UserCard, UsersList } from './styled';
 
 export function AdminView() {
   const { users, saveAdminUser, deleteAdminUser } = useApp();
-  const [editingUserMatricula, setEditingUserMatricula] = useState<string | null>(null);
+  const [editingUserEmail, setEditingUserEmail] = useState<string | null>(null);
   const [status, setStatus] = useState('');
   const [form, setForm] = useState({
-    matricula: '',
+    email: '',
     role: 'user',
     dataExpiracao: '',
     password: '',
@@ -31,18 +31,18 @@ export function AdminView() {
     try {
       await saveAdminUser(
         {
-          matricula: form.matricula.trim(),
+          email: form.email.trim().toLowerCase(),
           role: form.role as 'user' | 'admin',
           dataExpiracao: form.dataExpiracao,
           password: form.password,
         },
-        editingUserMatricula,
+        editingUserEmail,
       );
-      setStatus('Matricula salva com sucesso.');
-      setEditingUserMatricula(null);
-      setForm({ matricula: '', role: 'user', dataExpiracao: '', password: '' });
+      setStatus('Usuario salvo com sucesso.');
+      setEditingUserEmail(null);
+      setForm({ email: '', role: 'user', dataExpiracao: '', password: '' });
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Falha ao salvar matricula.');
+      setStatus(error instanceof Error ? error.message : 'Falha ao salvar usuario.');
     }
   }
 
@@ -50,18 +50,18 @@ export function AdminView() {
     <PanelGrid $narrowLeft>
       <Panel>
         <PanelHeading>
-          <h3>Gestao de matriculas</h3>
+          <h3>Gestao de usuarios</h3>
         </PanelHeading>
 
         <form onSubmit={handleSubmit}>
           <Stack>
             <InputGroup>
-              <span>Matricula</span>
+              <span>Email</span>
               <input
-                type="text"
+                type="email"
                 required
-                value={form.matricula}
-                onChange={(event) => setForm((current) => ({ ...current, matricula: event.target.value }))}
+                value={form.email}
+                onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
               />
             </InputGroup>
 
@@ -87,24 +87,24 @@ export function AdminView() {
             </InputGroup>
 
             <InputGroup>
-              <span>{editingUserMatricula ? 'Senha provisoria' : 'Senha inicial'}</span>
+              <span>{editingUserEmail ? 'Senha provisoria' : 'Senha inicial'}</span>
               <input
                 type="password"
                 value={form.password}
                 onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-                placeholder={editingUserMatricula ? 'Preencha para redefinir o primeiro acesso' : 'Defina a senha inicial'}
-                required={!editingUserMatricula}
+                placeholder={editingUserEmail ? 'Preencha para redefinir o primeiro acesso' : 'Defina a senha inicial'}
+                required={!editingUserEmail}
               />
             </InputGroup>
 
             <InlineActions>
               <button type="submit">Salvar acesso</button>
-              {editingUserMatricula ? (
+              {editingUserEmail ? (
                 <GhostButton
                   type="button"
                   onClick={() => {
-                    setEditingUserMatricula(null);
-                    setForm({ matricula: '', role: 'user', dataExpiracao: '', password: '' });
+                    setEditingUserEmail(null);
+                    setForm({ email: '', role: 'user', dataExpiracao: '', password: '' });
                     setStatus('');
                   }}
                 >
@@ -124,13 +124,13 @@ export function AdminView() {
         </PanelHeading>
 
         {users.length === 0 ? (
-          <EmptyState>Nenhuma matricula cadastrada.</EmptyState>
+          <EmptyState>Nenhum usuario cadastrado.</EmptyState>
         ) : (
           <UsersList>
             {users.map((user) => (
-              <UserCard key={user.matricula}>
+              <UserCard key={user.email}>
                 <div>
-                  <strong>{user.matricula}</strong>
+                  <strong>{user.email}</strong>
                   <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>
                     {user.role} • expira em {user.dataExpiracao}
                   </p>
@@ -139,9 +139,9 @@ export function AdminView() {
                   <GhostButton
                     type="button"
                     onClick={() => {
-                      setEditingUserMatricula(user.matricula);
+                      setEditingUserEmail(user.email);
                       setForm({
-                        matricula: user.matricula,
+                        email: user.email,
                         role: user.role,
                         dataExpiracao: user.dataExpiracao,
                         password: '',
@@ -151,7 +151,7 @@ export function AdminView() {
                   >
                     Editar
                   </GhostButton>
-                  <DangerButton type="button" onClick={() => void deleteAdminUser(user.matricula)}>
+                  <DangerButton type="button" onClick={() => void deleteAdminUser(user.email)}>
                     Excluir
                   </DangerButton>
                 </InlineActions>

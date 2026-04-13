@@ -40,7 +40,7 @@ function buildChecksum(buffer) {
     return crypto.createHash('sha256').update(buffer).digest('hex');
 }
 
-async function saveSessionArchive({ deviceId, ownerMatricula, sessionPath }) {
+async function saveSessionArchive({ deviceId, ownerEmail, sessionPath }) {
     const files = await listFiles(sessionPath);
     if (files.length === 0) {
         return null;
@@ -53,7 +53,7 @@ async function saveSessionArchive({ deviceId, ownerMatricula, sessionPath }) {
     await postgres.query(`
         INSERT INTO whatsapp_sessions (
             device_id,
-            owner_matricula,
+            owner_email,
             archive,
             checksum,
             file_count,
@@ -63,13 +63,13 @@ async function saveSessionArchive({ deviceId, ownerMatricula, sessionPath }) {
         )
         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
         ON CONFLICT (device_id) DO UPDATE SET
-            owner_matricula = EXCLUDED.owner_matricula,
+            owner_email = EXCLUDED.owner_email,
             archive = EXCLUDED.archive,
             checksum = EXCLUDED.checksum,
             file_count = EXCLUDED.file_count,
             size_bytes = EXCLUDED.size_bytes,
             updated_at = NOW()
-    `, [deviceId, ownerMatricula, archive, checksum, files.length, archive.length]);
+    `, [deviceId, ownerEmail, archive, checksum, files.length, archive.length]);
 
     return {
         deviceId,
@@ -79,30 +79,30 @@ async function saveSessionArchive({ deviceId, ownerMatricula, sessionPath }) {
     };
 }
 
-async function getSessionArchive(deviceId, ownerMatricula) {
+async function getSessionArchive(deviceId, ownerEmail) {
     const result = await postgres.query(`
-        SELECT device_id, owner_matricula, archive, checksum, file_count, size_bytes, created_at, updated_at
+        SELECT device_id, owner_email, archive, checksum, file_count, size_bytes, created_at, updated_at
         FROM whatsapp_sessions
-        WHERE device_id = $1 AND owner_matricula = $2
+        WHERE device_id = $1 AND owner_email = $2
         LIMIT 1
-    `, [deviceId, ownerMatricula]);
+    `, [deviceId, ownerEmail]);
 
     return result.rows[0] || null;
 }
 
-async function hasSessionArchive(deviceId, ownerMatricula) {
+async function hasSessionArchive(deviceId, ownerEmail) {
     const result = await postgres.query(`
         SELECT 1
         FROM whatsapp_sessions
-        WHERE device_id = $1 AND owner_matricula = $2
+        WHERE device_id = $1 AND owner_email = $2
         LIMIT 1
-    `, [deviceId, ownerMatricula]);
+    `, [deviceId, ownerEmail]);
 
     return result.rowCount > 0;
 }
 
-async function restoreSessionArchive({ deviceId, ownerMatricula, sessionPath }) {
-    const archiveRecord = await getSessionArchive(deviceId, ownerMatricula);
+async function restoreSessionArchive({ deviceId, ownerEmail, sessionPath }) {
+    const archiveRecord = await getSessionArchive(deviceId, ownerEmail);
     if (!archiveRecord) {
         return false;
     }
@@ -129,11 +129,11 @@ async function restoreSessionArchive({ deviceId, ownerMatricula, sessionPath }) 
     return true;
 }
 
-async function deleteSessionArchive(deviceId, ownerMatricula) {
+async function deleteSessionArchive(deviceId, ownerEmail) {
     await postgres.query(`
         DELETE FROM whatsapp_sessions
-        WHERE device_id = $1 AND owner_matricula = $2
-    `, [deviceId, ownerMatricula]);
+        WHERE device_id = $1 AND owner_email = $2
+    `, [deviceId, ownerEmail]);
 }
 
 module.exports = {

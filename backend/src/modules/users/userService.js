@@ -1,7 +1,16 @@
 const userRepository = require('./userRepository');
 
-function normalizeMatricula(value) {
-    return String(value || '').trim();
+function normalizeEmail(value) {
+    const parsed = String(value || '').trim().toLowerCase();
+    if (!parsed) {
+        return '';
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parsed)) {
+        throw new Error('Informe um email valido.');
+    }
+
+    return parsed;
 }
 
 function normalizeExpirationDate(value) {
@@ -41,12 +50,12 @@ async function listUsers() {
 }
 
 async function saveUser(payload) {
-    const matricula = normalizeMatricula(payload?.matricula);
-    if (!matricula) {
-        throw new Error('Informe a matricula.');
+    const email = normalizeEmail(payload?.email);
+    if (!email) {
+        throw new Error('Informe o email.');
     }
 
-    const existingUser = await userRepository.findByMatricula(matricula);
+    const existingUser = await userRepository.findByEmail(email);
     const normalizedPassword = normalizePassword(payload?.password);
 
     if (!existingUser && !normalizedPassword) {
@@ -54,7 +63,7 @@ async function saveUser(payload) {
     }
 
     const user = await userRepository.upsertUser({
-        matricula,
+        email,
         role: normalizeRole(payload?.role),
         dataExpiracao: normalizeExpirationDate(payload?.dataExpiracao),
         password: normalizedPassword,
@@ -69,8 +78,8 @@ async function saveUser(payload) {
     };
 }
 
-async function removeUser(matricula) {
-    await userRepository.deleteUser(matricula);
+async function removeUser(email) {
+    await userRepository.deleteUser(normalizeEmail(email));
     return {
         statusCode: 200,
         body: {

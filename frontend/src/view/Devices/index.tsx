@@ -9,7 +9,7 @@ export function DevicesView() {
   return (
     <Panel>
       <PanelHeading>
-        <h3>Dispositivo da matricula</h3>
+        <h3>Dispositivo do usuario</h3>
       </PanelHeading>
       <HeroText>
         Quando o dispositivo ja estiver autenticado, a tela mostra que ele esta pronto para enviar. Se ainda precisar

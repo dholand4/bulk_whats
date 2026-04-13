@@ -283,7 +283,7 @@ export function ComposeView() {
               <span>Dispositivo</span>
               <select value={deviceId} onChange={(event) => setDeviceId(event.target.value)} required>
                 {devices.length === 0 ? (
-                  <option value="">Dispositivo da matricula indisponivel</option>
+                  <option value="">Dispositivo do usuario indisponivel</option>
                 ) : (
                   devices.map((device) => (
                     <option key={device.id} value={device.id}>

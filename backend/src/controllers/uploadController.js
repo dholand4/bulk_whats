@@ -12,7 +12,7 @@ async function uploadMedia(req, res, next) {
 
 async function downloadFile(req, res, next) {
     try {
-        const file = await fileStore.getFile(req.params.id, req.auth.matricula);
+        const file = await fileStore.getFile(req.params.id, req.auth.email);
 
         if (!file) {
             res.status(404).json({ message: 'Arquivo nao encontrado.' });
