@@ -23,16 +23,22 @@ import {
   ComposeStack,
   FooterGrid,
   HeroPanel,
-  HiddenCheckbox,
   ListItem,
-  ListCardHeader,
-  ListTitleButton,
+  ListCardBadges,
+  ListCardMain,
+  ListCardTitleRow,
+  ListMeta,
   ListsStrip,
+  ListsSection,
+  ListsToolbar,
+  ListsToolbarActions,
   ModalCard,
   ModalOverlay,
   PlaceholderChip,
   PlaceholderRow,
   SearchField,
+  SelectionBar,
+  SelectionSummary,
   SectionLabel,
   SubmitPanel,
   UploadPanel,
@@ -88,7 +94,7 @@ export function ComposeView() {
     [contactGroups, selectedContactListNames],
   );
 
-  const pageSize = 10;
+  const pageSize = 6;
 
   const filteredContactGroups = useMemo(() => {
     const normalizedSearch = listSearchTerm.trim().toLocaleLowerCase('pt-BR');
@@ -322,130 +328,133 @@ export function ComposeView() {
                 <GhostButton type="button" onClick={selectAllComposeLists}>
                   Selecionar todas
                 </GhostButton>
-                <GhostButton type="button" onClick={handleClearComposeLists}>
-                  Limpar selecao
-                </GhostButton>
               </InlineActions>
             </ComposeHeader>
 
             <UploadPanel>
-              <div>
-                <SectionLabel>Listas disponiveis</SectionLabel>
-                <p style={{ margin: 0, color: 'var(--muted)' }}>
-                  {selectedContactListNames.size
-                    ? `${selectedContactListNames.size} lista(s) selecionada(s).`
-                    : 'Nenhuma lista selecionada.'}
-                </p>
-                {selectedContactListNames.size ? (
+              <ListsSection>
+                <div>
+                  <SectionLabel>Listas disponiveis</SectionLabel>
                   <p style={{ margin: 0, color: 'var(--muted)' }}>
-                    {recipients.length} contato(s) seguirao para este envio apos os ajustes.
+                    {selectedContactListNames.size
+                      ? `${selectedContactListNames.size} lista(s) selecionada(s).`
+                      : 'Nenhuma lista selecionada.'}
                   </p>
+                  {selectedContactListNames.size ? (
+                    <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
+                      {recipients.length} contato(s) seguirao para este envio apos os ajustes.
+                    </p>
+                  ) : null}
+                </div>
+
+                <ListsToolbar>
+                  <SearchField style={{ flex: 1 }}>
+                    <span>Buscar lista</span>
+                    <input
+                      type="text"
+                      placeholder="Pesquisar pelo nome da lista"
+                      value={listSearchTerm}
+                      onChange={(event) => {
+                        setListSearchTerm(event.target.value);
+                        setListsPage(1);
+                      }}
+                    />
+                  </SearchField>
+                </ListsToolbar>
+
+                {selectedContactListNames.size > 0 ? (
+                  <SelectionBar>
+                    <SelectionSummary>{selectedContactListNames.size} lista(s) selecionada(s)</SelectionSummary>
+                    <InlineActions>
+                      <GhostButton type="button" onClick={handleClearComposeLists}>
+                        Limpar selecao
+                      </GhostButton>
+                    </InlineActions>
+                  </SelectionBar>
                 ) : null}
-                <p style={{ margin: 0, color: 'var(--muted)' }}>
-                  Exibindo 3 listas por vez com rolagem interna de ate 10 por pagina.
-                </p>
-              </div>
 
-              <SearchField>
-                <span>Buscar lista</span>
-                <input
-                  type="text"
-                  placeholder="Pesquisar pelo nome da lista"
-                  value={listSearchTerm}
-                  onChange={(event) => {
-                    setListSearchTerm(event.target.value);
-                    setListsPage(1);
-                  }}
-                />
-              </SearchField>
+                {contactGroups.length === 0 ? (
+                  <EmptyState>Cadastre listas e contatos na aba Contatos para montar campanhas.</EmptyState>
+                ) : filteredContactGroups.length === 0 ? (
+                  <EmptyState>Nenhuma lista encontrada para essa busca.</EmptyState>
+                ) : (
+                  <>
+                    <ListsStrip>
+                      {pagedContactGroups.map((group) => {
+                        const active = selectedContactListNames.has(group.listName);
+                        const excludedCount = group.contacts.filter((contact) => excludedContactIds.has(contact.id)).length;
+                        const includedCount = group.contacts.length - excludedCount;
 
-              {contactGroups.length === 0 ? (
-                <EmptyState>Cadastre listas e contatos na aba Contatos para montar campanhas.</EmptyState>
-              ) : filteredContactGroups.length === 0 ? (
-                <EmptyState>Nenhuma lista encontrada para essa busca.</EmptyState>
-              ) : (
-                <>
-                  <ListsStrip>
-                    {pagedContactGroups.map((group) => {
-                    const active = selectedContactListNames.has(group.listName);
-                    const excludedCount = group.contacts.filter((contact) => excludedContactIds.has(contact.id)).length;
-                    const includedCount = group.contacts.length - excludedCount;
-                    return (
-                      <ListItem key={group.listName} $active={active}>
-                        <HiddenCheckbox
-                          type="checkbox"
-                          checked={active}
-                          onChange={(event) => handleToggleList(group.listName, event.target.checked)}
-                        />
-                        <ListCardHeader>
-                          <div>
-                            <ListTitleButton
-                              type="button"
-                              onClick={() => {
-                                if (!active) {
-                                  handleToggleList(group.listName, true);
-                                }
-                                setPreviewListName(group.listName);
-                              }}
-                            >
-                              <strong>{group.listName}</strong>
-                            </ListTitleButton>
-                            <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>
-                              {group.contacts.length} contato(s)
-                            </p>
-                          </div>
-                          {excludedCount > 0 ? <Badge>{excludedCount} removido(s)</Badge> : null}
-                        </ListCardHeader>
-
-                        <p style={{ margin: 0, color: 'var(--muted)' }}>
-                          {active
-                            ? `${includedCount} contato(s) serao usados neste envio.`
-                            : 'Selecione para usar esta lista no envio.'}
-                        </p>
-
-                        <InlineActions>
-                          <GhostButton
-                            type="button"
+                        return (
+                          <ListItem
+                            key={group.listName}
+                            $active={active}
                             onClick={() => handleToggleList(group.listName, !active)}
                           >
-                            {active ? 'Desmarcar lista' : 'Selecionar lista'}
-                          </GhostButton>
-                          <GhostButton
-                            type="button"
-                            onClick={() => {
-                              if (!active) {
-                                handleToggleList(group.listName, true);
-                              }
-                              setPreviewListName(group.listName);
-                            }}
-                          >
-                            Ver contatos
-                          </GhostButton>
-                          {active && excludedCount > 0 ? (
-                            <GhostButton type="button" onClick={() => clearExcludedFromList(group.listName)}>
-                              Restaurar lista
-                            </GhostButton>
-                          ) : null}
-                        </InlineActions>
-                      </ListItem>
-                    );
-                    })}
-                  </ListsStrip>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                              <ListCardMain>
+                                <ListCardTitleRow>
+                                  <strong>{group.listName}</strong>
+                                </ListCardTitleRow>
+                                <ListMeta>{group.contacts.length} contato(s)</ListMeta>
+                                <ListMeta>
+                                  {active
+                                    ? `${includedCount} contato(s) usados neste envio.`
+                                    : 'Clique para usar esta lista no envio.'}
+                                </ListMeta>
+                              </ListCardMain>
 
-                  <PaginationRow>
-                    <GhostButton type="button" onClick={() => setListsPage((current) => Math.max(1, current - 1))}>
-                      Anterior
-                    </GhostButton>
-                    <span style={{ color: 'var(--muted)' }}>Pagina {listsPage} de {listsPageCount}</span>
-                    <GhostButton
-                      type="button"
-                      onClick={() => setListsPage((current) => Math.min(listsPageCount, current + 1))}
-                    >
-                      Proxima
-                    </GhostButton>
-                  </PaginationRow>
-                </>
-              )}
+                              <ListCardBadges>
+                                <Badge>{group.contacts.length}</Badge>
+                                {excludedCount > 0 ? <Badge>{excludedCount} removido(s)</Badge> : null}
+                                {active ? <Badge>Selecionada</Badge> : null}
+                                <GhostButton
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    if (!active) {
+                                      handleToggleList(group.listName, true);
+                                    }
+                                    setPreviewListName(group.listName);
+                                  }}
+                                >
+                                  Ver contatos
+                                </GhostButton>
+                              </ListCardBadges>
+                            </div>
+                            {active && excludedCount > 0 ? (
+                              <InlineActions>
+                                <GhostButton
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    clearExcludedFromList(group.listName);
+                                  }}
+                                >
+                                  Restaurar lista
+                                </GhostButton>
+                              </InlineActions>
+                            ) : null}
+                          </ListItem>
+                        );
+                      })}
+                    </ListsStrip>
+
+                    <PaginationRow>
+                      <GhostButton type="button" onClick={() => setListsPage((current) => Math.max(1, current - 1))}>
+                        Anterior
+                      </GhostButton>
+                      <span style={{ color: 'var(--muted)' }}>Pagina {listsPage} de {listsPageCount}</span>
+                      <GhostButton
+                        type="button"
+                        onClick={() => setListsPage((current) => Math.min(listsPageCount, current + 1))}
+                      >
+                        Proxima
+                      </GhostButton>
+                    </PaginationRow>
+                  </>
+                )}
+              </ListsSection>
             </UploadPanel>
           </ComposeCard>
 

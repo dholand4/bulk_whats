@@ -40,19 +40,30 @@ export const UploadPanel = styled.div`
 `;
 
 export const ListsStrip = styled(ContactListStrip)`
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   max-height: 540px;
   overflow-y: auto;
   padding-right: 6px;
+  gap: 10px;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 export const ListItem = styled.div<{ $active: boolean }>`
   display: grid;
   gap: 10px;
-  padding: 16px;
-  border-radius: 18px;
+  padding: 14px 16px;
+  border-radius: 16px;
   border: 1px solid ${({ $active }) => ($active ? 'rgba(18, 53, 36, 0.32)' : 'var(--border)')};
   background: ${({ $active }) => ($active ? 'rgba(18, 53, 36, 0.08)' : 'rgba(255, 255, 255, 0.48)')};
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
 `;
 
 export const HiddenCheckbox = styled.input`
@@ -112,6 +123,77 @@ export const SectionLabel = styled(FieldLabel)``;
 export const SearchField = styled.label`
   display: grid;
   gap: 6px;
+`;
+
+export const ListsSection = styled.div`
+  display: grid;
+  gap: 16px;
+`;
+
+export const ListsToolbar = styled.div`
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+
+  @media (max-width: 860px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+export const ListsToolbarActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+`;
+
+export const SelectionBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(18, 53, 36, 0.18);
+  background: rgba(18, 53, 36, 0.06);
+
+  @media (max-width: 860px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+export const SelectionSummary = styled.strong`
+  font-size: 14px;
+`;
+
+export const ListCardMain = styled.div`
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+`;
+
+export const ListCardTitleRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+`;
+
+export const ListMeta = styled.p`
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+`;
+
+export const ListCardBadges = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 `;
 
 export const ModalOverlay = styled.div`
