@@ -19,10 +19,15 @@ export const CreateListForm = styled.form`
 `;
 
 export const ListsOverview = styled(ContactListStrip)`
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   max-height: 540px;
   overflow-y: auto;
   padding-right: 6px;
   gap: 10px;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 export const ListButton = styled.button<{ $active: boolean }>`

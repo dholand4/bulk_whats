@@ -363,40 +363,46 @@ export function ContactListsSection({
         </ListsSelectionBar>
       ) : null}
 
-      <ListsOverview>
-        {groups.map((group) => {
-          const isSelected = selectedListNames.has(group.listName);
-          const isActive = group.listName === activeContactListName || isSelected;
+      {groups.length === 0 ? (
+        <EmptyState>Nenhuma lista encontrada para essa busca.</EmptyState>
+      ) : (
+        <>
+          <ListsOverview>
+            {groups.map((group) => {
+              const isSelected = selectedListNames.has(group.listName);
+              const isActive = group.listName === activeContactListName || isSelected;
 
-          return (
-            <ListButton
-              key={group.listName}
-              type="button"
-              $active={isActive}
-              onClick={() => onToggleList(group.listName)}
-            >
-              <ListCardMain>
-                <ListCardTitleRow>
-                  <strong>{group.listName}</strong>
-                </ListCardTitleRow>
-                <ListCardMeta>{group.contacts.length} contato(s)</ListCardMeta>
-              </ListCardMain>
+              return (
+                <ListButton
+                  key={group.listName}
+                  type="button"
+                  $active={isActive}
+                  onClick={() => onToggleList(group.listName)}
+                >
+                  <ListCardMain>
+                    <ListCardTitleRow>
+                      <strong>{group.listName}</strong>
+                    </ListCardTitleRow>
+                    <ListCardMeta>{group.contacts.length} contato(s)</ListCardMeta>
+                  </ListCardMain>
 
-              <ListCardBadges>
-                <Badge>{group.contacts.length}</Badge>
-                {isSelected ? <Badge>Selecionada</Badge> : null}
-              </ListCardBadges>
-            </ListButton>
-          );
-        })}
-      </ListsOverview>
+                  <ListCardBadges>
+                    <Badge>{group.contacts.length}</Badge>
+                    {isSelected ? <Badge>Selecionada</Badge> : null}
+                  </ListCardBadges>
+                </ListButton>
+              );
+            })}
+          </ListsOverview>
 
-      <ContactsPagination
-        page={page}
-        pageCount={pageCount}
-        onPrev={onPrevPage}
-        onNext={onNextPage}
-      />
+          <ContactsPagination
+            page={page}
+            pageCount={pageCount}
+            onPrev={onPrevPage}
+            onNext={onNextPage}
+          />
+        </>
+      )}
     </ListsSection>
   );
 }

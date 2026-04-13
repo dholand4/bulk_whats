@@ -91,7 +91,7 @@ export function ContactsView() {
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
 
-  const listPageSize = 10;
+  const listPageSize = 6;
   const contactsPageSize = 10;
 
   const filteredContactGroups = useMemo(() => {
@@ -372,8 +372,6 @@ export function ContactsView() {
       <Panel>
         {contactGroups.length === 0 && !createListOpen ? (
           <EmptyState>Nenhuma lista criada ainda. Use o botao + para comecar.</EmptyState>
-        ) : filteredContactGroups.length === 0 ? (
-          <EmptyState>Nenhuma lista encontrada para essa busca.</EmptyState>
         ) : (
           <ContactListsSection
             groups={pagedLists}
