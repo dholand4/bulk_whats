@@ -5,13 +5,73 @@ export const Shell = styled.div`
   min-height: 100vh;
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
+  position: relative;
 
   @media (max-width: 980px) {
     grid-template-columns: 1fr;
   }
 `;
 
-export const Sidebar = styled.aside`
+export const MobileMenuButton = styled.button<{ $hidden?: boolean }>`
+  display: none;
+
+  @media (max-width: 980px) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 30;
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    border-radius: 50%;
+    background: rgba(18, 53, 36, 0.96);
+    color: #f5efe7;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 18px 38px rgba(18, 53, 36, 0.24);
+    opacity: ${({ $hidden }) => ($hidden ? 0 : 1)};
+    pointer-events: ${({ $hidden }) => ($hidden ? 'none' : 'auto')};
+    transition: opacity 0.2s ease;
+  }
+`;
+
+export const MobileMenuIcon = styled.span`
+  display: none;
+
+  @media (max-width: 980px) {
+    display: inline-grid;
+    gap: 5px;
+
+    span {
+      display: block;
+      width: 20px;
+      height: 2px;
+      border-radius: 999px;
+      background: currentColor;
+    }
+  }
+`;
+
+export const MobileSidebarOverlay = styled.button<{ $isOpen: boolean }>`
+  display: none;
+
+  @media (max-width: 980px) {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 18;
+    border: 0;
+    padding: 0;
+    background: rgba(7, 16, 11, 0.42);
+    opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
+    pointer-events: ${({ $isOpen }) => ($isOpen ? 'auto' : 'none')};
+    transition: opacity 0.24s ease;
+  }
+`;
+
+export const Sidebar = styled.aside<{ $isMobileOpen?: boolean }>`
   background: rgba(18, 53, 36, 0.94);
   color: #f5efe7;
   padding: 28px 22px;
@@ -23,8 +83,53 @@ export const Sidebar = styled.aside`
   min-height: 100vh;
 
   @media (max-width: 980px) {
-    min-height: auto;
-    position: static;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 20;
+    width: min(82vw, 320px);
+    min-height: 100vh;
+    padding-top: 72px;
+    transform: translateX(${({ $isMobileOpen }) => ($isMobileOpen ? '0' : '-108%')});
+    transition: transform 0.28s ease;
+    box-shadow: 0 28px 56px rgba(8, 22, 14, 0.3);
+  }
+`;
+
+export const MobileCloseButton = styled.button`
+  display: none;
+
+  @media (max-width: 980px) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #a92d31;
+    color: #fff;
+    box-shadow: 0 14px 28px rgba(70, 10, 12, 0.28);
+
+    span {
+      position: absolute;
+      width: 18px;
+      height: 2px;
+      border-radius: 999px;
+      background: currentColor;
+    }
+
+    span:first-child {
+      transform: rotate(45deg);
+    }
+
+    span:last-child {
+      transform: rotate(-45deg);
+    }
   }
 `;
 
@@ -84,8 +189,13 @@ export const Main = styled.main`
   display: grid;
   gap: 24px;
 
+  @media (max-width: 980px) {
+    padding-top: 88px;
+  }
+
   @media (max-width: 720px) {
     padding: 18px;
+    padding-top: 84px;
   }
 `;
 

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { PasswordChangeModal } from '../PasswordChangeModal';
 import { navigationItems } from '../../constants/navigation';
@@ -6,6 +7,10 @@ import {
   Eyebrow,
   GhostButtonS,
   Main,
+  MobileCloseButton,
+  MobileMenuButton,
+  MobileMenuIcon,
+  MobileSidebarOverlay,
   NavButton,
   NavList,
   Shell,
@@ -18,6 +23,7 @@ import {
 
 export function AppShell() {
   const { user, logout } = useApp();
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const emailLabel = user?.email ? user.email.split('@')[0] : '';
 
   const formatExpirationDate = (value?: string) => {
@@ -47,10 +53,53 @@ export function AppShell() {
   const roleLabel =
     user?.role === 'admin' ? 'Admin' : formatExpirationDate(user?.dataExpiracao);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 981px)');
+
+    const handleChange = (event: MediaQueryListEvent | MediaQueryList) => {
+      if (event.matches) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+
+    handleChange(mediaQuery);
+    mediaQuery.addEventListener('change', handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
+
   return (
     <Shell>
       <PasswordChangeModal />
-      <Sidebar>
+      <MobileMenuButton
+        type="button"
+        onClick={() => setIsMobileSidebarOpen(true)}
+        aria-label="Abrir menu lateral"
+        aria-expanded={isMobileSidebarOpen}
+        $hidden={isMobileSidebarOpen}
+      >
+        <MobileMenuIcon aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </MobileMenuIcon>
+      </MobileMenuButton>
+      <MobileSidebarOverlay
+        $isOpen={isMobileSidebarOpen}
+        onClick={() => setIsMobileSidebarOpen(false)}
+        aria-hidden={!isMobileSidebarOpen}
+      />
+      <Sidebar $isMobileOpen={isMobileSidebarOpen}>
+        <MobileCloseButton
+          type="button"
+          onClick={() => setIsMobileSidebarOpen(false)}
+          aria-label="Fechar menu lateral"
+        >
+          <span />
+          <span />
+        </MobileCloseButton>
         <SidebarHeader>
           <Eyebrow>Gestao</Eyebrow>
           <SidebarTitle>Bulk Whats</SidebarTitle>
@@ -61,15 +110,25 @@ export function AppShell() {
 
         <NavList>
           {navigationItems.map((item) => (
-            <NavButton key={item.path} to={item.path}>
+            <NavButton key={item.path} to={item.path} onClick={() => setIsMobileSidebarOpen(false)}>
               {item.label}
             </NavButton>
           ))}
-          {user?.role === 'admin' ? <NavButton to="/admin">Admin</NavButton> : null}
+          {user?.role === 'admin' ? (
+            <NavButton to="/admin" onClick={() => setIsMobileSidebarOpen(false)}>
+              Admin
+            </NavButton>
+          ) : null}
         </NavList>
 
         <SidebarFooter>
-          <GhostButtonS type="button" onClick={() => void logout()}>
+          <GhostButtonS
+            type="button"
+            onClick={() => {
+              setIsMobileSidebarOpen(false);
+              void logout();
+            }}
+          >
             Sair
           </GhostButtonS>
         </SidebarFooter>
