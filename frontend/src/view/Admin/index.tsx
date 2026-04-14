@@ -3,7 +3,6 @@ import {
   DangerButton,
   EmptyState,
   GhostButton,
-  InlineActions,
   InputGroup,
   Panel,
   PanelGrid,
@@ -12,7 +11,7 @@ import {
   StatusText,
 } from '../../components/AppShell/styled';
 import { useApp } from '../../providers/AppProvider';
-import { UserCard, UsersList } from './styled';
+import { AdminActions, FormActions, UserCard, UserCardContent, UserMeta, UsersList } from './styled';
 
 export function AdminView() {
   const { users, saveAdminUser, deleteAdminUser } = useApp();
@@ -97,7 +96,7 @@ export function AdminView() {
               />
             </InputGroup>
 
-            <InlineActions>
+            <FormActions>
               <button type="submit">Salvar acesso</button>
               {editingUserEmail ? (
                 <GhostButton
@@ -111,7 +110,7 @@ export function AdminView() {
                   Cancelar edicao
                 </GhostButton>
               ) : null}
-            </InlineActions>
+            </FormActions>
 
             {status ? <StatusText>{status}</StatusText> : null}
           </Stack>
@@ -129,13 +128,11 @@ export function AdminView() {
           <UsersList>
             {users.map((user) => (
               <UserCard key={user.email}>
-                <div>
+                <UserCardContent>
                   <strong>{user.email}</strong>
-                  <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>
-                    {user.role} • expira em {user.dataExpiracao}
-                  </p>
-                </div>
-                <InlineActions>
+                  <UserMeta>{user.role} - expira em {user.dataExpiracao}</UserMeta>
+                </UserCardContent>
+                <AdminActions>
                   <GhostButton
                     type="button"
                     onClick={() => {
@@ -154,7 +151,7 @@ export function AdminView() {
                   <DangerButton type="button" onClick={() => void deleteAdminUser(user.email)}>
                     Excluir
                   </DangerButton>
-                </InlineActions>
+                </AdminActions>
               </UserCard>
             ))}
           </UsersList>
