@@ -25,17 +25,17 @@ export function LoginView() {
     <LoginLayout>
       <LoginCard>
         <div>
-          <Eyebrow style={{ color: 'var(--muted)' }}>Bulk Whats</Eyebrow>
-          <LoginTitle>Entrar no painel</LoginTitle>
+          <Eyebrow style={{ color: 'var(--muted)' }}>Acessar Sistema</Eyebrow>
+          <LoginTitle>Bulk Whats</LoginTitle>
           <p style={{ color: 'var(--muted)', margin: '8px 0 0' }}>
-            Entre com seu email e senha para acessar o painel e a sessao WhatsApp associada.
+            Acesse com seu e-mail e senha para gerenciar e enviar mensagens em massa pelo WhatsApp.
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <Stack>
             <InputGroup>
-              <span>Email</span>
+              <span>E-mail</span>
               <input
                 type="email"
                 value={email}
