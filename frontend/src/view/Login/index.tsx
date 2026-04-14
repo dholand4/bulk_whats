@@ -7,7 +7,7 @@ import { LoginCard, LoginLayout, LoginTitle } from './styled';
 export function LoginView() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, loginStatus } = useApp();
+  const { login, loginStatus, isGlobalLoading } = useApp();
   const navigate = useNavigate();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -54,7 +54,9 @@ export function LoginView() {
                 required
               />
             </InputGroup>
-            <button type="submit">Entrar</button>
+            <button type="submit" disabled={isGlobalLoading}>
+              Entrar
+            </button>
           </Stack>
         </form>
 

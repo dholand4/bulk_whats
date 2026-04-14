@@ -34,6 +34,8 @@ interface AppContextValue {
   queueGroups: CampaignGroup[];
   historyGroups: CampaignGroup[];
   loginStatus: string;
+  isGlobalLoading: boolean;
+  globalLoadingMessage: string;
   login: (email: string, password: string) => Promise<void>;
   changeOwnPassword: (currentPassword: string, newPassword: string) => Promise<string>;
   logout: () => Promise<void>;
@@ -87,7 +89,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null);
   const [activeContactListName, setActiveContactListName] = useState('');
   const [loginStatus, setLoginStatus] = useState('');
+  const [globalLoadingCount, setGlobalLoadingCount] = useState(0);
+  const [globalLoadingMessage, setGlobalLoadingMessage] = useState('');
   const authPrefetchRef = useRef<Set<string>>(new Set());
+  const hasBootstrappedSessionRef = useRef(false);
 
   function mergeDevice(nextDevice: Device) {
     setDevices((current) => {
@@ -106,12 +111,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const activeListContacts = getActiveListContacts(contacts, activeContactListName);
   const queueGroups = groupCampaignItems(queue, 'queue');
   const historyGroups = groupCampaignItems(history, 'history');
+  const isGlobalLoading = globalLoadingCount > 0;
+
+  async function runWithGlobalLoading<T>(message: string, task: () => Promise<T>) {
+    setGlobalLoadingMessage(message);
+    setGlobalLoadingCount((current) => current + 1);
+
+    try {
+      return await task();
+    } finally {
+      setGlobalLoadingCount((current) => Math.max(0, current - 1));
+    }
+  }
 
   useEffect(() => {
     if (activeContactListName && !contactGroups.some((group) => group.listName === activeContactListName)) {
       setActiveContactListName(contactGroups[0]?.listName || '');
     }
   }, [activeContactListName, contactGroups]);
+
+  useEffect(() => {
+    if (!isGlobalLoading) {
+      setGlobalLoadingMessage('');
+    }
+  }, [isGlobalLoading]);
 
   useEffect(() => {
     setSelectedContactListNames((current) => new Set(
@@ -129,6 +152,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!token) {
+      hasBootstrappedSessionRef.current = false;
       return;
     }
 
@@ -139,6 +163,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => {
       window.clearInterval(pollingId);
     };
+  }, [token]);
+
+  useEffect(() => {
+    if (!token || hasBootstrappedSessionRef.current) {
+      return;
+    }
+
+    hasBootstrappedSessionRef.current = true;
+    void runWithGlobalLoading('Carregando seus dados...', async () => {
+      await refreshData(token);
+    });
   }, [token]);
 
   useEffect(() => {
@@ -245,18 +280,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setLoginStatus('Validando acesso...');
 
     try {
-      const response = await apiRequest<{ token: string; user: AuthUser }>('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await runWithGlobalLoading('Entrando na sua conta...', () =>
+        apiRequest<{ token: string; user: AuthUser }>(
+          '/api/auth/login',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          },
+        ),
+      );
 
+      hasBootstrappedSessionRef.current = true;
       setToken(response.token);
       setUser(response.user);
       localStorage.setItem('authToken', response.token);
-      await apiRequest('/api/devices', { method: 'POST' }, response.token);
+      await runWithGlobalLoading('Preparando seu ambiente...', async () => {
+        await apiRequest('/api/devices', { method: 'POST' }, response.token);
+        await refreshData(response.token);
+      });
       setLoginStatus('');
-      await refreshData(response.token);
     } catch (error) {
       setLoginStatus(error instanceof Error ? error.message : 'Falha ao autenticar.');
       throw error;
@@ -286,18 +329,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setExpandedDeviceId(null);
     setActiveContactListName('');
     setLoginStatus('');
+    setGlobalLoadingCount(0);
+    setGlobalLoadingMessage('');
     localStorage.removeItem('authToken');
   }
 
   async function changeOwnPassword(currentPassword: string, newPassword: string) {
-    const response = await apiRequest<{ message: string; user: AuthUser }>(
-      '/api/auth/change-password',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      },
-      token,
+    const response = await runWithGlobalLoading('Atualizando sua senha...', () =>
+      apiRequest<{ message: string; user: AuthUser }>(
+        '/api/auth/change-password',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ currentPassword, newPassword }),
+        },
+        token,
+      ),
     );
 
     setUser(response.user);
@@ -314,14 +361,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    await apiRequest(`/api/devices/${deviceId}/connect`, { method: 'POST' }, token);
-    await apiRequest(`/api/devices/${deviceId}/auth`, {}, token);
-    await refreshData();
+    await runWithGlobalLoading('Conectando dispositivo...', async () => {
+      await apiRequest(`/api/devices/${deviceId}/connect`, { method: 'POST' }, token);
+      await apiRequest(`/api/devices/${deviceId}/auth`, {}, token);
+      await refreshData();
+    });
   }
 
   async function disconnectDevice(deviceId: string) {
-    const response = await apiRequest<{ message: string }>(`/api/devices/${deviceId}/disconnect`, { method: 'POST' }, token);
-    await refreshData();
+    const response = await runWithGlobalLoading('Desconectando dispositivo...', async () => {
+      const data = await apiRequest<{ message: string }>(`/api/devices/${deviceId}/disconnect`, { method: 'POST' }, token);
+      await refreshData();
+      return data;
+    });
     return response.message;
   }
 
@@ -337,32 +389,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   async function submitCompose(payload: ComposePayload) {
-    const attachments = await uploadAttachments(payload.files);
-    const response = await apiRequest<{ message: string }>(
-      payload.endpoint,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          deviceId: payload.deviceId,
-          campaignName: payload.campaignName,
-          recipients: payload.recipients,
-          message: payload.message,
-          attachments,
-          scheduleAt: payload.scheduleAt || null,
-          delaySeconds: payload.delaySeconds,
-        }),
-      },
-      token,
-    );
+    const response = await runWithGlobalLoading('Enviando campanha...', async () => {
+      const attachments = await uploadAttachments(payload.files);
+      const data = await apiRequest<{ message: string }>(
+        payload.endpoint,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            deviceId: payload.deviceId,
+            campaignName: payload.campaignName,
+            recipients: payload.recipients,
+            message: payload.message,
+            attachments,
+            scheduleAt: payload.scheduleAt || null,
+            delaySeconds: payload.delaySeconds,
+          }),
+        },
+        token,
+      );
 
-    await refreshData();
+      await refreshData();
+      return data;
+    });
     return response.message;
   }
 
   async function cancelQueueItem(itemId: string) {
-    await apiRequest(`/api/queue/${itemId}/cancel`, { method: 'POST' }, token);
-    await refreshData();
+    await runWithGlobalLoading('Cancelando item da fila...', async () => {
+      await apiRequest(`/api/queue/${itemId}/cancel`, { method: 'POST' }, token);
+      await refreshData();
+    });
   }
 
   async function cancelCampaign(groupKey: string) {
@@ -371,13 +428,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    await Promise.all(
-      group.items
-        .filter((item) => ['pending', 'processing'].includes(item.status))
-        .map((item) => apiRequest(`/api/queue/${item.id}/cancel`, { method: 'POST' }, token)),
-    );
+    await runWithGlobalLoading('Cancelando campanha...', async () => {
+      await Promise.all(
+        group.items
+          .filter((item) => ['pending', 'processing'].includes(item.status))
+          .map((item) => apiRequest(`/api/queue/${item.id}/cancel`, { method: 'POST' }, token)),
+      );
 
-    await refreshData();
+      await refreshData();
+    });
   }
 
   function createDraftList(listName: string) {
@@ -412,31 +471,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    await apiRequest(`/api/contact-lists/${encodeURIComponent(listName)}`, { method: 'DELETE' }, token);
-    setSelectedContactListNames((current) => {
-      const next = new Set(current);
-      next.delete(listName);
-      return next;
+    await runWithGlobalLoading('Removendo lista...', async () => {
+      await apiRequest(`/api/contact-lists/${encodeURIComponent(listName)}`, { method: 'DELETE' }, token);
+      setSelectedContactListNames((current) => {
+        const next = new Set(current);
+        next.delete(listName);
+        return next;
+      });
+      await refreshData();
     });
-    await refreshData();
   }
 
   async function saveContact(draft: ContactDraft, contactId?: string) {
     const path = contactId ? `/api/contacts/${contactId}` : '/api/contacts';
     const method = contactId ? 'PUT' : 'POST';
 
-    await apiRequest(
-      path,
-      {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(draft),
-      },
-      token,
-    );
+    await runWithGlobalLoading(contactId ? 'Atualizando contato...' : 'Salvando contato...', async () => {
+      await apiRequest(
+        path,
+        {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(draft),
+        },
+        token,
+      );
 
-    setDraftContactLists((current) => current.filter((listName) => listName !== draft.listName));
-    await refreshData();
+      setDraftContactLists((current) => current.filter((listName) => listName !== draft.listName));
+      await refreshData();
+    });
   }
 
   async function bulkUpdateContacts(contactIds: string[], data: string, notes: string) {
@@ -447,46 +510,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
       throw new Error('Preencha ao menos um campo para atualizar em lote.');
     }
 
-    await Promise.all(
-      contactIds.map((contactId) => {
-        const contact = contacts.find((item) => item.id === contactId);
-        if (!contact) {
-          return Promise.resolve();
-        }
+    await runWithGlobalLoading('Atualizando contatos...', async () => {
+      await Promise.all(
+        contactIds.map((contactId) => {
+          const contact = contacts.find((item) => item.id === contactId);
+          if (!contact) {
+            return Promise.resolve();
+          }
 
-        return apiRequest(
-          `/api/contacts/${contactId}`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              listName: contact.listName || 'Geral',
-              name: contact.name,
-              phone: contact.phone,
-              paciente: contact.paciente || '',
-              profissional: contact.profissional || '',
-              data: shouldUpdateData ? data : contact.data || '',
-              hora: contact.hora || '',
-              notes: shouldUpdateNotes ? notes : contact.notes || '',
-            }),
-          },
-          token,
-        );
-      }),
-    );
+          return apiRequest(
+            `/api/contacts/${contactId}`,
+            {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                listName: contact.listName || 'Geral',
+                name: contact.name,
+                phone: contact.phone,
+                paciente: contact.paciente || '',
+                profissional: contact.profissional || '',
+                data: shouldUpdateData ? data : contact.data || '',
+                hora: contact.hora || '',
+                notes: shouldUpdateNotes ? notes : contact.notes || '',
+              }),
+            },
+            token,
+          );
+        }),
+      );
 
-    await refreshData();
+      await refreshData();
+    });
   }
 
   async function deleteContact(contactId: string) {
-    await apiRequest(`/api/contacts/${contactId}`, { method: 'DELETE' }, token);
-    await refreshData();
+    await runWithGlobalLoading('Excluindo contato...', async () => {
+      await apiRequest(`/api/contacts/${contactId}`, { method: 'DELETE' }, token);
+      await refreshData();
+    });
   }
 
   async function deleteContacts(contactIds: string[]) {
-    await Promise.all(contactIds.map((contactId) => apiRequest(`/api/contacts/${contactId}`, { method: 'DELETE' }, token)));
-    setSelectedContactIds(new Set());
-    await refreshData();
+    await runWithGlobalLoading('Excluindo contatos...', async () => {
+      await Promise.all(contactIds.map((contactId) => apiRequest(`/api/contacts/${contactId}`, { method: 'DELETE' }, token)));
+      setSelectedContactIds(new Set());
+      await refreshData();
+    });
   }
 
   async function importContactsFromSpreadsheet(file: File) {
@@ -494,32 +563,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
       throw new Error('Selecione uma lista antes de importar.');
     }
 
-    const rows = await readSpreadsheet(file);
-    const importedContacts = rows
-      .map((row) => ({
-        listName: activeContactListName,
-        name: row[0] || '',
-        phone: row[1] || '',
-        paciente: row[2] || '',
-        profissional: row[3] || '',
-        data: row[4] || '',
-        hora: row[5] || '',
-        notes: row[6] || '',
-      }))
-      .filter((item) => item.name && item.phone);
+    const response = await runWithGlobalLoading('Importando contatos...', async () => {
+      const rows = await readSpreadsheet(file);
+      const importedContacts = rows
+        .map((row) => ({
+          listName: activeContactListName,
+          name: row[0] || '',
+          phone: row[1] || '',
+          paciente: row[2] || '',
+          profissional: row[3] || '',
+          data: row[4] || '',
+          hora: row[5] || '',
+          notes: row[6] || '',
+        }))
+        .filter((item) => item.name && item.phone);
 
-    const response = await apiRequest<{ message: string }>(
-      '/api/contacts/import',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contacts: importedContacts }),
-      },
-      token,
-    );
+      const data = await apiRequest<{ message: string }>(
+        '/api/contacts/import',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contacts: importedContacts }),
+        },
+        token,
+      );
 
-    setDraftContactLists((current) => current.filter((listName) => listName !== activeContactListName));
-    await refreshData();
+      setDraftContactLists((current) => current.filter((listName) => listName !== activeContactListName));
+      await refreshData();
+      return data;
+    });
     return response.message;
   }
 
@@ -527,22 +599,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const path = currentEmail ? `/api/admin/users/${encodeURIComponent(currentEmail)}` : '/api/admin/users';
     const method = currentEmail ? 'PUT' : 'POST';
 
-    await apiRequest(
-      path,
-      {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      },
-      token,
-    );
+    await runWithGlobalLoading('Salvando usuario...', async () => {
+      await apiRequest(
+        path,
+        {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
+        token,
+      );
 
-    await refreshData();
+      await refreshData();
+    });
   }
 
   async function deleteAdminUser(email: string) {
-    await apiRequest(`/api/admin/users/${encodeURIComponent(email)}`, { method: 'DELETE' }, token);
-    await refreshData();
+    await runWithGlobalLoading('Excluindo usuario...', async () => {
+      await apiRequest(`/api/admin/users/${encodeURIComponent(email)}`, { method: 'DELETE' }, token);
+      await refreshData();
+    });
   }
 
   function toggleComposeList(listName: string, checked: boolean) {
@@ -610,6 +686,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         queueGroups,
         historyGroups,
         loginStatus,
+        isGlobalLoading,
+        globalLoadingMessage,
         login,
         changeOwnPassword,
         logout,

@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import {
   EmptyState,
   MutedText,
@@ -15,11 +14,7 @@ import { formatDateTime } from '../../utils/format';
 import { PreviewList } from './styled';
 
 export function HomeView() {
-  const { summary, queue, devices, refreshData } = useApp();
-
-  useEffect(() => {
-    void refreshData();
-  }, []);
+  const { summary, queue, devices } = useApp();
 
   const queuePreview = queue.slice(0, 5);
   const devicePreview = devices.slice(0, 5);
