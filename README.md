@@ -168,12 +168,12 @@ Crie o arquivo `backend/.env` com base em `backend/.env.example`.
 Exemplo:
 
 ```
-PORT=
-PGHOST=
-PGPORT=
-PGDATABASE=
-PGUSER=
-PGPASSWORD=
+PORT=3000
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=bulk_whats
+PGUSER=postgres
+PGPASSWORD=sua_senha
 CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
 ```
 
@@ -182,6 +182,7 @@ Observacoes:
 - voce pode deixar no `.env` apenas o que quiser sobrescrever
 - se preferir, pode usar apenas `PGPASSWORD` e `CHROME_PATH` no ambiente local
 - o administrador inicial deve ser criado diretamente no banco de dados
+- em producao com Docker, o navegador costuma ser configurado por `PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium`
 
 ### 3. Criar as tabelas
 
@@ -213,7 +214,10 @@ Arquivo base: `backend/.env.example`
 - `PGDATABASE`: nome do banco
 - `PGUSER`: usuario do banco
 - `PGPASSWORD`: senha do banco
+- `PGSSLMODE`: use `require` quando o banco exigir SSL
+- `DATABASE_URL`: string unica de conexao com o PostgreSQL
 - `CHROME_PATH`: caminho do executavel do Chrome
+- `PUPPETEER_EXECUTABLE_PATH`: caminho do Chromium/Chrome no ambiente Linux ou container
 
 Modelo recomendado para projeto compartilhado:
 
@@ -237,6 +241,50 @@ CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
 ### Frontend
 
 No estado atual, o frontend nao exige `.env` para rodar localmente.
+
+### Producao com Docker
+
+Arquivo base na raiz: `.env.production.example`
+
+- `APP_DEPLOY_ROOT`: pasta do repositorio clonado na VM
+- `APP_STORAGE_ROOT`: pasta persistente no host da VM para banco, sessoes e arquivos locais
+- `FRONTEND_PORT`: porta publicada pela aplicacao na VM
+- `TZ`: timezone dos containers
+- `POSTGRES_DB`: nome do banco do compose
+- `POSTGRES_USER`: usuario do banco do compose
+- `POSTGRES_PASSWORD`: senha do banco do compose
+
+Exemplo:
+
+```env
+APP_DEPLOY_ROOT=/opt/bulk_whats/app
+APP_STORAGE_ROOT=/opt/bulk_whats/storage
+FRONTEND_PORT=80
+TZ=America/Sao_Paulo
+POSTGRES_DB=bulk_whats
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=troque_esta_senha_forte
+```
+
+Caminho recomendado de deploy na VM:
+
+- codigo da aplicacao: `/opt/bulk_whats/app`
+- persistencia: `/opt/bulk_whats/storage`
+
+Guia de deploy:
+
+- [docs/deploy-digitalocean.md](/C:/Daniel/Projetos/bulk_whats/docs/deploy-digitalocean.md)
+
+Persistencia em producao:
+
+- PostgreSQL: `${APP_STORAGE_ROOT}/postgres`
+- sessoes locais do WhatsApp Web: `${APP_STORAGE_ROOT}/backend/data`
+- arquivos locais do backend: `${APP_STORAGE_ROOT}/backend/uploads`
+
+Observacao importante:
+
+- os anexos de campanhas ja sao salvos no PostgreSQL
+- as sessoes do WhatsApp tambem sao arquivadas no PostgreSQL, mas manter `backend/data` persistente acelera recuperacao e evita reautenticacoes desnecessarias
 
 ---
 

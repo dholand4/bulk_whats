@@ -9,6 +9,8 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+!.env.docker.example
+!.env.production.example
 
 backend/uploads/
 backend/data/
