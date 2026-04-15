@@ -15,9 +15,9 @@ export const LoadingCard = styled.div`
   width: min(100%, 320px);
   padding: 28px 24px 22px;
   border-radius: 28px;
-  background: rgba(245, 239, 231, 0.96);
-  border: 1px solid rgba(18, 53, 36, 0.12);
-  box-shadow: 0 26px 70px rgba(8, 22, 14, 0.24);
+  /* background: rgba(245, 239, 231, 0.96); */
+  /* border: 1px solid rgba(18, 53, 36, 0.12); */
+  /* box-shadow: 0 26px 70px rgba(8, 22, 14, 0.24); */
   display: grid;
   gap: 10px;
   justify-items: center;

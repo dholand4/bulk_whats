@@ -97,6 +97,11 @@ export interface ComposeRecipient {
   hora?: string;
 }
 
+export interface SpreadsheetParseResult {
+  recipients: ComposeRecipient[];
+  skippedRows: number;
+}
+
 export interface ComposePayload {
   endpoint: '/api/queue' | '/api/messages/send';
   deviceId: string;

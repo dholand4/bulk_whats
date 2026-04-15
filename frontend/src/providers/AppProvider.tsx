@@ -11,6 +11,7 @@ import {
   ContactDraft,
   ContactGroup,
   Device,
+  SpreadsheetParseResult,
   Summary,
 } from '../types';
 import { getActiveListContacts, getContactGroups, groupCampaignItems } from '../utils/campaigns';
@@ -53,6 +54,7 @@ interface AppContextValue {
   deleteContact: (contactId: string) => Promise<void>;
   deleteContacts: (contactIds: string[]) => Promise<void>;
   importContactsFromSpreadsheet: (file: File) => Promise<string>;
+  parseComposeRecipientsFromSpreadsheet: (file: File) => Promise<SpreadsheetParseResult>;
   saveAdminUser: (payload: AdminUser, currentEmail?: string | null) => Promise<void>;
   deleteAdminUser: (email: string) => Promise<void>;
   toggleComposeList: (listName: string, checked: boolean) => void;
@@ -72,6 +74,83 @@ async function readSpreadsheet(file: File) {
   const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
   const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
   return XLSX.utils.sheet_to_json<string[]>(firstSheet, { header: 1, raw: false });
+}
+
+function normalizeSpreadsheetHeader(value: string) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLocaleLowerCase('pt-BR');
+}
+
+function findSpreadsheetColumnIndex(headers: string[], aliases: string[]) {
+  const normalizedAliases = aliases.map((alias) => normalizeSpreadsheetHeader(alias));
+  return headers.findIndex((header) => normalizedAliases.includes(normalizeSpreadsheetHeader(header)));
+}
+
+function parseSpreadsheetRecipients(rows: string[][]) {
+  const sanitizedRows = rows
+    .map((row) => Array.isArray(row)
+      ? row.map((cell) => String(cell || '').trim())
+      : [])
+    .filter((row) => row.some((cell) => cell));
+
+  if (sanitizedRows.length === 0) {
+    return {
+      recipients: [],
+      skippedRows: 0,
+    };
+  }
+
+  const firstRow = sanitizedRows[0];
+  const hasHeader = [
+    'nome',
+    'telefone',
+    'numero',
+    'whatsapp',
+    'paciente',
+    'profissional',
+    'data',
+    'hora',
+  ].some((keyword) => firstRow.some((cell) => normalizeSpreadsheetHeader(cell).includes(keyword)));
+
+  const dataRows = hasHeader ? sanitizedRows.slice(1) : sanitizedRows;
+  const headers = hasHeader ? firstRow : [];
+
+  const columnMap = hasHeader
+    ? {
+      name: findSpreadsheetColumnIndex(headers, ['nome', 'name', 'contato']),
+      number: findSpreadsheetColumnIndex(headers, ['telefone', 'fone', 'celular', 'numero', 'numero whatsapp', 'whatsapp']),
+      paciente: findSpreadsheetColumnIndex(headers, ['paciente']),
+      profissional: findSpreadsheetColumnIndex(headers, ['profissional', 'medico', 'doutor', 'dr']),
+      data: findSpreadsheetColumnIndex(headers, ['data', 'dia']),
+      hora: findSpreadsheetColumnIndex(headers, ['hora', 'horario']),
+    }
+    : {
+      name: 0,
+      number: 1,
+      paciente: 2,
+      profissional: 3,
+      data: 4,
+      hora: 5,
+    };
+
+  const recipients = dataRows
+    .map((row) => ({
+      name: row[columnMap.name] || '',
+      number: row[columnMap.number] || '',
+      paciente: columnMap.paciente >= 0 ? row[columnMap.paciente] || '' : '',
+      profissional: columnMap.profissional >= 0 ? row[columnMap.profissional] || '' : '',
+      data: columnMap.data >= 0 ? row[columnMap.data] || '' : '',
+      hora: columnMap.hora >= 0 ? row[columnMap.hora] || '' : '',
+    }))
+    .filter((item) => item.name && item.number);
+
+  return {
+    recipients,
+    skippedRows: dataRows.length - recipients.length,
+  };
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -565,18 +644,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const response = await runWithGlobalLoading('Importando contatos...', async () => {
       const rows = await readSpreadsheet(file);
-      const importedContacts = rows
-        .map((row) => ({
-          listName: activeContactListName,
-          name: row[0] || '',
-          phone: row[1] || '',
-          paciente: row[2] || '',
-          profissional: row[3] || '',
-          data: row[4] || '',
-          hora: row[5] || '',
-          notes: row[6] || '',
-        }))
-        .filter((item) => item.name && item.phone);
+      const importedContacts = parseSpreadsheetRecipients(rows).recipients.map((recipient) => ({
+        listName: activeContactListName,
+        name: recipient.name,
+        phone: recipient.number,
+        paciente: recipient.paciente || '',
+        profissional: recipient.profissional || '',
+        data: recipient.data || '',
+        hora: recipient.hora || '',
+        notes: '',
+      }));
 
       const data = await apiRequest<{ message: string }>(
         '/api/contacts/import',
@@ -593,6 +670,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return data;
     });
     return response.message;
+  }
+
+  async function parseComposeRecipientsFromSpreadsheet(file: File) {
+    return runWithGlobalLoading('Lendo planilha...', async () => {
+      const rows = await readSpreadsheet(file);
+      const result = parseSpreadsheetRecipients(rows);
+
+      if (result.recipients.length === 0) {
+        throw new Error('Nenhum contato valido foi encontrado na planilha.');
+      }
+
+      return result;
+    });
   }
 
   async function saveAdminUser(payload: AdminUser, currentEmail?: string | null) {
@@ -705,6 +795,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         deleteContact,
         deleteContacts,
         importContactsFromSpreadsheet,
+        parseComposeRecipientsFromSpreadsheet,
         saveAdminUser,
         deleteAdminUser,
         toggleComposeList,

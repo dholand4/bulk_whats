@@ -39,6 +39,26 @@ export const UploadPanel = styled.div`
   background: rgba(255, 255, 255, 0.48);
 `;
 
+export const SpreadsheetDropzone = styled.label`
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px dashed rgba(18, 53, 36, 0.24);
+  background: rgba(18, 53, 36, 0.04);
+  cursor: pointer;
+`;
+
+export const HiddenFileInput = styled.input`
+  display: none;
+`;
+
+export const SpreadsheetSummary = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
 export const ListsStrip = styled(ContactListStrip)`
   grid-template-columns: repeat(2, minmax(0, 1fr));
   max-height: 540px;

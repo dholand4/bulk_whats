@@ -3,7 +3,7 @@ import { GlobalLoading } from './components/GlobalLoading';
 import { useApp } from './providers/AppProvider';
 import { AppRoutes } from './routes';
 
-const MIN_LOADING_DURATION_MS = 2250;
+const MIN_LOADING_DURATION_MS = 1500;
 
 function App() {
   const { globalLoadingMessage, isGlobalLoading } = useApp();

@@ -23,6 +23,7 @@ import {
   ComposeStack,
   FooterGrid,
   HeroPanel,
+  HiddenFileInput,
   ListItem,
   ListCardBadges,
   ListCardMain,
@@ -40,6 +41,8 @@ import {
   SelectionBar,
   SelectionSummary,
   SectionLabel,
+  SpreadsheetDropzone,
+  SpreadsheetSummary,
   SubmitPanel,
   UploadPanel,
 } from './styled';
@@ -56,6 +59,7 @@ export function ComposeView() {
     selectAllComposeLists,
     clearComposeLists,
     submitCompose,
+    parseComposeRecipientsFromSpreadsheet,
   } = useApp();
   const [guideOpen, setGuideOpen] = useState(false);
   const [previewListName, setPreviewListName] = useState('');
@@ -67,6 +71,16 @@ export function ComposeView() {
   const [scheduleAt, setScheduleAt] = useState('');
   const [delaySeconds, setDelaySeconds] = useState('3');
   const [files, setFiles] = useState<File[]>([]);
+  const [spreadsheetRecipients, setSpreadsheetRecipients] = useState<Array<{
+    name: string;
+    number: string;
+    paciente?: string;
+    profissional?: string;
+    data?: string;
+    hora?: string;
+  }>>([]);
+  const [spreadsheetFileName, setSpreadsheetFileName] = useState('');
+  const [spreadsheetSkippedRows, setSpreadsheetSkippedRows] = useState(0);
   const [excludedContactIds, setExcludedContactIds] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -109,7 +123,7 @@ export function ComposeView() {
   const listsPageCount = Math.max(1, Math.ceil(Math.max(filteredContactGroups.length, 1) / pageSize));
   const pagedContactGroups = filteredContactGroups.slice((listsPage - 1) * pageSize, listsPage * pageSize);
 
-  const recipients = useMemo(
+  const recipientsFromLists = useMemo(
     () =>
       selectedGroups
         .flatMap((group) =>
@@ -128,6 +142,32 @@ export function ComposeView() {
     [excludedContactIds, selectedGroups],
   );
 
+  const recipients = useMemo(() => {
+    const uniqueRecipients = new Map<string, {
+      name: string;
+      number: string;
+      listName?: string;
+      paciente?: string;
+      profissional?: string;
+      data?: string;
+      hora?: string;
+    }>();
+
+    [...recipientsFromLists, ...spreadsheetRecipients].forEach((recipient) => {
+      const normalizedNumber = String(recipient.number || '').replace(/\D/g, '');
+      if (!normalizedNumber || uniqueRecipients.has(normalizedNumber)) {
+        return;
+      }
+
+      uniqueRecipients.set(normalizedNumber, {
+        ...recipient,
+        number: normalizedNumber,
+      });
+    });
+
+    return Array.from(uniqueRecipients.values());
+  }, [recipientsFromLists, spreadsheetRecipients]);
+
   const previewGroup = useMemo(
     () => contactGroups.find((group) => group.listName === previewListName) || null,
     [contactGroups, previewListName],
@@ -139,6 +179,39 @@ export function ComposeView() {
 
   function handleFiles(event: ChangeEvent<HTMLInputElement>) {
     setFiles(Array.from(event.target.files || []));
+  }
+
+  async function handleSpreadsheetUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      setStatus('Lendo contatos da planilha...');
+      const result = await parseComposeRecipientsFromSpreadsheet(file);
+      setSpreadsheetRecipients(result.recipients);
+      setSpreadsheetFileName(file.name);
+      setSpreadsheetSkippedRows(result.skippedRows);
+      setStatus(
+        result.skippedRows > 0
+          ? `${result.recipients.length} contato(s) carregado(s) da planilha. ${result.skippedRows} linha(s) foram ignoradas.`
+          : `${result.recipients.length} contato(s) carregado(s) da planilha para envio temporario.`,
+      );
+    } catch (error) {
+      setSpreadsheetRecipients([]);
+      setSpreadsheetFileName('');
+      setSpreadsheetSkippedRows(0);
+      setStatus(error instanceof Error ? error.message : 'Falha ao ler a planilha.');
+    }
+  }
+
+  function clearSpreadsheetRecipients() {
+    setSpreadsheetRecipients([]);
+    setSpreadsheetFileName('');
+    setSpreadsheetSkippedRows(0);
   }
 
   function handleToggleList(listName: string, checked: boolean) {
@@ -224,6 +297,7 @@ export function ComposeView() {
       setScheduleAt('');
       setDelaySeconds('3');
       setFiles([]);
+      clearSpreadsheetRecipients();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Falha ao criar campanha.');
     }
@@ -248,6 +322,7 @@ export function ComposeView() {
         files,
       });
       setStatus(responseMessage);
+      clearSpreadsheetRecipients();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Falha ao enviar campanha.');
     }
@@ -342,7 +417,7 @@ export function ComposeView() {
                   </p>
                   {selectedContactListNames.size ? (
                     <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
-                      {recipients.length} contato(s) seguirao para este envio apos os ajustes.
+                      {recipientsFromLists.length} contato(s) seguirao para este envio apos os ajustes.
                     </p>
                   ) : null}
                 </div>
@@ -374,7 +449,13 @@ export function ComposeView() {
                 ) : null}
 
                 {contactGroups.length === 0 ? (
-                  <EmptyState>Cadastre listas e contatos na aba Contatos para montar campanhas.</EmptyState>
+                  spreadsheetRecipients.length > 0 ? (
+                    <EmptyState>
+                      Sua planilha ja esta pronta para uso. Se quiser, voce ainda pode combinar esse envio com listas salvas.
+                    </EmptyState>
+                  ) : (
+                    <EmptyState>Cadastre listas e contatos na aba Contatos para montar campanhas.</EmptyState>
+                  )
                 ) : filteredContactGroups.length === 0 ? (
                   <EmptyState>Nenhuma lista encontrada para essa busca.</EmptyState>
                 ) : (
@@ -455,6 +536,55 @@ export function ComposeView() {
                   </>
                 )}
               </ListsSection>
+            </UploadPanel>
+          </ComposeCard>
+
+          <ComposeCard>
+            <ComposeHeader>
+              <div>
+                <p style={{ margin: 0, color: 'var(--muted)', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.18em' }}>
+                  Planilha
+                </p>
+                <h3 style={{ margin: '6px 0 0' }}>Envio por Planilha</h3>
+              </div>
+            </ComposeHeader>
+
+            <UploadPanel>
+              <div>
+                <SectionLabel>Planilha avulsa</SectionLabel>
+                <p style={{ margin: 0, color: 'var(--muted)' }}>
+                  Suba uma planilha `.xlsx`, `.xls` ou `.csv` e envie sem salvar esses contatos no banco.
+                </p>
+                <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
+                  {spreadsheetRecipients.length > 0
+                    ? `${spreadsheetRecipients.length} contato(s) temporario(s) pronto(s) para este envio.`
+                    : 'Nenhuma planilha carregada ainda.'}
+                </p>
+              </div>
+
+              <SpreadsheetDropzone>
+                <strong>{spreadsheetFileName || 'Selecionar planilha para envio temporario'}</strong>
+                <span style={{ color: 'var(--muted)', fontSize: 13 }}>
+                  Colunas aceitas: nome, telefone, paciente, profissional, data e hora.
+                </span>
+                <HiddenFileInput type="file" accept=".xlsx,.xls,.csv" onChange={handleSpreadsheetUpload} />
+              </SpreadsheetDropzone>
+
+              {spreadsheetRecipients.length > 0 ? (
+                <SpreadsheetSummary>
+                  <Badge>{spreadsheetRecipients.length} contato(s) da planilha</Badge>
+                  {spreadsheetSkippedRows > 0 ? <Badge>{spreadsheetSkippedRows} linha(s) ignorada(s)</Badge> : null}
+                  <GhostButton type="button" onClick={clearSpreadsheetRecipients}>
+                    Remover planilha
+                  </GhostButton>
+                </SpreadsheetSummary>
+              ) : null}
+
+              {spreadsheetRecipients.length > 0 ? (
+                <EmptyState>
+                  Esses contatos entram apenas neste disparo e não ficam cadastrados em listas.
+                </EmptyState>
+              ) : null}
             </UploadPanel>
           </ComposeCard>
 
