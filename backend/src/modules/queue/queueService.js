@@ -8,6 +8,7 @@ const deviceLocks = new Set();
 const deviceCooldowns = new Map();
 const cancelRequests = new Set();
 let workerStarted = false;
+let tickInProgress = false;
 
 function nowIso() {
     return new Date().toISOString();
@@ -451,22 +452,42 @@ async function processItem(item) {
 }
 
 async function tick() {
-    const current = database.load();
-    const dueItems = current.queue
-        .filter((item) => item.status === 'pending' && new Date(item.scheduleAt) <= new Date())
-        .sort((a, b) => new Date(a.scheduleAt) - new Date(b.scheduleAt));
+    if (tickInProgress) {
+        return;
+    }
 
-    for (const item of dueItems) {
-        if (deviceLocks.has(item.deviceId)) {
-            continue;
+    tickInProgress = true;
+
+    try {
+        const current = database.load();
+        const dueItems = current.queue
+            .filter((item) => item.status === 'pending' && new Date(item.scheduleAt) <= new Date())
+            .sort((a, b) => new Date(a.scheduleAt) - new Date(b.scheduleAt));
+
+        const nextItemByDevice = new Map();
+
+        for (const item of dueItems) {
+            if (deviceLocks.has(item.deviceId)) {
+                continue;
+            }
+
+            if (getDeviceCooldownRemaining(item.deviceId) > 0) {
+                continue;
+            }
+
+            if (!nextItemByDevice.has(item.deviceId)) {
+                nextItemByDevice.set(item.deviceId, item);
+            }
         }
 
-        if (getDeviceCooldownRemaining(item.deviceId) > 0) {
-            continue;
-        }
-
-        // eslint-disable-next-line no-await-in-loop
-        await processItem(item);
+        await Promise.all(
+            Array.from(nextItemByDevice.values()).map((item) =>
+                processItem(item).catch((error) => {
+                    console.error(`Erro ao processar item ${item.id}:`, error.message);
+                })),
+        );
+    } finally {
+        tickInProgress = false;
     }
 }
 

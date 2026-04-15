@@ -12,6 +12,7 @@ const defaultDatabase = {
 
 let cache = null;
 let writeQueue = Promise.resolve();
+let updateQueue = Promise.resolve();
 
 function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -72,15 +73,23 @@ async function persist(nextDatabase) {
 }
 
 async function update(mutator) {
-    const current = load();
-    const next = clone(current);
-    const result = await mutator(next);
-    const persisted = await persist(next);
+    const runUpdate = async () => {
+        const current = load();
+        const next = clone(current);
+        const result = await mutator(next);
+        const persisted = await persist(next);
 
-    return {
-        database: persisted,
-        result,
+        return {
+            database: persisted,
+            result,
+        };
     };
+
+    const pendingUpdate = updateQueue.then(runUpdate);
+
+    updateQueue = pendingUpdate.catch(() => {});
+
+    return pendingUpdate;
 }
 
 module.exports = {
