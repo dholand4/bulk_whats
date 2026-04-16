@@ -482,7 +482,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
             message: payload.message,
             attachments,
             scheduleAt: payload.scheduleAt || null,
-            delaySeconds: payload.delaySeconds,
           }),
         },
         token,

@@ -67,7 +67,6 @@ export function groupCampaignItems(items: CampaignItem[], type: 'queue' | 'histo
         scheduleAt: item.scheduleAt,
         updatedAt: item.updatedAt,
         message: item.message || '',
-        delaySeconds: item.delaySeconds || 3,
         items: [],
       });
     }

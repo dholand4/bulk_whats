@@ -76,7 +76,6 @@ export function ComposeView() {
   const [deviceId, setDeviceId] = useState(devices[0]?.id || '');
   const [message, setMessage] = useState('');
   const [scheduleAt, setScheduleAt] = useState('');
-  const [delaySeconds, setDelaySeconds] = useState('3');
   const [files, setFiles] = useState<File[]>([]);
   const [spreadsheetRecipients, setSpreadsheetRecipients] = useState<Array<{
     name: string;
@@ -306,7 +305,6 @@ export function ComposeView() {
         campaignName: campaignName.trim(),
         message: message.trim(),
         scheduleAt: scheduleAt || null,
-        delaySeconds,
         recipients,
         files,
       });
@@ -314,7 +312,6 @@ export function ComposeView() {
       setCampaignName('');
       setMessage('');
       setScheduleAt('');
-      setDelaySeconds('3');
       setFiles([]);
       clearSpreadsheetRecipients();
     } catch (error) {
@@ -336,7 +333,6 @@ export function ComposeView() {
         campaignName: campaignName.trim(),
         message: message.trim(),
         scheduleAt: scheduleAt || null,
-        delaySeconds,
         recipients,
         files,
       });
@@ -355,7 +351,7 @@ export function ComposeView() {
             Mensagens
           </p>
           <h2 style={{ margin: '8px 0 4px' }}>Envio de Mensagens</h2>
-          <p style={{ margin: 0, color: 'var(--muted)' }}>Monte a campanha e defina como as mensagens serao enviadas.</p>
+          <p style={{ margin: 0, color: 'var(--muted)' }}>Monte a campanha com ritmo automatico e pausas aleatorias entre os envios.</p>
         </div>
         <GhostButton type="button" onClick={() => setGuideOpen(true)}>
           Guia rapido
@@ -685,14 +681,10 @@ export function ComposeView() {
             </InputGroup>
 
             <InputGroup>
-              <span>Intervalo entre mensagens</span>
-              <select value={delaySeconds} onChange={(event) => setDelaySeconds(event.target.value)}>
-                {['3', '4', '5', '6', '7', '8', '9', '10'].map((value) => (
-                  <option key={value} value={value}>
-                    {value} segundos
-                  </option>
-                ))}
-              </select>
+              <span>Ritmo do envio</span>
+              <p style={{ margin: 0, color: 'var(--muted)' }}>
+                Automatico: 6-20 segundos entre mensagens e pausas aleatorias de 1-3 minutos a cada 5-15 contatos.
+              </p>
             </InputGroup>
           </FooterGrid>
 

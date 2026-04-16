@@ -6,9 +6,17 @@ const { sendQueueItem } = require('../messages/messageSender');
 
 const deviceLocks = new Set();
 const deviceCooldowns = new Map();
+const devicePacingState = new Map();
 const cancelRequests = new Set();
 let workerStarted = false;
 let tickInProgress = false;
+
+const RANDOM_SEND_DELAY_MIN_SECONDS = 6;
+const RANDOM_SEND_DELAY_MAX_SECONDS = 20;
+const RANDOM_BATCH_SIZE_MIN = 5;
+const RANDOM_BATCH_SIZE_MAX = 15;
+const RANDOM_BATCH_PAUSE_MIN_SECONDS = 60;
+const RANDOM_BATCH_PAUSE_MAX_SECONDS = 180;
 
 function nowIso() {
     return new Date().toISOString();
@@ -42,10 +50,25 @@ function normalizeSchedule(scheduleAt) {
 function normalizeDelaySeconds(delaySeconds) {
     const parsed = Number.parseInt(delaySeconds, 10);
     if (Number.isNaN(parsed)) {
-        return 3;
+        return RANDOM_SEND_DELAY_MIN_SECONDS;
     }
 
-    return Math.min(10, Math.max(3, parsed));
+    return Math.min(RANDOM_SEND_DELAY_MAX_SECONDS, Math.max(RANDOM_SEND_DELAY_MIN_SECONDS, parsed));
+}
+
+function randomBetween(min, max) {
+    return Math.floor(Math.random() * ((max - min) + 1)) + min;
+}
+
+function getDevicePacingState(deviceId) {
+    if (!devicePacingState.has(deviceId)) {
+        devicePacingState.set(deviceId, {
+            sentSincePause: 0,
+            nextPauseThreshold: randomBetween(RANDOM_BATCH_SIZE_MIN, RANDOM_BATCH_SIZE_MAX),
+        });
+    }
+
+    return devicePacingState.get(deviceId);
 }
 
 function createQueueItem(base) {
@@ -358,6 +381,22 @@ function scheduleDeviceCooldown(deviceId, delaySeconds) {
     deviceCooldowns.set(deviceId, Date.now() + (normalizeDelaySeconds(delaySeconds) * 1000));
 }
 
+function scheduleNextDeviceCooldown(deviceId) {
+    const pacingState = getDevicePacingState(deviceId);
+    pacingState.sentSincePause += 1;
+
+    let nextCooldownSeconds = randomBetween(RANDOM_SEND_DELAY_MIN_SECONDS, RANDOM_SEND_DELAY_MAX_SECONDS);
+
+    if (pacingState.sentSincePause >= pacingState.nextPauseThreshold) {
+        nextCooldownSeconds = randomBetween(RANDOM_BATCH_PAUSE_MIN_SECONDS, RANDOM_BATCH_PAUSE_MAX_SECONDS);
+        pacingState.sentSincePause = 0;
+        pacingState.nextPauseThreshold = randomBetween(RANDOM_BATCH_SIZE_MIN, RANDOM_BATCH_SIZE_MAX);
+    }
+
+    scheduleDeviceCooldown(deviceId, nextCooldownSeconds);
+    return nextCooldownSeconds;
+}
+
 async function processItem(item) {
     if (deviceLocks.has(item.deviceId)) {
         return;
@@ -429,7 +468,7 @@ async function processItem(item) {
                 errorMessage: '',
                 sentAt: nowIso(),
             });
-            scheduleDeviceCooldown(queueItem.deviceId, queueItem.delaySeconds);
+            scheduleNextDeviceCooldown(queueItem.deviceId);
         });
     } catch (error) {
         await updateQueueItem(item.id, (queueItem, dbState) => {

@@ -69,7 +69,7 @@ export function CampaignGroupList({
             </SummaryMain>
 
             <SummarySide>
-              {mode === 'queue' ? <span><strong>Intervalo:</strong> {group.delaySeconds}s</span> : null}
+              {mode === 'queue' ? <span><strong>Ritmo:</strong> Aleatorio</span> : null}
               <span><strong>Status:</strong> {buildStatusSummary(group.items)}</span>
               {mode === 'queue' && onCancelCampaign ? (
                 <InlineActions>
@@ -103,7 +103,9 @@ export function CampaignGroupList({
                   <strong>{mode === 'queue' ? 'Agendada para' : 'Atualizado em'}:</strong>{' '}
                   {formatDateTime(mode === 'queue' ? group.scheduleAt : group.updatedAt)}
                 </p>
-                <p><strong>Intervalo:</strong> {group.delaySeconds} segundos</p>
+                {mode === 'queue' ? (
+                  <p><strong>Ritmo:</strong> 6-20 segundos com pausas aleatorias de 1-3 minutos a cada 5-15 contatos.</p>
+                ) : null}
               </NoteCard>
             </DetailGrid>
 

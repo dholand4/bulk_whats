@@ -78,7 +78,6 @@ export interface CampaignGroup {
   scheduleAt: string;
   updatedAt: string;
   message: string;
-  delaySeconds: number;
   items: CampaignItem[];
 }
 
@@ -108,7 +107,6 @@ export interface ComposePayload {
   campaignName: string;
   message: string;
   scheduleAt: string | null;
-  delaySeconds: string;
   recipients: ComposeRecipient[];
   files: File[];
 }
