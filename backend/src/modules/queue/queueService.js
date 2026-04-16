@@ -11,8 +11,8 @@ const cancelRequests = new Set();
 let workerStarted = false;
 let tickInProgress = false;
 
-const RANDOM_SEND_DELAY_MIN_SECONDS = 6;
-const RANDOM_SEND_DELAY_MAX_SECONDS = 20;
+const RANDOM_SEND_DELAY_MIN_SECONDS = 8;
+const RANDOM_SEND_DELAY_MAX_SECONDS = 22;
 const RANDOM_BATCH_SIZE_MIN = 5;
 const RANDOM_BATCH_SIZE_MAX = 15;
 const RANDOM_BATCH_PAUSE_MIN_SECONDS = 60;

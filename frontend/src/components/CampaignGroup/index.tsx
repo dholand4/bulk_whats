@@ -118,7 +118,7 @@ export function CampaignGroupList({
                     </p>
                     {mode === 'queue' ? (
                       <>
-                        <p><strong>Ritmo:</strong> 6-20 segundos com pausas aleatorias de 1-3 minutos a cada 5-15 contatos.</p>
+                        <p><strong>Ritmo:</strong> 8-22 segundos com pausas aleatorias de 1-3 minutos a cada 5-15 contatos.</p>
                         <p><strong>Duracao media apos iniciar:</strong> {formatDurationEstimate(estimatedDurationSeconds)}</p>
                         <p><strong>Previsao media de termino:</strong> {estimatedEndDate ? formatDateTime(estimatedEndDate.toISOString()) : '-'}</p>
                         <p><strong>Observacao:</strong> essa previsao pode terminar antes ou depois porque o ritmo do envio e randomico.</p>

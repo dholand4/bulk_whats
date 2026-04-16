@@ -17,7 +17,7 @@ export function formatDisplayDate(value?: string | null) {
   return value;
 }
 
-const AVERAGE_SEND_DELAY_SECONDS = 13;
+const AVERAGE_SEND_DELAY_SECONDS = 15;
 const AVERAGE_BATCH_SIZE = 10;
 const AVERAGE_BATCH_PAUSE_SECONDS = 120;
 
