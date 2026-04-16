@@ -42,3 +42,42 @@ export const LoginDescription = styled.p`
   margin: 0;
   color: var(--muted);
 `;
+
+export const PasswordField = styled.div`
+  position: relative;
+  display: grid;
+
+  input {
+    padding-right: 50px;
+  }
+`;
+
+export const PasswordToggle = styled.button`
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: none;
+
+  &:hover {
+    transform: translateY(-50%);
+    background: rgba(18, 53, 36, 0.06);
+    color: var(--primary);
+    filter: none;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(18, 53, 36, 0.08);
+    color: var(--primary);
+  }
+`;

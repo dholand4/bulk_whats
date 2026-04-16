@@ -1,12 +1,23 @@
 import { FormEvent, useState } from 'react';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { Eyebrow, InputGroup, Stack, StatusText } from '../../components/AppShell/styled';
 import { useApp } from '../../providers/AppProvider';
-import { LoginCard, LoginDescription, LoginEyebrow, LoginHeader, LoginLayout, LoginTitle } from './styled';
+import {
+  LoginCard,
+  LoginDescription,
+  LoginEyebrow,
+  LoginHeader,
+  LoginLayout,
+  LoginTitle,
+  PasswordField,
+  PasswordToggle,
+} from './styled';
 
 export function LoginView() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { login, loginStatus, isGlobalLoading } = useApp();
   const navigate = useNavigate();
 
@@ -46,13 +57,36 @@ export function LoginView() {
             </InputGroup>
             <InputGroup>
               <span>Senha</span>
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Digite sua senha"
-                required
-              />
+              <PasswordField>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Digite sua senha"
+                  autoComplete="current-password"
+                  required
+                />
+                <PasswordToggle
+                  type="button"
+                  aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                  aria-pressed={showPassword}
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setShowPassword((current) => !current);
+                  }}
+                >
+                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </PasswordToggle>
+              </PasswordField>
             </InputGroup>
             <button type="submit" disabled={isGlobalLoading}>
               Entrar
