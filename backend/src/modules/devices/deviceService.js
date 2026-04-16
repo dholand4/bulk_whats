@@ -42,22 +42,61 @@ async function ensurePersonalDevice(email) {
 
 function decorateDevice(device) {
     const runtime = clientManager.getDeviceRuntime(device.id);
+    const isStaleConnectedState = ['connected', 'authenticated'].includes(device.status)
+        && !runtime.hasClient
+        && !runtime.initializing;
+
     return {
         ...device,
+        status: isStaleConnectedState ? 'resetting_session' : device.status,
+        lastKnownStatus: isStaleConnectedState
+            ? 'Conexao perdida. Aguarde enquanto geramos um novo QR Code.'
+            : device.lastKnownStatus,
+        connectedNumber: isStaleConnectedState ? null : device.connectedNumber,
         qrCode: runtime.qrCode,
         pairingCode: runtime.pairingCode,
         runtime,
     };
 }
 
+async function recoverMissingRuntimeIfNeeded(device, { skipSessionRestore = false } = {}) {
+    const runtime = clientManager.getDeviceRuntime(device.id);
+    if (runtime.hasClient || runtime.initializing) {
+        return;
+    }
+
+    if (['connected', 'authenticated'].includes(device.status)) {
+        await database.update((current) => {
+            const currentDevice = current.devices.find((item) => item.id === device.id);
+            if (!currentDevice) {
+                return;
+            }
+
+            currentDevice.status = 'resetting_session';
+            currentDevice.lastKnownStatus = 'Conexao perdida. Aguarde enquanto geramos um novo QR Code.';
+            currentDevice.connectedNumber = null;
+            currentDevice.updatedAt = new Date().toISOString();
+        });
+    }
+
+    setTimeout(() => {
+        clientManager.initializeDevice(device, { skipSessionRestore }).catch((error) => {
+            console.error('Falha ao recuperar dispositivo sem cliente ativo:', error.message);
+        });
+    }, 50);
+}
+
 async function listDevices(auth) {
     await ensurePersonalDevice(auth.email);
     const current = database.load();
     const ownDevice = current.devices.find((item) => item.id === auth.email);
+    if (ownDevice) {
+        await recoverMissingRuntimeIfNeeded(ownDevice);
+    }
     return {
         statusCode: 200,
         body: {
-            devices: ownDevice ? [decorateDevice(ownDevice)] : [],
+            devices: ownDevice ? [decorateDevice(getDeviceOrThrow(database.load(), auth.email))] : [],
         },
     };
 }
@@ -94,7 +133,7 @@ async function reconnectDevice(deviceId, auth) {
     }
     const current = database.load();
     const device = getDeviceOrThrow(current, deviceId);
-    await clientManager.destroyClient(deviceId);
+    await clientManager.destroyClient(deviceId, { suppressAutoReset: true });
     await clientManager.initializeDevice(device);
 
     return {
@@ -111,19 +150,31 @@ async function disconnectDevice(deviceId, auth) {
         throw new Error('Dispositivo invalido para este usuario.');
     }
 
-    await clientManager.destroyClient(deviceId, { removeSession: true, logout: true });
+    await clientManager.destroyClient(deviceId, { removeSession: true, logout: true, suppressAutoReset: true });
+    await database.update((current) => {
+        const device = current.devices.find((item) => item.id === deviceId);
+        if (!device) {
+            return;
+        }
 
-    const updatedDevice = await updateDevice(deviceId, {
-        status: 'disconnected',
-        lastKnownStatus: 'Desconectado pelo usuario',
-        connectedNumber: null,
+        device.status = 'resetting_session';
+        device.lastKnownStatus = 'Aguarde, apagando ultimos registros para gerar um novo QR Code.';
+        device.connectedNumber = null;
+        device.updatedAt = new Date().toISOString();
     });
+
+    const refreshedDevice = getDeviceOrThrow(database.load(), deviceId);
+    setTimeout(() => {
+        clientManager.initializeDevice(refreshedDevice, { skipSessionRestore: true }).catch((error) => {
+            console.error('Falha ao reinicializar dispositivo apos desconexao manual:', error.message);
+        });
+    }, 50);
 
     return {
         statusCode: 200,
         body: {
-            message: 'Dispositivo desconectado com sucesso.',
-            device: decorateDevice(updatedDevice || getDeviceOrThrow(database.load(), deviceId)),
+            message: 'Dispositivo desconectado. Aguarde enquanto apagamos os ultimos registros para gerar um novo QR Code.',
+            device: decorateDevice(getDeviceOrThrow(database.load(), deviceId)),
         },
     };
 }
@@ -134,11 +185,7 @@ async function getDeviceAuth(deviceId, auth) {
     }
     const current = database.load();
     const device = getDeviceOrThrow(current, deviceId);
-
-    const runtime = clientManager.getDeviceRuntime(device.id);
-    if (!runtime.hasClient && !runtime.initializing && !['connected', 'authenticated'].includes(device.status)) {
-        await clientManager.initializeDevice(device);
-    }
+    await recoverMissingRuntimeIfNeeded(device);
 
     return {
         statusCode: 200,
@@ -169,7 +216,7 @@ async function removeDevice(deviceId, auth) {
     if (deviceId !== auth.email) {
         throw new Error('Dispositivo invalido para este usuario.');
     }
-    await clientManager.destroyClient(deviceId, { removeSession: true, logout: true });
+    await clientManager.destroyClient(deviceId, { removeSession: true, logout: true, suppressAutoReset: true });
 
     await database.update((current) => {
         current.devices = current.devices.filter((item) => item.id !== deviceId);

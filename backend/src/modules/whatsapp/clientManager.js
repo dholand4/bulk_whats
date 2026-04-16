@@ -81,6 +81,9 @@ function getRuntime(deviceId) {
             freshAuthAttempts: 0,
             persistingSession: false,
             pendingSessionPersist: false,
+            resetInProgress: false,
+            suppressDisconnectReset: false,
+            timeoutRecoveryAttempts: 0,
         });
     }
 
@@ -125,6 +128,42 @@ async function cleanupSessionArtifacts(deviceId) {
     await terminateBrowserProcessesForSession(getLegacyHashedSessionPath(deviceId));
     await removeSessionDirectory(deviceId);
     await sessionStore.deleteSessionArchive(deviceId, deviceId);
+}
+
+function getDeviceFromDatabase(deviceId) {
+    const current = database.load();
+    return current.devices.find((item) => item.id === deviceId) || null;
+}
+
+async function resetDeviceSession(deviceId, statusMessage) {
+    const runtime = getRuntime(deviceId);
+    if (runtime.resetInProgress) {
+        return;
+    }
+
+    runtime.resetInProgress = true;
+    runtime.client = null;
+    runtime.qrCode = null;
+    runtime.pairingCode = null;
+    runtime.lastError = null;
+    finishInitialization(runtime);
+
+    try {
+        await updateDevice(deviceId, {
+            status: 'resetting_session',
+            lastKnownStatus: statusMessage,
+            connectedNumber: null,
+        });
+
+        await cleanupSessionArtifacts(deviceId);
+
+        const device = getDeviceFromDatabase(deviceId);
+        if (device) {
+            await initializeDevice(device, { skipSessionRestore: true });
+        }
+    } finally {
+        runtime.resetInProgress = false;
+    }
 }
 
 async function retryWithFreshSession(device, reason) {
@@ -175,13 +214,27 @@ function scheduleInitializationTimeout(device) {
             console.error('Falha ao recriar sessao apos timeout:', error.message);
         }
 
+        if (runtime.timeoutRecoveryAttempts < 2) {
+            runtime.timeoutRecoveryAttempts += 1;
+
+            try {
+                await resetDeviceSession(
+                    device.id,
+                    `A autenticacao demorou mais que o esperado. Aguarde, apagando ultimos registros para gerar novo QR Code... (${runtime.timeoutRecoveryAttempts}/2)`,
+                );
+                return;
+            } catch (error) {
+                console.error('Falha ao resetar sessao apos timeout:', error.message);
+            }
+        }
+
         runtime.initializing = false;
-        runtime.lastError = 'Tempo limite ao iniciar a autenticacao do WhatsApp. Tente conectar novamente.';
+        runtime.lastError = 'Nao foi possivel gerar o QR Code automaticamente. Clique em conectar para tentar novamente.';
         runtime.client = null;
 
         updateDevice(device.id, {
             status: 'error',
-            lastKnownStatus: 'Tempo limite ao iniciar a autenticacao do WhatsApp',
+            lastKnownStatus: 'Nao foi possivel gerar o QR Code automaticamente',
             connectedNumber: null,
         }).catch((error) => {
             console.error('Falha ao atualizar timeout de inicializacao:', error.message);
@@ -408,6 +461,7 @@ function registerEvents(device, client) {
             runtime.qrCode = await qrcode.toDataURL(qr);
             runtime.pairingCode = null;
             runtime.freshAuthAttempts = 0;
+            runtime.timeoutRecoveryAttempts = 0;
             await updateDevice(device.id, {
                 status: 'qr_ready',
                 lastKnownStatus: 'QR Code disponivel',
@@ -420,6 +474,7 @@ function registerEvents(device, client) {
             finishInitialization(runtime);
             runtime.pairingCode = code;
             runtime.freshAuthAttempts = 0;
+            runtime.timeoutRecoveryAttempts = 0;
             await updateDevice(device.id, {
                 status: 'pairing_code_ready',
                 lastKnownStatus: 'Codigo de pareamento disponivel',
@@ -435,6 +490,7 @@ function registerEvents(device, client) {
             runtime.lastError = null;
             runtime.retries = 0;
             runtime.freshAuthAttempts = 0;
+            runtime.timeoutRecoveryAttempts = 0;
 
             await updateDevice(device.id, {
                 status: 'authenticated',
@@ -453,6 +509,7 @@ function registerEvents(device, client) {
             runtime.lastError = null;
             runtime.retries = 0;
             runtime.freshAuthAttempts = 0;
+            runtime.timeoutRecoveryAttempts = 0;
             await updateDevice(device.id, {
                 status: 'connected',
                 lastKnownStatus: 'Conectado',
@@ -467,27 +524,32 @@ function registerEvents(device, client) {
             finishInitialization(runtime);
             runtime.lastError = message;
             runtime.client = null;
-            await updateDevice(device.id, {
-                status: 'auth_failure',
-                lastKnownStatus: `Falha de autenticacao: ${message}`,
-                connectedNumber: null,
-            });
+            await resetDeviceSession(
+                device.id,
+                `Falha de autenticacao. Limpando sessao antiga para gerar um novo QR Code...`,
+            );
         });
     });
 
     client.on('disconnected', (reason) => {
         runEventSafely(device.id, 'disconnected', async () => {
+            const shouldSuppressReset = runtime.suppressDisconnectReset;
             runtime.qrCode = null;
             runtime.pairingCode = null;
             finishInitialization(runtime);
             runtime.client = null;
             runtime.retries = 0;
             runtime.freshAuthAttempts = 0;
-            await updateDevice(device.id, {
-                status: 'disconnected',
-                lastKnownStatus: `Desconectado: ${reason}`,
-                connectedNumber: null,
-            });
+            runtime.suppressDisconnectReset = false;
+
+            if (shouldSuppressReset) {
+                return;
+            }
+
+            await resetDeviceSession(
+                device.id,
+                `WhatsApp desconectado (${reason}). Aguarde, apagando ultimos registros para gerar novo QR Code...`,
+            );
         });
     });
 
@@ -665,10 +727,10 @@ async function bootstrapPersistedDevices() {
     );
 }
 
-async function destroyClient(deviceId, { removeSession = false, logout = false } = {}) {
+async function destroyClient(deviceId, { removeSession = false, logout = false, suppressAutoReset = false } = {}) {
     const runtime = getRuntime(deviceId);
     const client = runtime.client;
-    const sessionPath = getSessionPath(deviceId);
+    runtime.suppressDisconnectReset = suppressAutoReset;
 
     if (client) {
         try {
@@ -692,6 +754,9 @@ async function destroyClient(deviceId, { removeSession = false, logout = false }
     finishInitialization(runtime);
     runtime.retries = 0;
     runtime.freshAuthAttempts = 0;
+    runtime.resetInProgress = false;
+    runtime.suppressDisconnectReset = false;
+    runtime.timeoutRecoveryAttempts = 0;
 
     if (removeSession) {
         await cleanupSessionArtifacts(deviceId);

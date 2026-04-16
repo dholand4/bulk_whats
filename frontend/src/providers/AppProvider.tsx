@@ -267,7 +267,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (['connected', 'authenticated', 'initializing', 'qr_ready'].includes(device.status)) {
+    if (
+      ['connected', 'authenticated', 'initializing', 'qr_ready', 'resetting_session'].includes(device.status)
+      && device.runtime?.hasClient !== false
+    ) {
       return;
     }
 
@@ -295,7 +298,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (!['initializing', 'qr_ready', 'pairing_code_ready', 'auth_failure', 'disconnected', 'error'].includes(activeDevice.status)) {
+    if (
+      !['initializing', 'resetting_session', 'qr_ready', 'pairing_code_ready', 'auth_failure', 'disconnected', 'error'].includes(activeDevice.status)
+      && activeDevice.runtime?.hasClient !== false
+    ) {
       return;
     }
 
@@ -434,7 +440,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const currentDevice = devices.find((device) => device.id === deviceId);
     setExpandedDeviceId(deviceId);
 
-    if (currentDevice?.status === 'connected') {
+    if (currentDevice?.status === 'connected' && currentDevice.runtime?.hasClient !== false) {
       window.alert('Dispositivo autenticado e pronto para enviar mensagens.');
       await refreshData();
       return;
@@ -448,8 +454,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   async function disconnectDevice(deviceId: string) {
-    const response = await runWithGlobalLoading('Desconectando dispositivo...', async () => {
+    setExpandedDeviceId(deviceId);
+    setDevices((current) => current.map((device) => (
+      device.id === deviceId
+        ? {
+          ...device,
+          status: 'resetting_session',
+          lastKnownStatus: 'Aguarde, apagando ultimos registros para gerar um novo QR Code.',
+          connectedNumber: null,
+          qrCode: undefined,
+          pairingCode: undefined,
+          runtime: {
+            ...device.runtime,
+            hasClient: false,
+            initializing: true,
+            lastError: '',
+          },
+        }
+        : device
+    )));
+
+    const response = await runWithGlobalLoading('Aguarde, apagando ultimos registros para gerar novo QR Code...', async () => {
       const data = await apiRequest<{ message: string }>(`/api/devices/${deviceId}/disconnect`, { method: 'POST' }, token);
+      await apiRequest(`/api/devices/${deviceId}/auth`, {}, token);
       await refreshData();
       return data;
     });

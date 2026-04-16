@@ -13,7 +13,7 @@ interface DeviceCardListProps {
 }
 
 function isDeviceConnected(device: Device) {
-  return ['connected', 'authenticated'].includes(device.status);
+  return ['connected', 'authenticated'].includes(device.status) && device.runtime?.hasClient !== false;
 }
 
 function getConnectButtonLabel(device: Device) {
@@ -38,7 +38,7 @@ function isBenignRuntimeError(error?: string) {
 }
 
 function renderDeviceStatus(device: Device) {
-  if (device.status === 'connected' || device.status === 'authenticated') {
+  if ((device.status === 'connected' || device.status === 'authenticated') && device.runtime?.hasClient !== false) {
     return 'Dispositivo autenticado e pronto para enviar mensagens.';
   }
 
@@ -54,8 +54,16 @@ function renderDeviceStatus(device: Device) {
     return 'Verificando sessao existente e preparando autenticacao...';
   }
 
+  if (device.status === 'resetting_session') {
+    return 'Aguarde, apagando ultimos registros para gerar um novo QR Code...';
+  }
+
+  if (device.status === 'error') {
+    return 'Nao foi possivel gerar o QR Code automaticamente. Clique em conectar para tentar novamente.';
+  }
+
   if (['disconnected', 'auth_failure'].includes(device.status)) {
-    return 'Sessao expirada ou desconectada. Clique em conectar e escaneie o QR Code para reconectar.';
+    return 'Sessao expirada ou desconectada. O sistema vai limpar os registros anteriores e exibir um novo QR Code automaticamente.';
   }
 
   return 'QR Code ainda nao disponivel. Aguarde alguns segundos.';
@@ -82,11 +90,12 @@ export function DeviceCardList({ devices, expandedDeviceId, onConnect, onDisconn
       return;
     }
 
+    const deviceId = confirmDevice.id;
     setDisconnecting(true);
+    setConfirmDevice(null);
 
     try {
-      await onDisconnect(confirmDevice.id);
-      setConfirmDevice(null);
+      await onDisconnect(deviceId);
     } finally {
       setDisconnecting(false);
     }
