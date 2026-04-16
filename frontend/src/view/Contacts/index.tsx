@@ -558,7 +558,7 @@ export function ContactsView() {
                         inputMode="numeric"
                         autoComplete="tel"
                         maxLength={15}
-                        placeholder="(88) 99700-0530"
+                        placeholder="(99) 99999-9999"
                         value={draft.phone}
                         onChange={(event) => setDraft((current) => ({
                           ...current,

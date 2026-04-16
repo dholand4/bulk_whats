@@ -2,7 +2,7 @@ import { Device } from '../../types';
 import { formatDateTime } from '../../utils/format';
 import { Badge, DangerButton, EmptyState, GhostButton, MutedText } from '../AppShell/styled';
 import { ConfirmModal } from '../ConfirmModal';
-import { AuthBox, DeviceActions, DeviceCardWrap, DeviceGrid, DeviceMeta, QrImage } from './styled';
+import { AuthBox, DeviceActions, DeviceCardWrap, DeviceGrid, DeviceHeader, DeviceMeta, QrImage } from './styled';
 import { useState } from 'react';
 
 interface DeviceCardListProps {
@@ -97,11 +97,11 @@ export function DeviceCardList({ devices, expandedDeviceId, onConnect, onDisconn
       <DeviceGrid>
         {devices.map((device) => (
           <DeviceCardWrap key={device.id}>
-            <div>
+            <DeviceHeader>
               <Badge>{device.status}</Badge>
               <h3>{device.name}</h3>
               <MutedText>{device.description || 'Sem descricao.'}</MutedText>
-            </div>
+            </DeviceHeader>
 
             <DeviceMeta>
               <span>ID: {device.id}</span>

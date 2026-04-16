@@ -20,6 +20,19 @@ export const DeviceCardWrap = styled.article`
   }
 `;
 
+export const DeviceHeader = styled.div`
+  display: grid;
+  gap: 10px;
+
+  h3,
+  p {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+`;
+
 export const DeviceMeta = styled.div`
   display: grid;
   gap: 8px;
@@ -27,6 +40,12 @@ export const DeviceMeta = styled.div`
   font-size: 14px;
 
   span {
+    display: grid;
+    gap: 2px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.56);
     min-width: 0;
     overflow-wrap: anywhere;
     word-break: break-word;
