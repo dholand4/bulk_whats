@@ -55,6 +55,7 @@ import {
 } from './styled';
 
 const placeholderTokens = ['{nome}', '{paciente}', '{profissional}', '{data}', '{hora}'];
+const duplicateAllowedNumbers = new Set(['88997000530', '88999351235']);
 
 export function ComposeView() {
   const {
@@ -158,10 +159,31 @@ export function ComposeView() {
       data?: string;
       hora?: string;
     }>();
+    const allowedDuplicateRecipients: Array<{
+      name: string;
+      number: string;
+      listName?: string;
+      paciente?: string;
+      profissional?: string;
+      data?: string;
+      hora?: string;
+    }> = [];
 
     [...recipientsFromLists, ...spreadsheetRecipients].forEach((recipient) => {
       const normalizedNumber = String(recipient.number || '').replace(/\D/g, '');
-      if (!normalizedNumber || uniqueRecipients.has(normalizedNumber)) {
+      if (!normalizedNumber) {
+        return;
+      }
+
+      if (duplicateAllowedNumbers.has(normalizedNumber)) {
+        allowedDuplicateRecipients.push({
+          ...recipient,
+          number: normalizedNumber,
+        });
+        return;
+      }
+
+      if (uniqueRecipients.has(normalizedNumber)) {
         return;
       }
 
@@ -171,7 +193,7 @@ export function ComposeView() {
       });
     });
 
-    return Array.from(uniqueRecipients.values());
+    return [...Array.from(uniqueRecipients.values()), ...allowedDuplicateRecipients];
   }, [recipientsFromLists, spreadsheetRecipients]);
 
   const previewGroup = useMemo(
