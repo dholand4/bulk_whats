@@ -12,6 +12,10 @@ import {
 } from '../../components/AppShell/styled';
 import { useApp } from '../../providers/AppProvider';
 import {
+  AttachmentHint,
+  AttachmentItem,
+  AttachmentList,
+  AttachmentMeta,
   AttachmentPreview,
   ContactPreviewCard,
   ContactPreviewHeader,
@@ -46,6 +50,7 @@ import {
   SpreadsheetDropzone,
   SpreadsheetSummary,
   SubmitPanel,
+  UploadDropzone,
   UploadPanel,
 } from './styled';
 
@@ -181,6 +186,18 @@ export function ComposeView() {
 
   function handleFiles(event: ChangeEvent<HTMLInputElement>) {
     setFiles(Array.from(event.target.files || []));
+  }
+
+  function formatFileSize(size: number) {
+    if (size < 1024) {
+      return `${size} B`;
+    }
+
+    if (size < 1024 * 1024) {
+      return `${(size / 1024).toFixed(1)} KB`;
+    }
+
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   async function handleSpreadsheetUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -624,9 +641,28 @@ export function ComposeView() {
                 <SectionLabel>Arquivos da campanha</SectionLabel>
                 <p style={{ margin: 0, color: 'var(--muted)' }}>A legenda vai no primeiro anexo.</p>
               </div>
-              <input type="file" multiple onChange={handleFiles} />
+
+              <UploadDropzone>
+                <strong>{files.length ? `${files.length} arquivo(s) selecionado(s)` : 'Selecionar arquivos da campanha'}</strong>
+                <AttachmentHint>
+                  Envie imagens, documentos, audios ou videos. Voce pode selecionar varios arquivos de uma vez.
+                </AttachmentHint>
+                <HiddenFileInput type="file" multiple onChange={handleFiles} />
+              </UploadDropzone>
+
               <AttachmentPreview>
-                {files.length ? files.map((file) => file.name).join(', ') : 'Nenhum anexo selecionado.'}
+                {files.length ? (
+                  <AttachmentList>
+                    {files.map((file) => (
+                      <AttachmentItem key={`${file.name}-${file.size}-${file.lastModified}`}>
+                        <strong>{file.name}</strong>
+                        <AttachmentMeta>{formatFileSize(file.size)}</AttachmentMeta>
+                      </AttachmentItem>
+                    ))}
+                  </AttachmentList>
+                ) : (
+                  <AttachmentHint>Nenhum anexo selecionado.</AttachmentHint>
+                )}
               </AttachmentPreview>
             </UploadPanel>
           </ComposeCard>

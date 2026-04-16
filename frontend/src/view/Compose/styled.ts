@@ -63,6 +63,12 @@ export const SpreadsheetDropzone = styled.label`
   cursor: pointer;
 `;
 
+export const UploadDropzone = styled(SpreadsheetDropzone)`
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(18, 53, 36, 0.03)),
+    rgba(18, 53, 36, 0.04);
+`;
+
 export const HiddenFileInput = styled.input`
   display: none;
 `;
@@ -148,6 +154,44 @@ export const FooterGrid = styled.div`
 `;
 
 export const AttachmentPreview = styled.div`
+  display: grid;
+  gap: 10px;
+`;
+
+export const AttachmentHint = styled.span`
+  color: var(--muted);
+  font-size: 13px;
+`;
+
+export const AttachmentList = styled.div`
+  display: grid;
+  gap: 8px;
+`;
+
+export const AttachmentItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.62);
+
+  strong,
+  span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
+export const AttachmentMeta = styled.span`
   color: var(--muted);
   font-size: 13px;
 `;
