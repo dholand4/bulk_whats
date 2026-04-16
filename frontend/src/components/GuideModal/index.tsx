@@ -1,15 +1,112 @@
 import { GhostButton, PanelHeading } from '../AppShell/styled';
 import { CodeExample, GuideContent, ModalCard, Overlay, Step } from './styled';
 
+type GuideModalVariant = 'compose' | 'contacts';
+
 interface GuideModalProps {
   open: boolean;
   onClose: () => void;
+  variant: GuideModalVariant;
 }
 
-export function GuideModal({ open, onClose }: GuideModalProps) {
+const guideContentByVariant: Record<GuideModalVariant, { title: string; steps: Array<{
+  title: string;
+  description?: string;
+  bullets?: string[];
+  code?: string[];
+}> }> = {
+  compose: {
+    title: 'Como montar um envio',
+    steps: [
+      {
+        title: '1. Dê um nome para a campanha',
+        bullets: [
+          'Preencha o campo Nome da campanha para identificar esse envio depois.',
+          'Use nomes simples como lembrete-consulta, cobranca ou convite-evento.',
+        ],
+      },
+      {
+        title: '2. Escolha de onde saem os contatos',
+        bullets: [
+          'Selecione uma ou mais listas em Listas selecionadas para usar os contatos ja cadastrados.',
+          'Se precisar, abra Ver contatos para remover pessoas apenas deste envio.',
+        ],
+      },
+      {
+        title: '3. Use planilha quando quiser envio temporario',
+        description: 'A planilha pode ser .xlsx, .xls ou .csv e deve ter colunas com estes nomes:',
+        code: [
+          'nome',
+          'telefone',
+          'paciente',
+          'profissional',
+          'data',
+          'hora',
+        ],
+        bullets: [
+          'Esses contatos entram so neste disparo e nao ficam salvos nas listas.',
+        ],
+      },
+      {
+        title: '4. Escreva a mensagem com variaveis',
+        description: 'No campo Mensagem, voce pode personalizar o texto com:',
+        code: ['{nome}', '{paciente}', '{profissional}', '{data}', '{hora}'],
+        bullets: [
+          'Exemplo: Ola {nome}, sua consulta com {profissional} esta marcada para {data} as {hora}.',
+        ],
+      },
+      {
+        title: '5. Anexe arquivos quando precisar',
+        bullets: [
+          'Use Arquivos da campanha para enviar imagens, documentos, audios ou videos.',
+          'A legenda da mensagem vai no primeiro anexo enviado.',
+        ],
+      },
+      {
+        title: '6. Escolha entre agendar ou enviar na hora',
+        bullets: [
+          'Preencha Agendar para se quiser definir data e hora.',
+          'Use Adicionar na fila para deixar programado.',
+          'Use Enviar agora para disparar imediatamente com os dados atuais.',
+        ],
+      },
+    ],
+  },
+  contacts: {
+    title: 'Como organizar seus contatos',
+    steps: [
+      {
+        title: '1. Cadastre uma lista',
+        bullets: [
+          'Clique no botao + para criar uma nova lista.',
+          'Dê um nome claro para separar seus grupos, como pacientes-manha ou leads-evento.',
+        ],
+      },
+      {
+        title: '2. Adicione contatos manualmente',
+        bullets: [
+          'Selecione a lista desejada e clique em Novo contato.',
+          'Preencha nome, numero WhatsApp e, se quiser, dados como paciente, profissional, data, hora e observacoes.',
+        ],
+      },
+      {
+        title: '3. Importe contatos por planilha',
+        bullets: [
+          'Com a lista aberta, clique em Importar contatos.',
+          'Use uma planilha .xlsx, .xls ou .csv com colunas como nome, telefone, paciente, profissional, data, hora e observacoes.',
+          'Os contatos importados entram direto na lista selecionada.',
+        ],
+      },
+    ],
+  },
+};
+
+export function GuideModal({ open, onClose, variant }: GuideModalProps) {
   if (!open) {
     return null;
   }
+
+  const content = guideContentByVariant[variant];
 
   return (
     <Overlay onClick={onClose}>
@@ -22,67 +119,28 @@ export function GuideModal({ open, onClose }: GuideModalProps) {
         </PanelHeading>
 
         <GuideContent>
-          <h3>Como utilizar o sistema de envio</h3>
+          <h3>{content.title}</h3>
 
-          <Step>
-            <h4>1. Autenticacao</h4>
-            <ul>
-              <li>Insira seu email, senha e clique em Entrar.</li>
-              <li>Se estiver usando uma senha inicial, o sistema vai pedir a troca obrigatoria no primeiro acesso.</li>
-              <li>Na aba Dispositivos, conecte a sessao WhatsApp vinculada ao seu email.</li>
-              <li>Escaneie o QR Code com o WhatsApp do seu celular.</li>
-            </ul>
-          </Step>
-
-          <Step>
-            <h4>2. Inserir Contatos</h4>
-            <p>Use cadastro manual ou planilha. Se ambas forem preenchidas, o texto digitado tera prioridade.</p>
-            <div>
-              <h5>Opcao A: Colar Texto</h5>
-              <CodeExample>
-                <code>Nome:Numero;Paciente;Data;Hora</code>
-                <code>Ex: Daniel:88997000530;Pedro;05/09/2025;19h</code>
-              </CodeExample>
-            </div>
-            <div>
-              <h5>Opcao B: Carregar Planilha</h5>
-              <ul>
-                <li>Coluna A: Nome do Contato</li>
-                <li>Coluna B: Numero do WhatsApp</li>
-                <li>Coluna C: Nome do Paciente</li>
-                <li>Coluna D: Nome do Profissional</li>
-                <li>Coluna E: Data</li>
-                <li>Coluna F: Hora</li>
-              </ul>
-            </div>
-          </Step>
-
-          <Step>
-            <h4>3. Escrever a Mensagem</h4>
-            <p>Personalize usando as variaveis abaixo:</p>
-            <CodeExample>
-              <code>{'{nome}'}</code>
-              <code>{'{paciente}'}</code>
-              <code>{'{data}'}</code>
-              <code>{'{hora}'}</code>
-            </CodeExample>
-          </Step>
-
-          <Step>
-            <h4>4. Anexar Arquivo</h4>
-            <ul>
-              <li>Selecione imagens, PDFs e documentos para a campanha.</li>
-              <li>A legenda vai no primeiro anexo enviado.</li>
-            </ul>
-          </Step>
-
-          <Step>
-            <h4>5. Enviar</h4>
-            <ul>
-              <li>Use Adicionar na fila para agendar ou Enviar agora para disparo imediato.</li>
-              <li>Acompanhe tudo em Fila e agendamentos e Historico.</li>
-            </ul>
-          </Step>
+          {content.steps.map((step) => (
+            <Step key={step.title}>
+              <h4>{step.title}</h4>
+              {step.description ? <p>{step.description}</p> : null}
+              {step.code?.length ? (
+                <CodeExample>
+                  {step.code.map((line) => (
+                    <code key={line}>{line}</code>
+                  ))}
+                </CodeExample>
+              ) : null}
+              {step.bullets?.length ? (
+                <ul>
+                  {step.bullets.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </Step>
+          ))}
         </GuideContent>
       </ModalCard>
     </Overlay>

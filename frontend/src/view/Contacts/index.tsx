@@ -637,7 +637,7 @@ export function ContactsView() {
         </ModalOverlay>
       ) : null}
 
-      <GuideModal open={guideOpen} onClose={() => setGuideOpen(false)} />
+      <GuideModal open={guideOpen} onClose={() => setGuideOpen(false)} variant="contacts" />
       <ConfirmModal
         open={Boolean(confirmState)}
         title={confirmState?.title || ''}

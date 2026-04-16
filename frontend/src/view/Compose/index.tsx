@@ -707,7 +707,7 @@ export function ComposeView() {
         </SubmitPanel>
       </ComposeForm>
 
-      <GuideModal open={guideOpen} onClose={() => setGuideOpen(false)} />
+      <GuideModal open={guideOpen} onClose={() => setGuideOpen(false)} variant="compose" />
 
       {previewGroup ? (
         <ModalOverlay onClick={() => setPreviewListName('')}>
