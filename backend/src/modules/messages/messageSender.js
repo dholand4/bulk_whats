@@ -1,6 +1,5 @@
 const { MessageMedia } = require('whatsapp-web.js');
 
-const { whatsapp } = require('../../config');
 const clientManager = require('../whatsapp/clientManager');
 const { loadAttachmentContent } = require('../storage/fileReferenceService');
 const { formatPhoneNumber } = require('../../shared/utils/phoneUtils');
@@ -29,6 +28,17 @@ async function createMedia(attachment, ownerEmail) {
     );
 }
 
+async function resolveChatId(client, recipientNumber) {
+    const formattedNumber = formatPhoneNumber(recipientNumber);
+    const numberId = await client.getNumberId(formattedNumber);
+
+    if (!numberId?._serialized) {
+        throw new Error('Numero nao registrado no WhatsApp.');
+    }
+
+    return numberId._serialized;
+}
+
 async function sendQueueItem(queueItem) {
     const client = clientManager.getClient(queueItem.deviceId);
 
@@ -36,14 +46,8 @@ async function sendQueueItem(queueItem) {
         throw new Error('Dispositivo ainda nao foi inicializado.');
     }
 
-    const formattedNumber = formatPhoneNumber(queueItem.recipientNumber);
-    const chatId = `${formattedNumber}${whatsapp.suffix}`;
+    const chatId = await resolveChatId(client, queueItem.recipientNumber);
     const personalizedMessage = fillTemplate(queueItem.message, queueItem);
-
-    const isRegistered = await client.isRegisteredUser(chatId);
-    if (!isRegistered) {
-        throw new Error('Numero nao registrado no WhatsApp.');
-    }
 
     const attachments = Array.isArray(queueItem.attachments) ? queueItem.attachments : [];
     const ownerEmail = queueItem.createdBy || queueItem.deviceId;
