@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 export const DeviceGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: 18px;
 `;
 
@@ -14,6 +14,10 @@ export const DeviceCardWrap = styled.article`
   box-shadow: var(--shadow);
   display: grid;
   gap: 18px;
+
+  @media (max-width: 720px) {
+    padding: 18px;
+  }
 `;
 
 export const DeviceMeta = styled.div`
@@ -21,6 +25,25 @@ export const DeviceMeta = styled.div`
   gap: 8px;
   color: var(--muted);
   font-size: 14px;
+
+  span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+`;
+
+export const DeviceActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  @media (max-width: 720px) {
+    > * {
+      flex: 1 1 100%;
+      width: 100%;
+    }
+  }
 `;
 
 export const AuthBox = styled.div`
@@ -30,6 +53,10 @@ export const AuthBox = styled.div`
   border: 1px solid var(--border);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.48);
+
+  @media (max-width: 720px) {
+    padding: 14px;
+  }
 `;
 
 export const QrImage = styled.img`

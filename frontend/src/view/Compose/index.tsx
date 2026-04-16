@@ -26,6 +26,7 @@ import {
   HiddenFileInput,
   ListItem,
   ListCardBadges,
+  ListItemHeader,
   ListCardMain,
   ListCardTitleRow,
   ListMeta,
@@ -37,6 +38,7 @@ import {
   ModalOverlay,
   PlaceholderChip,
   PlaceholderRow,
+  PaginationSummary,
   SearchField,
   SelectionBar,
   SelectionSummary,
@@ -472,7 +474,7 @@ export function ComposeView() {
                             $active={active}
                             onClick={() => handleToggleList(group.listName, !active)}
                           >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                            <ListItemHeader>
                               <ListCardMain>
                                 <ListCardTitleRow>
                                   <strong>{group.listName}</strong>
@@ -502,7 +504,7 @@ export function ComposeView() {
                                   Ver contatos
                                 </GhostButton>
                               </ListCardBadges>
-                            </div>
+                            </ListItemHeader>
                             {active && excludedCount > 0 ? (
                               <InlineActions>
                                 <GhostButton
@@ -525,7 +527,7 @@ export function ComposeView() {
                       <GhostButton type="button" onClick={() => setListsPage((current) => Math.max(1, current - 1))}>
                         Anterior
                       </GhostButton>
-                      <span style={{ color: 'var(--muted)' }}>Pagina {listsPage} de {listsPageCount}</span>
+                      <PaginationSummary>Pagina {listsPage} de {listsPageCount}</PaginationSummary>
                       <GhostButton
                         type="button"
                         onClick={() => setListsPage((current) => Math.min(listsPageCount, current + 1))}

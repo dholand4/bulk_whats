@@ -11,6 +11,11 @@ export const HeroHeader = styled.div`
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 export const CreateListForm = styled.form`
@@ -43,6 +48,11 @@ export const ListButton = styled.button<{ $active: boolean }>`
   gap: 12px;
   align-items: center;
   transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
   &:hover {
     transform: translateY(-1px);
@@ -156,6 +166,13 @@ export const ListsActions = styled.div`
   @media (max-width: 860px) {
     width: 100%;
   }
+
+  @media (max-width: 720px) {
+    > * {
+      flex: 1 1 100%;
+      width: 100%;
+    }
+  }
 `;
 
 export const ListsSelectionBar = styled.div`
@@ -182,6 +199,13 @@ export const ListCardMain = styled.div`
   display: grid;
   gap: 4px;
   min-width: 0;
+
+  strong,
+  p {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 `;
 
 export const ListCardTitleRow = styled.div`
@@ -203,6 +227,16 @@ export const ListCardBadges = styled.div`
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+
+  @media (max-width: 720px) {
+    width: 100%;
+    justify-content: flex-start;
+
+    > * {
+      flex: 1 1 100%;
+      width: 100%;
+    }
+  }
 `;
 
 export const ContactsSection = styled.div`
@@ -260,6 +294,10 @@ export const BulkSelectLabel = styled.label`
     width: 16px;
     height: 16px;
     accent-color: var(--primary);
+  }
+
+  @media (max-width: 720px) {
+    width: 100%;
   }
 `;
 
@@ -335,12 +373,23 @@ export const CompactContactRow = styled.div`
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+  }
 `;
 
 export const CompactContactMain = styled.div`
   display: grid;
   gap: 4px;
   min-width: 0;
+
+  strong,
+  span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 `;
 
 export const CompactContactNameRow = styled.div`
@@ -385,6 +434,16 @@ export const ContactActions = styled.div`
   gap: 8px;
   align-items: center;
   flex-shrink: 0;
+  flex-wrap: wrap;
+
+  @media (max-width: 720px) {
+    width: 100%;
+
+    > * {
+      flex: 1 1 100%;
+      width: 100%;
+    }
+  }
 `;
 
 export const ContactDangerButton = styled.button`
@@ -401,8 +460,12 @@ export const CompactPagination = styled.div`
   margin-top: 4px;
 
   @media (max-width: 720px) {
-    justify-content: center;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
+
+    > * {
+      width: 100%;
+    }
   }
 `;
 
@@ -436,4 +499,22 @@ export const ModalCard = styled.div`
   padding: 24px;
   display: grid;
   gap: 16px;
+
+  @media (max-width: 720px) {
+    max-height: calc(100vh - 24px);
+    padding: 18px;
+    border-radius: 20px;
+  }
+`;
+
+export const ModalHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;

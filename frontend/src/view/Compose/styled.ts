@@ -6,6 +6,11 @@ export const HeroPanel = styled(Panel)`
   align-items: center;
   justify-content: space-between;
   gap: 18px;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 export const ComposeForm = styled.form`
@@ -28,6 +33,11 @@ export const ComposeHeader = styled.div`
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 export const UploadPanel = styled.div`
@@ -37,6 +47,10 @@ export const UploadPanel = styled.div`
   border: 1px solid var(--border);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.48);
+
+  @media (max-width: 720px) {
+    padding: 14px;
+  }
 `;
 
 export const SpreadsheetDropzone = styled.label`
@@ -189,10 +203,28 @@ export const SelectionSummary = styled.strong`
   font-size: 14px;
 `;
 
+export const ListItemHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+  }
+`;
+
 export const ListCardMain = styled.div`
   display: grid;
   gap: 4px;
   min-width: 0;
+
+  strong,
+  p {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 `;
 
 export const ListCardTitleRow = styled.div`
@@ -214,6 +246,16 @@ export const ListCardBadges = styled.div`
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+
+  @media (max-width: 720px) {
+    width: 100%;
+    justify-content: flex-start;
+
+    > * {
+      flex: 1 1 100%;
+      width: 100%;
+    }
+  }
 `;
 
 export const ModalOverlay = styled.div`
@@ -237,6 +279,12 @@ export const ModalCard = styled.div`
   padding: 24px;
   display: grid;
   gap: 16px;
+
+  @media (max-width: 720px) {
+    max-height: calc(100vh - 24px);
+    padding: 18px;
+    border-radius: 20px;
+  }
 `;
 
 export const ContactsPreviewList = styled.div`
@@ -258,6 +306,10 @@ export const ContactPreviewHeader = styled.div`
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+  }
 `;
 
 export const ContactPreviewMeta = styled.div`
@@ -266,4 +318,9 @@ export const ContactPreviewMeta = styled.div`
   gap: 8px 14px;
   color: var(--muted);
   font-size: 13px;
+`;
+
+export const PaginationSummary = styled.span`
+  color: var(--muted);
+  text-align: center;
 `;

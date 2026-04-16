@@ -29,11 +29,22 @@ export const GroupSummary = styled.summary`
   @media (max-width: 860px) {
     grid-template-columns: 1fr;
   }
+
+  @media (max-width: 720px) {
+    padding: 18px;
+  }
 `;
 
 export const SummaryMain = styled.div`
   display: grid;
   gap: 8px;
+
+  h4,
+  p {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 `;
 
 export const SummarySide = styled.div`
@@ -41,8 +52,19 @@ export const SummarySide = styled.div`
   justify-items: end;
   gap: 8px;
 
+  span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    text-align: right;
+  }
+
   @media (max-width: 860px) {
     justify-items: start;
+
+    span {
+      text-align: left;
+    }
   }
 `;
 
@@ -51,6 +73,10 @@ export const Detail = styled.div`
   padding: 0 24px 24px;
   display: grid;
   gap: 18px;
+
+  @media (max-width: 720px) {
+    padding: 0 18px 18px;
+  }
 `;
 
 export const DetailGrid = styled.div`
@@ -69,6 +95,16 @@ export const NoteCard = styled.div`
   border-radius: 18px;
   padding: 18px;
   background: rgba(255, 255, 255, 0.48);
+
+  p {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  @media (max-width: 720px) {
+    padding: 16px;
+  }
 `;
 
 export const ContactRows = styled.div`
@@ -83,6 +119,10 @@ export const ContactRow = styled.div`
   display: grid;
   gap: 10px;
   background: rgba(255, 255, 255, 0.54);
+
+  @media (max-width: 720px) {
+    padding: 14px;
+  }
 `;
 
 export const ContactMeta = styled.div`
@@ -91,6 +131,12 @@ export const ContactMeta = styled.div`
   gap: 10px 18px;
   color: var(--muted);
   font-size: 13px;
+
+  span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 `;
 
 export const RowHeader = styled.div`
@@ -98,11 +144,30 @@ export const RowHeader = styled.div`
   justify-content: space-between;
   gap: 12px;
   align-items: flex-start;
+
+  > div {
+    min-width: 0;
+  }
+
+  strong,
+  p {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+  }
 `;
 
 export const ActionButton = styled(GhostButton)`
   padding: 9px 12px;
   font-size: 13px;
+
+  @media (max-width: 720px) {
+    width: 100%;
+  }
 `;
 
 export const GroupEmpty = styled(EmptyState)``;

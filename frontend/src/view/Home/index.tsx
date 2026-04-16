@@ -1,6 +1,5 @@
 import {
   EmptyState,
-  MutedText,
   Panel,
   PanelGrid,
   PanelHeading,
@@ -11,7 +10,7 @@ import {
 } from '../../components/AppShell/styled';
 import { useApp } from '../../providers/AppProvider';
 import { formatDateTime } from '../../utils/format';
-import { PreviewList } from './styled';
+import { PreviewCard, PreviewList, PreviewMeta } from './styled';
 
 export function HomeView() {
   const { summary, queue, devices } = useApp();
@@ -48,11 +47,12 @@ export function HomeView() {
           </PanelHeading>
           <PreviewList>
             {queuePreview.length ? queuePreview.map((item) => (
-              <EmptyState key={item.id}>
+              <PreviewCard key={item.id}>
                 <strong>{item.campaignName || item.contactName || item.recipientNumber}</strong>
-                <br />
-                {getDeviceName(item.deviceId)} - {formatDateTime(item.scheduleAt)} - {item.status}
-              </EmptyState>
+                <PreviewMeta>
+                  {getDeviceName(item.deviceId)} - {formatDateTime(item.scheduleAt)} - {item.status}
+                </PreviewMeta>
+              </PreviewCard>
             )) : <EmptyState>Nenhum item na fila.</EmptyState>}
           </PreviewList>
         </Panel>
@@ -63,11 +63,10 @@ export function HomeView() {
           </PanelHeading>
           <PreviewList>
             {devicePreview.length ? devicePreview.map((device) => (
-              <EmptyState key={device.id}>
+              <PreviewCard key={device.id}>
                 <strong>{device.name}</strong>
-                <br />
-                <MutedText>{device.status} - {device.connectedNumber || 'Sem numero conectado'}</MutedText>
-              </EmptyState>
+                <PreviewMeta>{device.status} - {device.connectedNumber || 'Sem numero conectado'}</PreviewMeta>
+              </PreviewCard>
             )) : <EmptyState>Nenhum dispositivo cadastrado.</EmptyState>}
           </PreviewList>
         </Panel>

@@ -386,4 +386,13 @@ export const PaginationRow = styled.div`
   justify-content: space-between;
   gap: 12px;
   margin-top: 18px;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items: stretch;
+
+    > * {
+      width: 100%;
+    }
+  }
 `;

@@ -1,8 +1,8 @@
 import { Device } from '../../types';
 import { formatDateTime } from '../../utils/format';
-import { Badge, DangerButton, EmptyState, GhostButton, InlineActions, MutedText } from '../AppShell/styled';
+import { Badge, DangerButton, EmptyState, GhostButton, MutedText } from '../AppShell/styled';
 import { ConfirmModal } from '../ConfirmModal';
-import { AuthBox, DeviceCardWrap, DeviceGrid, DeviceMeta, QrImage } from './styled';
+import { AuthBox, DeviceActions, DeviceCardWrap, DeviceGrid, DeviceMeta, QrImage } from './styled';
 import { useState } from 'react';
 
 interface DeviceCardListProps {
@@ -110,7 +110,7 @@ export function DeviceCardList({ devices, expandedDeviceId, onConnect, onDisconn
               <span>Numero conectado: {device.connectedNumber || '-'}</span>
             </DeviceMeta>
 
-            <InlineActions>
+            <DeviceActions>
               <GhostButton
                 type="button"
                 onClick={() => onConnect(device.id)}
@@ -127,7 +127,7 @@ export function DeviceCardList({ devices, expandedDeviceId, onConnect, onDisconn
                   Desconectar
                 </DangerButton>
               ) : null}
-            </InlineActions>
+            </DeviceActions>
 
             {expandedDeviceId === device.id ? (
               <AuthBox>

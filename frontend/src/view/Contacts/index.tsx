@@ -29,6 +29,7 @@ import {
   HeroPanel,
   HiddenFileInput,
   ModalCard,
+  ModalHeader,
   ModalOverlay,
   SelectedBanner,
 } from './styled';
@@ -489,7 +490,7 @@ export function ContactsView() {
       {contactModalOpen ? (
         <ModalOverlay onClick={() => setContactModalOpen(false)}>
           <ModalCard onClick={(event) => event.stopPropagation()}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+            <ModalHeader>
               <div>
                 <h3 style={{ margin: 0 }}>
                   {contactModalMode === 'bulk-edit'
@@ -507,7 +508,7 @@ export function ContactsView() {
               <GhostButton type="button" onClick={() => setContactModalOpen(false)}>
                 Fechar
               </GhostButton>
-            </div>
+            </ModalHeader>
 
             <form onSubmit={handleSaveContact}>
               <Stack>

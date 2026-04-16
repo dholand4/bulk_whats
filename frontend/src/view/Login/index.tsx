@@ -2,7 +2,7 @@ import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eyebrow, InputGroup, Stack, StatusText } from '../../components/AppShell/styled';
 import { useApp } from '../../providers/AppProvider';
-import { LoginCard, LoginLayout, LoginTitle } from './styled';
+import { LoginCard, LoginDescription, LoginEyebrow, LoginHeader, LoginLayout, LoginTitle } from './styled';
 
 export function LoginView() {
   const [email, setEmail] = useState('');
@@ -24,13 +24,13 @@ export function LoginView() {
   return (
     <LoginLayout>
       <LoginCard>
-        <div>
-          <Eyebrow style={{ color: 'var(--muted)' }}>Acessar Sistema</Eyebrow>
+        <LoginHeader>
+          <Eyebrow as={LoginEyebrow}>Acessar Sistema</Eyebrow>
           <LoginTitle>Bulk Whats</LoginTitle>
-          <p style={{ color: 'var(--muted)', margin: '8px 0 0' }}>
+          <LoginDescription>
             Acesse com seu e-mail e senha para gerenciar e enviar mensagens em massa pelo WhatsApp.
-          </p>
-        </div>
+          </LoginDescription>
+        </LoginHeader>
 
         <form onSubmit={handleSubmit}>
           <Stack>
