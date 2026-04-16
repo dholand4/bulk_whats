@@ -27,6 +27,20 @@ interface CampaignGroupListProps {
   onCancelCampaign?: (groupKey: string) => void;
 }
 
+function formatWhatsAppNumber(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+
+  if (digits.length <= 2) {
+    return digits ? `(${digits}` : '';
+  }
+
+  if (digits.length <= 7) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  }
+
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 export function CampaignGroupList({
   groups,
   getDeviceName,
@@ -99,7 +113,7 @@ export function CampaignGroupList({
                   <RowHeader>
                     <div>
                       <strong>{item.contactName || 'Contato'}</strong>
-                      <MutedText>{item.recipientNumber}</MutedText>
+                      <MutedText>{formatWhatsAppNumber(item.recipientNumber) || item.recipientNumber}</MutedText>
                     </div>
                     {mode === 'queue' && onCancelItem ? (
                       <ActionButton type="button" onClick={() => onCancelItem(item.id)}>

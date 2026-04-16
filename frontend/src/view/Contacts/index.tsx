@@ -54,6 +54,24 @@ const emptyDraft = {
   notes: '',
 };
 
+function normalizeWhatsAppNumber(value: string) {
+  return value.replace(/\D/g, '').slice(0, 11);
+}
+
+function formatWhatsAppNumber(value: string) {
+  const digits = normalizeWhatsAppNumber(value);
+
+  if (digits.length <= 2) {
+    return digits ? `(${digits}` : '';
+  }
+
+  if (digits.length <= 7) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  }
+
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 export function ContactsView() {
   const {
     contactGroups,
@@ -176,7 +194,7 @@ export function ContactsView() {
     setContactModalMode('edit');
     setDraft({
       name: contact.name || '',
-      phone: contact.phone || '',
+      phone: formatWhatsAppNumber(contact.phone || ''),
       paciente: contact.paciente || '',
       profissional: contact.profissional || '',
       data: contact.data || '',
@@ -211,6 +229,7 @@ export function ContactsView() {
           {
             listName: activeContactListName.trim(),
             ...draft,
+            phone: normalizeWhatsAppNumber(draft.phone),
           },
           editingContactId || undefined,
         );
@@ -536,8 +555,15 @@ export function ContactsView() {
                       <span>Numero WhatsApp</span>
                       <input
                         type="text"
+                        inputMode="numeric"
+                        autoComplete="tel"
+                        maxLength={15}
+                        placeholder="(88) 99700-0530"
                         value={draft.phone}
-                        onChange={(event) => setDraft((current) => ({ ...current, phone: event.target.value }))}
+                        onChange={(event) => setDraft((current) => ({
+                          ...current,
+                          phone: formatWhatsAppNumber(event.target.value),
+                        }))}
                         required
                       />
                     </InputGroup>
