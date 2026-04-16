@@ -1,5 +1,5 @@
 import { CampaignGroup } from '../../types';
-import { buildStatusSummary } from '../../utils/campaigns';
+import { buildStatusSummary, formatCampaignStatus } from '../../utils/campaigns';
 import { formatDateTime } from '../../utils/format';
 import { Badge, FieldLabel, InlineActions, MutedText } from '../AppShell/styled';
 import {
@@ -123,7 +123,7 @@ export function CampaignGroupList({
                   </RowHeader>
 
                   <ContactMeta>
-                    <span><strong>Status:</strong> {item.status}</span>
+                    <span><strong>Status:</strong> {formatCampaignStatus(item.status)}</span>
                     <span><strong>Agendamento:</strong> {formatDateTime(item.scheduleAt)}</span>
                     <span><strong>ID:</strong> {item.id.slice(0, 8)}</span>
                     {item.errorMessage ? <span><strong>Erro:</strong> {item.errorMessage}</span> : null}

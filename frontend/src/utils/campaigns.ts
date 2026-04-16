@@ -1,5 +1,32 @@
 import { CampaignGroup, CampaignItem, Contact, ContactGroup } from '../types';
 
+const campaignStatusLabels: Record<string, string> = {
+  pending: 'Pendente',
+  queued: 'Na fila',
+  scheduled: 'Agendado',
+  processing: 'Processando',
+  sending: 'Enviando',
+  sent: 'Enviado',
+  delivered: 'Enviado',
+  success: 'Enviado',
+  completed: 'Enviado',
+  error: 'Erro',
+  failed: 'Erro',
+  failure: 'Erro',
+  canceled: 'Cancelado',
+  cancelled: 'Cancelado',
+};
+
+export function formatCampaignStatus(status: string) {
+  const normalized = status.trim().toLowerCase();
+
+  if (!normalized) {
+    return 'Sem status';
+  }
+
+  return campaignStatusLabels[normalized] || `${normalized.charAt(0).toUpperCase()}${normalized.slice(1)}`;
+}
+
 export function getContactGroups(contacts: Contact[], draftContactLists: string[]): ContactGroup[] {
   const groups = contacts.reduce<Record<string, Contact[]>>((accumulator, contact) => {
     const listName = contact.listName || 'Geral';
@@ -75,6 +102,6 @@ export function buildStatusSummary(items: CampaignItem[]) {
   }, {});
 
   return Object.entries(counters)
-    .map(([status, count]) => `${count} ${status}`)
+    .map(([status, count]) => `${count} ${formatCampaignStatus(status)}`)
     .join(' | ');
 }
