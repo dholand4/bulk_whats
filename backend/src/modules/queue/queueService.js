@@ -406,44 +406,45 @@ async function processItem(item) {
         return;
     }
 
-    const current = database.load();
-    const device = current.devices.find((entry) => entry.id === item.deviceId);
-    if (!device) {
-        await updateQueueItem(item.id, (queueItem, dbState) => {
-            archiveAndRemoveQueueItem(dbState, queueItem.id, {
-                status: 'error',
-                errorMessage: 'Dispositivo removido.',
-            });
-        });
-        return;
-    }
-
-    const deviceRuntime = clientManager.getDeviceRuntime(device.id);
-    if (!deviceRuntime.hasClient) {
-        await clientManager.initializeDevice(device);
-    }
-
-    const refreshedDatabase = database.load();
-    const refreshedDevice = refreshedDatabase.devices.find((entry) => entry.id === item.deviceId);
-
-    if (!refreshedDevice || !['connected', 'authenticated'].includes(refreshedDevice.status)) {
-        await updateQueueItem(item.id, (queueItem, dbState) => {
-            archiveAndRemoveQueueItem(dbState, queueItem.id, {
-                status: 'error',
-                errorMessage: 'Dispositivo nao conectado para envio.',
-            });
-        });
-        return;
-    }
-
     deviceLocks.add(item.deviceId);
-    await updateQueueItem(item.id, (queueItem) => {
-        queueItem.status = 'processing';
-        queueItem.errorMessage = '';
-        queueItem.updatedAt = nowIso();
-    });
 
     try {
+        const current = database.load();
+        const device = current.devices.find((entry) => entry.id === item.deviceId);
+        if (!device) {
+            await updateQueueItem(item.id, (queueItem, dbState) => {
+                archiveAndRemoveQueueItem(dbState, queueItem.id, {
+                    status: 'error',
+                    errorMessage: 'Dispositivo removido.',
+                });
+            });
+            return;
+        }
+
+        const deviceRuntime = clientManager.getDeviceRuntime(device.id);
+        if (!deviceRuntime.hasClient) {
+            await clientManager.initializeDevice(device);
+        }
+
+        const refreshedDatabase = database.load();
+        const refreshedDevice = refreshedDatabase.devices.find((entry) => entry.id === item.deviceId);
+
+        if (!refreshedDevice || !['connected', 'authenticated'].includes(refreshedDevice.status)) {
+            await updateQueueItem(item.id, (queueItem, dbState) => {
+                archiveAndRemoveQueueItem(dbState, queueItem.id, {
+                    status: 'error',
+                    errorMessage: 'Dispositivo nao conectado para envio.',
+                });
+            });
+            return;
+        }
+
+        await updateQueueItem(item.id, (queueItem) => {
+            queueItem.status = 'processing';
+            queueItem.errorMessage = '';
+            queueItem.updatedAt = nowIso();
+        });
+
         const freshState = database.load();
         const freshItem = freshState.queue.find((entry) => entry.id === item.id);
         if (!freshItem) {
