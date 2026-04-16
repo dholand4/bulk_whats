@@ -15,7 +15,7 @@ export function LoginView() {
 
     try {
       await login(email.trim(), password);
-      navigate('/overview', { replace: true });
+      navigate('/home', { replace: true });
     } catch {
       // O status ja e atualizado no provider.
     }

@@ -24,7 +24,7 @@ function AdminRoute() {
   const { user } = useApp();
 
   if (user?.role !== 'admin') {
-    return <Navigate to="/overview" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   return <AdminView />;
@@ -35,18 +35,24 @@ export function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/login" element={token ? <Navigate to="/overview" replace /> : <LoginView />} />
+      <Route path="/login" element={token ? <Navigate to="/home" replace /> : <LoginView />} />
       <Route element={<ProtectedRoutes />}>
-        <Route path="/" element={<Navigate to="/overview" replace />} />
-        <Route path="/overview" element={<HomeView />} />
-        <Route path="/devices" element={<DevicesView />} />
-        <Route path="/contacts" element={<ContactsView />} />
-        <Route path="/compose" element={<ComposeView />} />
-        <Route path="/queue" element={<QueueView />} />
-        <Route path="/history" element={<HistoryView />} />
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/home" element={<HomeView />} />
+        <Route path="/dispositivo" element={<DevicesView />} />
+        <Route path="/contato" element={<ContactsView />} />
+        <Route path="/envios" element={<ComposeView />} />
+        <Route path="/agendamentos" element={<QueueView />} />
+        <Route path="/historico" element={<HistoryView />} />
         <Route path="/admin" element={<AdminRoute />} />
+        <Route path="/overview" element={<Navigate to="/home" replace />} />
+        <Route path="/devices" element={<Navigate to="/dispositivo" replace />} />
+        <Route path="/contacts" element={<Navigate to="/contato" replace />} />
+        <Route path="/compose" element={<Navigate to="/envios" replace />} />
+        <Route path="/queue" element={<Navigate to="/agendamentos" replace />} />
+        <Route path="/history" element={<Navigate to="/historico" replace />} />
       </Route>
-      <Route path="*" element={<Navigate to={token ? '/overview' : '/login'} replace />} />
+      <Route path="*" element={<Navigate to={token ? '/home' : '/login'} replace />} />
     </Routes>
   );
 }
