@@ -68,6 +68,7 @@ export interface CampaignItem {
   data?: string;
   hora?: string;
   delaySeconds?: number;
+  sentAt?: string | null;
 }
 
 export interface CampaignGroup {

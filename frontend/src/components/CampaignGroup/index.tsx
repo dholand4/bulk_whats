@@ -145,6 +145,7 @@ export function CampaignGroupList({
                       <ContactMeta>
                         <span><strong>Status:</strong> {formatCampaignStatus(item.status)}</span>
                         <span><strong>Agendamento:</strong> {formatDateTime(item.scheduleAt)}</span>
+                        {item.sentAt ? <span><strong>Enviado em:</strong> {formatDateTime(item.sentAt)}</span> : null}
                         <span><strong>ID:</strong> {item.id.slice(0, 8)}</span>
                         {item.errorMessage ? <span><strong>Erro:</strong> {item.errorMessage}</span> : null}
                         {item.paciente ? <span><strong>Paciente:</strong> {item.paciente}</span> : null}
