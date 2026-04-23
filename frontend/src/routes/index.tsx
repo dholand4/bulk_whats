@@ -12,9 +12,17 @@ import { QueueView } from '../view/Queue';
 import { TemplatesView } from '../view/Templates';
 
 function ProtectedRoutes() {
-  const { token } = useApp();
+  const { token, user, isAuthChecking } = useApp();
 
   if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (isAuthChecking) {
+    return null;
+  }
+
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
@@ -32,11 +40,14 @@ function AdminRoute() {
 }
 
 export function AppRoutes() {
-  const { token } = useApp();
+  const { token, user, isAuthChecking } = useApp();
 
   return (
     <Routes>
-      <Route path="/login" element={token ? <Navigate to="/home" replace /> : <LoginView />} />
+      <Route
+        path="/login"
+        element={token && user ? <Navigate to="/home" replace /> : isAuthChecking ? null : <LoginView />}
+      />
       <Route element={<ProtectedRoutes />}>
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/home" element={<HomeView />} />
@@ -55,7 +66,7 @@ export function AppRoutes() {
         <Route path="/queue" element={<Navigate to="/agendamentos" replace />} />
         <Route path="/history" element={<Navigate to="/historico" replace />} />
       </Route>
-      <Route path="*" element={<Navigate to={token ? '/home' : '/login'} replace />} />
+      <Route path="*" element={<Navigate to={token && user ? '/home' : '/login'} replace />} />
     </Routes>
   );
 }

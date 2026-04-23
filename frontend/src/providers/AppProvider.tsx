@@ -39,6 +39,7 @@ interface AppContextValue {
   queueGroups: CampaignGroup[];
   historyGroups: CampaignGroup[];
   loginStatus: string;
+  isAuthChecking: boolean;
   isGlobalLoading: boolean;
   globalLoadingMessage: string;
   login: (email: string, password: string) => Promise<void>;
@@ -177,6 +178,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null);
   const [activeContactListName, setActiveContactListName] = useState('');
   const [loginStatus, setLoginStatus] = useState('');
+  const [isAuthChecking, setIsAuthChecking] = useState(() => Boolean(localStorage.getItem('authToken')));
   const [globalLoadingCount, setGlobalLoadingCount] = useState(0);
   const [globalLoadingMessage, setGlobalLoadingMessage] = useState('');
   const authPrefetchRef = useRef<Set<string>>(new Set());
@@ -332,6 +334,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   async function refreshData(overrideToken?: string) {
     const authToken = overrideToken || token;
     if (!authToken) {
+      setIsAuthChecking(false);
       return;
     }
 
@@ -360,6 +363,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setContacts(contactsData.contacts);
       setTemplates(templatesData.templates);
       setUsers(usersData?.users || []);
+      setIsAuthChecking(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao atualizar dados.';
 
@@ -368,6 +372,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      setIsAuthChecking(false);
       console.error(error);
     }
   }
@@ -388,6 +393,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       );
 
       hasBootstrappedSessionRef.current = true;
+      setIsAuthChecking(false);
       setToken(response.token);
       setUser(response.user);
       localStorage.setItem('authToken', response.token);
@@ -413,6 +419,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     setToken('');
     setUser(null);
+    setIsAuthChecking(false);
     setSummary(null);
     setDevices([]);
     setQueue([]);
@@ -870,6 +877,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         queueGroups,
         historyGroups,
         loginStatus,
+        isAuthChecking,
         isGlobalLoading,
         globalLoadingMessage,
         login,
