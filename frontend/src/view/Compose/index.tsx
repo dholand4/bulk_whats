@@ -745,7 +745,7 @@ export function ComposeView() {
             <InputGroup>
               <span>Ritmo do envio</span>
               <p style={{ margin: 0, color: 'var(--muted)' }}>
-                Automatico: 8-22 segundos entre mensagens e pausas aleatorias de 1-3 minutos a cada 5-15 contatos.
+                Automatico: 15-30 segundos entre mensagens e pausas aleatorias de 1-3 minutos a cada 5-15 contatos.
               </p>
             </InputGroup>
           </FooterGrid>
