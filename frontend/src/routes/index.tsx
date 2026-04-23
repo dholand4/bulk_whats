@@ -9,6 +9,7 @@ import { HistoryView } from '../view/History';
 import { HomeView } from '../view/Home';
 import { LoginView } from '../view/Login';
 import { QueueView } from '../view/Queue';
+import { TemplatesView } from '../view/Templates';
 
 function ProtectedRoutes() {
   const { token } = useApp();
@@ -41,6 +42,7 @@ export function AppRoutes() {
         <Route path="/home" element={<HomeView />} />
         <Route path="/dispositivo" element={<DevicesView />} />
         <Route path="/contato" element={<ContactsView />} />
+        <Route path="/templates" element={<TemplatesView />} />
         <Route path="/envios" element={<ComposeView />} />
         <Route path="/agendamentos" element={<QueueView />} />
         <Route path="/historico" element={<HistoryView />} />
@@ -48,6 +50,7 @@ export function AppRoutes() {
         <Route path="/overview" element={<Navigate to="/home" replace />} />
         <Route path="/devices" element={<Navigate to="/dispositivo" replace />} />
         <Route path="/contacts" element={<Navigate to="/contato" replace />} />
+        <Route path="/message-templates" element={<Navigate to="/templates" replace />} />
         <Route path="/compose" element={<Navigate to="/envios" replace />} />
         <Route path="/queue" element={<Navigate to="/agendamentos" replace />} />
         <Route path="/history" element={<Navigate to="/historico" replace />} />

@@ -11,6 +11,9 @@ import {
   ContactDraft,
   ContactGroup,
   Device,
+  MessageTemplate,
+  MessageTemplateDraft,
+  MessageTemplateVariantDraft,
   SpreadsheetParseResult,
   Summary,
 } from '../types';
@@ -24,6 +27,7 @@ interface AppContextValue {
   queue: CampaignItem[];
   history: CampaignItem[];
   contacts: Contact[];
+  templates: MessageTemplate[];
   users: AdminUser[];
   draftContactLists: string[];
   selectedContactListNames: Set<string>;
@@ -55,6 +59,10 @@ interface AppContextValue {
   deleteContacts: (contactIds: string[]) => Promise<void>;
   importContactsFromSpreadsheet: (file: File) => Promise<string>;
   parseComposeRecipientsFromSpreadsheet: (file: File) => Promise<SpreadsheetParseResult>;
+  saveTemplate: (draft: MessageTemplateDraft, templateId?: string) => Promise<void>;
+  deleteTemplate: (templateId: string) => Promise<void>;
+  saveTemplateVariant: (templateId: string, draft: MessageTemplateVariantDraft, variantId?: string) => Promise<void>;
+  deleteTemplateVariant: (templateId: string, variantId: string) => Promise<void>;
   saveAdminUser: (payload: AdminUser, currentEmail?: string | null) => Promise<void>;
   deleteAdminUser: (email: string) => Promise<void>;
   toggleComposeList: (listName: string, checked: boolean) => void;
@@ -161,6 +169,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [queue, setQueue] = useState<CampaignItem[]>([]);
   const [history, setHistory] = useState<CampaignItem[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [draftContactLists, setDraftContactLists] = useState<string[]>([]);
   const [selectedContactListNames, setSelectedContactListNames] = useState<Set<string>>(new Set());
@@ -327,13 +336,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const [me, summaryData, devicesData, queueData, historyData, contactsData] = await Promise.all([
+      const [me, summaryData, devicesData, queueData, historyData, contactsData, templatesData] = await Promise.all([
         apiRequest<{ user: AuthUser }>('/api/auth/me', {}, authToken),
         apiRequest<{ summary: Summary }>('/api/dashboard/summary', {}, authToken),
         apiRequest<{ devices: Device[] }>('/api/devices', {}, authToken),
         apiRequest<{ items: CampaignItem[] }>('/api/queue', {}, authToken),
         apiRequest<{ items: CampaignItem[] }>('/api/history', {}, authToken),
         apiRequest<{ contacts: Contact[] }>('/api/contacts', {}, authToken),
+        apiRequest<{ templates: MessageTemplate[] }>('/api/templates', {}, authToken),
       ]);
 
       let usersData: { users: AdminUser[] } | null = null;
@@ -348,6 +358,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setQueue(queueData.items);
       setHistory(historyData.items);
       setContacts(contactsData.contacts);
+      setTemplates(templatesData.templates);
       setUsers(usersData?.users || []);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao atualizar dados.';
@@ -407,6 +418,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setQueue([]);
     setHistory([]);
     setContacts([]);
+    setTemplates([]);
     setUsers([]);
     setDraftContactLists([]);
     setSelectedContactListNames(new Set());
@@ -507,6 +519,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             campaignName: payload.campaignName,
             recipients: payload.recipients,
             message: payload.message,
+            templateId: payload.templateId || null,
             attachments,
             scheduleAt: payload.scheduleAt || null,
           }),
@@ -711,6 +724,60 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }
 
+  async function saveTemplate(draft: MessageTemplateDraft, templateId?: string) {
+    const path = templateId ? `/api/templates/${templateId}` : '/api/templates';
+    const method = templateId ? 'PUT' : 'POST';
+
+    await runWithGlobalLoading(templateId ? 'Atualizando template...' : 'Salvando template...', async () => {
+      await apiRequest(
+        path,
+        {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(draft),
+        },
+        token,
+      );
+
+      await refreshData();
+    });
+  }
+
+  async function deleteTemplate(templateId: string) {
+    await runWithGlobalLoading('Excluindo template...', async () => {
+      await apiRequest(`/api/templates/${templateId}`, { method: 'DELETE' }, token);
+      await refreshData();
+    });
+  }
+
+  async function saveTemplateVariant(templateId: string, draft: MessageTemplateVariantDraft, variantId?: string) {
+    const path = variantId
+      ? `/api/templates/${templateId}/variants/${variantId}`
+      : `/api/templates/${templateId}/variants`;
+    const method = variantId ? 'PUT' : 'POST';
+
+    await runWithGlobalLoading(variantId ? 'Atualizando variacao...' : 'Salvando variacao...', async () => {
+      await apiRequest(
+        path,
+        {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(draft),
+        },
+        token,
+      );
+
+      await refreshData();
+    });
+  }
+
+  async function deleteTemplateVariant(templateId: string, variantId: string) {
+    await runWithGlobalLoading('Excluindo variacao...', async () => {
+      await apiRequest(`/api/templates/${templateId}/variants/${variantId}`, { method: 'DELETE' }, token);
+      await refreshData();
+    });
+  }
+
   async function saveAdminUser(payload: AdminUser, currentEmail?: string | null) {
     const path = currentEmail ? `/api/admin/users/${encodeURIComponent(currentEmail)}` : '/api/admin/users';
     const method = currentEmail ? 'PUT' : 'POST';
@@ -791,6 +858,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         queue,
         history,
         contacts,
+        templates,
         users,
         draftContactLists,
         selectedContactListNames,
@@ -822,6 +890,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         deleteContacts,
         importContactsFromSpreadsheet,
         parseComposeRecipientsFromSpreadsheet,
+        saveTemplate,
+        deleteTemplate,
+        saveTemplateVariant,
+        deleteTemplateVariant,
         saveAdminUser,
         deleteAdminUser,
         toggleComposeList,

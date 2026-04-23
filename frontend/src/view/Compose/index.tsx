@@ -61,6 +61,7 @@ export function ComposeView() {
   const {
     devices,
     contacts,
+    templates,
     contactGroups,
     selectedContactListNames,
     toggleComposeList,
@@ -75,6 +76,7 @@ export function ComposeView() {
   const [listSearchTerm, setListSearchTerm] = useState('');
   const [campaignName, setCampaignName] = useState('');
   const [deviceId, setDeviceId] = useState(devices[0]?.id || '');
+  const [templateId, setTemplateId] = useState('');
   const [message, setMessage] = useState('');
   const [scheduleAt, setScheduleAt] = useState('');
   const [files, setFiles] = useState<File[]>([]);
@@ -201,6 +203,18 @@ export function ComposeView() {
     [contactGroups, previewListName],
   );
 
+  const usableTemplates = useMemo(
+    () => templates.filter((template) =>
+      template.active && template.variants.some((variant) => variant.active && variant.body.trim()),
+    ),
+    [templates],
+  );
+
+  const selectedTemplate = useMemo(
+    () => usableTemplates.find((template) => template.id === templateId) || null,
+    [templateId, usableTemplates],
+  );
+
   useEffect(() => {
     setListsPage((current) => Math.min(current, listsPageCount));
   }, [listsPageCount]);
@@ -314,8 +328,8 @@ export function ComposeView() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!deviceId || recipients.length === 0 || (!message.trim() && files.length === 0)) {
-      setStatus('Selecione o dispositivo, ao menos uma lista e informe a mensagem ou anexo.');
+    if (!deviceId || recipients.length === 0 || (!templateId && !message.trim() && files.length === 0)) {
+      setStatus('Selecione o dispositivo, ao menos uma lista e informe a mensagem, template ou anexo.');
       return;
     }
 
@@ -326,6 +340,7 @@ export function ComposeView() {
         deviceId,
         campaignName: campaignName.trim(),
         message: message.trim(),
+        templateId: templateId || null,
         scheduleAt: scheduleAt || null,
         recipients,
         files,
@@ -333,6 +348,7 @@ export function ComposeView() {
       setStatus(responseMessage);
       setCampaignName('');
       setMessage('');
+      setTemplateId('');
       setScheduleAt('');
       setFiles([]);
       clearSpreadsheetRecipients();
@@ -342,8 +358,8 @@ export function ComposeView() {
   }
 
   async function handleSendNow() {
-    if (!deviceId || recipients.length === 0 || (!message.trim() && files.length === 0)) {
-      setStatus('Selecione o dispositivo, ao menos uma lista e informe a mensagem ou anexo.');
+    if (!deviceId || recipients.length === 0 || (!templateId && !message.trim() && files.length === 0)) {
+      setStatus('Selecione o dispositivo, ao menos uma lista e informe a mensagem, template ou anexo.');
       return;
     }
 
@@ -354,6 +370,7 @@ export function ComposeView() {
         deviceId,
         campaignName: campaignName.trim(),
         message: message.trim(),
+        templateId: templateId || null,
         scheduleAt: scheduleAt || null,
         recipients,
         files,
@@ -636,11 +653,34 @@ export function ComposeView() {
             </ComposeHeader>
 
             <InputGroup>
+              <span>Template</span>
+              <select value={templateId} onChange={(event) => setTemplateId(event.target.value)}>
+                <option value="">Sem template, usar mensagem manual</option>
+                {usableTemplates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name} ({template.variants.filter((variant) => variant.active).length} variacao(oes))
+                  </option>
+                ))}
+              </select>
+            </InputGroup>
+
+            {selectedTemplate ? (
+              <UploadPanel>
+                <div>
+                  <SectionLabel>{selectedTemplate.name}</SectionLabel>
+                  <p style={{ margin: 0, color: 'var(--muted)' }}>
+                    Uma das {selectedTemplate.variants.filter((variant) => variant.active).length} variacao(oes) ativas sera sorteada para cada destinatario.
+                  </p>
+                </div>
+              </UploadPanel>
+            ) : null}
+
+            <InputGroup>
               <span>Mensagem</span>
               <textarea
                 ref={textareaRef}
                 rows={10}
-                placeholder="Use {nome}, {paciente}, {profissional}, {data}, {hora}."
+                placeholder={templateId ? 'Opcional quando um template esta selecionado.' : 'Use {nome}, {paciente}, {profissional}, {data}, {hora}.'}
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
               />

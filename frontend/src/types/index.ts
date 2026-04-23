@@ -45,6 +45,37 @@ export interface Contact {
   notes?: string;
 }
 
+export interface MessageTemplateVariant {
+  id: string;
+  templateId: string;
+  body: string;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface MessageTemplate {
+  id: string;
+  ownerEmail?: string;
+  name: string;
+  description?: string;
+  active: boolean;
+  variants: MessageTemplateVariant[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface MessageTemplateDraft {
+  name: string;
+  description: string;
+  active: boolean;
+}
+
+export interface MessageTemplateVariantDraft {
+  body: string;
+  active: boolean;
+}
+
 export interface AdminUser {
   email: string;
   role: UserRole;
@@ -107,6 +138,7 @@ export interface ComposePayload {
   deviceId: string;
   campaignName: string;
   message: string;
+  templateId?: string | null;
   scheduleAt: string | null;
   recipients: ComposeRecipient[];
   files: File[];
