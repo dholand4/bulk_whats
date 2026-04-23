@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const database = require('../storage/database');
 const clientManager = require('../whatsapp/clientManager');
 const { sendQueueItem } = require('../messages/messageSender');
+const templateRepository = require('../templates/templateRepository');
 
 const deviceLocks = new Set();
 const deviceCooldowns = new Map();
@@ -58,6 +59,10 @@ function normalizeDelaySeconds(delaySeconds) {
 
 function randomBetween(min, max) {
     return Math.floor(Math.random() * ((max - min) + 1)) + min;
+}
+
+function pickRandomItem(items) {
+    return items[randomBetween(0, items.length - 1)];
 }
 
 function getDevicePacingState(deviceId) {
@@ -156,6 +161,19 @@ async function createItems(payload, auth) {
         throw new Error('Informe ao menos um destinatario.');
     }
 
+    let templateVariants = [];
+    if (payload?.templateId) {
+        const template = await templateRepository.getTemplate(payload.templateId, auth.email);
+        if (!template || !template.active) {
+            throw new Error('Template selecionado nao foi encontrado.');
+        }
+
+        templateVariants = template.variants.filter((variant) => variant.active && String(variant.body || '').trim());
+        if (templateVariants.length === 0) {
+            throw new Error('O template selecionado nao possui variacoes ativas.');
+        }
+    }
+
     const campaignId = recipients.length > 1 ? crypto.randomUUID() : null;
     const items = recipients.map((recipient) =>
         createQueueItem({
@@ -168,7 +186,7 @@ async function createItems(payload, auth) {
             profissional: recipient.profissional,
             data: recipient.data,
             hora: recipient.hora,
-            message: payload.message,
+            message: templateVariants.length > 0 ? pickRandomItem(templateVariants).body : payload.message,
             attachments: payload.attachments,
             scheduleAt: payload.scheduleAt,
             delaySeconds: payload.delaySeconds,

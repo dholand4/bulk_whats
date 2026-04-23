@@ -130,3 +130,26 @@ END $$;
 CREATE INDEX IF NOT EXISTS idx_contacts_owner ON contacts (owner_email, name);
 ALTER TABLE contacts ADD COLUMN IF NOT EXISTS list_name TEXT NOT NULL DEFAULT 'Geral';
 ALTER TABLE contacts ADD COLUMN IF NOT EXISTS profissional TEXT NOT NULL DEFAULT '';
+
+CREATE TABLE IF NOT EXISTS message_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_email TEXT NOT NULL REFERENCES users(email) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_message_templates_owner ON message_templates (owner_email, updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS message_template_variants (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    template_id UUID NOT NULL REFERENCES message_templates(id) ON DELETE CASCADE,
+    body TEXT NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_message_template_variants_template ON message_template_variants (template_id, created_at ASC);

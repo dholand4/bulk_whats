@@ -5,6 +5,7 @@ const adminController = require('../controllers/adminController');
 const contactController = require('../controllers/contactController');
 const deviceController = require('../controllers/deviceController');
 const queueController = require('../controllers/queueController');
+const templateController = require('../controllers/templateController');
 const uploadController = require('../controllers/uploadController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const adminMiddleware = require('../middlewares/adminMiddleware');
@@ -26,6 +27,14 @@ router.put('/api/contacts/:id', contactController.updateContact);
 router.delete('/api/contacts/:id', contactController.deleteContact);
 router.delete('/api/contact-lists/:listName', contactController.deleteContactList);
 router.post('/api/contacts/import', contactController.importContacts);
+
+router.get('/api/templates', templateController.listTemplates);
+router.post('/api/templates', templateController.createTemplate);
+router.put('/api/templates/:id', templateController.updateTemplate);
+router.delete('/api/templates/:id', templateController.deleteTemplate);
+router.post('/api/templates/:templateId/variants', templateController.createVariant);
+router.put('/api/templates/:templateId/variants/:variantId', templateController.updateVariant);
+router.delete('/api/templates/:templateId/variants/:variantId', templateController.deleteVariant);
 
 router.get('/api/dashboard/summary', queueController.summary);
 
