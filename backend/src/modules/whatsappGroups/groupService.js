@@ -19,6 +19,15 @@ function normalizeGroupId(value) {
     return groupId;
 }
 
+function isGroupsSyncUnavailableError(error) {
+    const message = String(error?.message || error || '').toLowerCase();
+    return message.includes('dispositivo nao conectado')
+        || message.includes('reading \'getchats\'')
+        || message.includes('reading "getchats"')
+        || message.includes('wwebjs')
+        || message.includes('execution context was destroyed');
+}
+
 function getConnectedClientOrThrow(deviceId) {
     const client = clientManager.getClient(deviceId);
     if (!client) {
@@ -59,7 +68,7 @@ async function listGroups(auth) {
     try {
         groups = await syncConnectedGroups(auth);
     } catch (error) {
-        if (!String(error?.message || '').includes('Dispositivo nao conectado')) {
+        if (!isGroupsSyncUnavailableError(error)) {
             throw error;
         }
     }
