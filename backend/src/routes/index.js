@@ -4,6 +4,7 @@ const authController = require('../controllers/authController');
 const adminController = require('../controllers/adminController');
 const contactController = require('../controllers/contactController');
 const deviceController = require('../controllers/deviceController');
+const groupController = require('../controllers/groupController');
 const queueController = require('../controllers/queueController');
 const templateController = require('../controllers/templateController');
 const uploadController = require('../controllers/uploadController');
@@ -46,6 +47,9 @@ router.post('/api/devices/:id/reconnect', deviceController.reconnectDevice);
 router.post('/api/devices/:id/disconnect', deviceController.disconnectDevice);
 router.get('/api/devices/:id/auth', deviceController.getDeviceAuth);
 router.post('/api/devices/:id/pairing-code', deviceController.generatePairingCode);
+
+router.get('/api/whatsapp/groups', groupController.listGroups);
+router.post('/api/whatsapp/groups', groupController.createGroup);
 
 router.get('/api/queue', queueController.listQueue);
 router.post('/api/queue', queueController.enqueue);

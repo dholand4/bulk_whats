@@ -131,6 +131,18 @@ CREATE INDEX IF NOT EXISTS idx_contacts_owner ON contacts (owner_email, name);
 ALTER TABLE contacts ADD COLUMN IF NOT EXISTS list_name TEXT NOT NULL DEFAULT 'Geral';
 ALTER TABLE contacts ADD COLUMN IF NOT EXISTS profissional TEXT NOT NULL DEFAULT '';
 
+CREATE TABLE IF NOT EXISTS whatsapp_groups (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_email TEXT NOT NULL REFERENCES users(email) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    whatsapp_group_id TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (owner_email, whatsapp_group_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_whatsapp_groups_owner_name ON whatsapp_groups (owner_email, name, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS message_templates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_email TEXT NOT NULL REFERENCES users(email) ON DELETE CASCADE,

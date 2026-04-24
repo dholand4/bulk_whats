@@ -32,6 +32,20 @@ async function listContacts(ownerEmail) {
     return result.rows.map(mapContact);
 }
 
+async function listContactsByIds(ownerEmail, ids) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return [];
+    }
+
+    const result = await postgres.query(`
+        SELECT id, owner_email, list_name, name, phone, paciente, profissional, data, hora, notes, created_at, updated_at
+        FROM contacts
+        WHERE owner_email = $1 AND id = ANY($2::uuid[])
+    `, [ownerEmail, ids]);
+
+    return result.rows.map(mapContact);
+}
+
 async function createContact({ ownerEmail, listName = 'Geral', name, phone, paciente = '', profissional = '', data = '', hora = '', notes = '' }) {
     const result = await postgres.query(`
         INSERT INTO contacts (owner_email, list_name, name, phone, paciente, profissional, data, hora, notes)
@@ -77,6 +91,7 @@ async function deleteContactList(ownerEmail, listName) {
 
 module.exports = {
     listContacts,
+    listContactsByIds,
     createContact,
     updateContact,
     deleteContact,

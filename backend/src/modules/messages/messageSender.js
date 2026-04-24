@@ -87,8 +87,15 @@ async function sendQueueItem(queueItem) {
         throw new Error('Dispositivo ainda nao foi inicializado.');
     }
 
-    const chatIds = await resolveChatIds(client, queueItem.recipientNumber);
+    const isGroupRecipient = queueItem.recipientType === 'group';
+    const chatIds = isGroupRecipient
+        ? [String(queueItem.recipientId || queueItem.recipientNumber || '').trim()]
+        : await resolveChatIds(client, queueItem.recipientNumber);
     const personalizedMessage = fillTemplate(queueItem.message, queueItem);
+
+    if (isGroupRecipient && (!chatIds[0] || !chatIds[0].endsWith('@g.us'))) {
+        throw new Error('Grupo nao encontrado ou ID invalido.');
+    }
 
     const attachments = Array.isArray(queueItem.attachments) ? queueItem.attachments : [];
     const ownerEmail = queueItem.createdBy || queueItem.deviceId;

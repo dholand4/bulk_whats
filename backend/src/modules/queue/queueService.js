@@ -4,6 +4,7 @@ const database = require('../storage/database');
 const clientManager = require('../whatsapp/clientManager');
 const { sendQueueItem } = require('../messages/messageSender');
 const templateRepository = require('../templates/templateRepository');
+const groupService = require('../whatsappGroups/groupService');
 
 const deviceLocks = new Set();
 const deviceCooldowns = new Map();
@@ -83,6 +84,8 @@ function createQueueItem(base) {
         campaignId: base.campaignId || null,
         campaignName: String(base.campaignName || '').trim(),
         deviceId: base.deviceId,
+        recipientType: base.recipientType || 'contact',
+        recipientId: base.recipientId || '',
         recipientNumber: base.recipientNumber,
         contactName: base.contactName || '',
         paciente: base.paciente || '',
@@ -116,6 +119,8 @@ function buildHistoryEntry(item) {
         campaignId: item.campaignId,
         campaignName: item.campaignName || '',
         deviceId: item.deviceId,
+        recipientType: item.recipientType || 'contact',
+        recipientId: item.recipientId || '',
         recipientNumber: item.recipientNumber,
         contactName: item.contactName,
         paciente: item.paciente || '',
@@ -175,24 +180,55 @@ async function createItems(payload, auth) {
     }
 
     const campaignId = recipients.length > 1 ? crypto.randomUUID() : null;
-    const items = recipients.map((recipient) =>
-        createQueueItem({
+    const items = [];
+
+    for (const recipient of recipients) {
+        const recipientType = recipient.type === 'group' ? 'group' : 'contact';
+        const message = templateVariants.length > 0 ? pickRandomItem(templateVariants).body : payload.message;
+
+        if (recipientType === 'group') {
+            // eslint-disable-next-line no-await-in-loop
+            const storedGroup = await groupService.validateStoredGroup(auth.email, recipient.id || recipient.number);
+            if (!storedGroup) {
+                throw new Error(`Grupo nao encontrado: ${recipient.name || recipient.id || recipient.number}.`);
+            }
+
+            items.push(createQueueItem({
+                campaignId,
+                campaignName: payload.campaignName,
+                deviceId: selectedDeviceId,
+                recipientType,
+                recipientId: storedGroup.whatsappGroupId,
+                recipientNumber: storedGroup.whatsappGroupId,
+                contactName: storedGroup.name,
+                message,
+                attachments: payload.attachments,
+                scheduleAt: payload.scheduleAt,
+                delaySeconds: payload.delaySeconds,
+                createdBy: auth?.email || '',
+            }));
+            continue;
+        }
+
+        items.push(createQueueItem({
             campaignId,
             campaignName: payload.campaignName,
             deviceId: selectedDeviceId,
+            recipientType,
+            recipientId: '',
             recipientNumber: recipient.number,
             contactName: recipient.name,
             paciente: recipient.paciente,
             profissional: recipient.profissional,
             data: recipient.data,
             hora: recipient.hora,
-            message: templateVariants.length > 0 ? pickRandomItem(templateVariants).body : payload.message,
+            message,
             attachments: payload.attachments,
             scheduleAt: payload.scheduleAt,
             delaySeconds: payload.delaySeconds,
             createdBy: auth?.email || '',
-        }),
-    );
+        }));
+    }
 
     await database.update((dbState) => {
         dbState.queue.unshift(...items);
@@ -318,6 +354,8 @@ async function reprocessItem(queueItemId, auth) {
             campaignId: item.campaignId,
             campaignName: item.campaignName,
             deviceId: item.deviceId,
+            recipientType: item.recipientType || 'contact',
+            recipientId: item.recipientId || '',
             recipientNumber: item.recipientNumber,
             contactName: item.contactName,
             paciente: item.paciente,
