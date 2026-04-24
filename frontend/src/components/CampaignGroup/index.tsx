@@ -1,5 +1,10 @@
 import { CampaignGroup } from '../../types';
-import { buildStatusSummary, formatCampaignStatus } from '../../utils/campaigns';
+import {
+  buildStatusSummary,
+  formatCampaignStatus,
+  getCampaignRecipientLabel,
+  getCampaignRecipientValue,
+} from '../../utils/campaigns';
 import {
   estimateCampaignDurationSeconds,
   estimateCampaignEndDate,
@@ -33,6 +38,10 @@ interface CampaignGroupListProps {
 }
 
 function formatWhatsAppNumber(value: string) {
+  if (value.endsWith('@g.us')) {
+    return value;
+  }
+
   const digits = value.replace(/\D/g, '').slice(0, 11);
 
   if (digits.length <= 2) {
@@ -68,7 +77,7 @@ export function CampaignGroupList({
             <GroupCard key={group.key}>
               <GroupSummary>
                 <SummaryMain>
-                  <Badge>{group.items.length} {mode === 'queue' ? 'contato(s)' : 'registro(s)'}</Badge>
+                  <Badge>{group.items.length} {mode === 'queue' ? 'destinatario(s)' : 'registro(s)'}</Badge>
                   <h4 style={{ margin: 0, fontSize: 20 }}>{group.campaignName}</h4>
                   <MutedText>
                     {getDeviceName(group.deviceId)} |{' '}
@@ -132,8 +141,8 @@ export function CampaignGroupList({
                     <ContactRow key={item.id}>
                       <RowHeader>
                         <div>
-                          <strong>{item.contactName || 'Contato'}</strong>
-                          <MutedText>{formatWhatsAppNumber(item.recipientNumber) || item.recipientNumber}</MutedText>
+                          <strong>{getCampaignRecipientLabel(item)}</strong>
+                          <MutedText>{formatWhatsAppNumber(getCampaignRecipientValue(item)) || getCampaignRecipientValue(item)}</MutedText>
                         </div>
                         {mode === 'queue' && onCancelItem ? (
                           <ActionButton type="button" onClick={() => onCancelItem(item.id)}>
@@ -143,6 +152,7 @@ export function CampaignGroupList({
                       </RowHeader>
 
                       <ContactMeta>
+                        <span><strong>Tipo:</strong> {item.recipientType === 'group' ? 'Grupo' : 'Contato'}</span>
                         <span><strong>Status:</strong> {formatCampaignStatus(item.status)}</span>
                         <span><strong>Agendamento:</strong> {formatDateTime(item.scheduleAt)}</span>
                         {item.sentAt ? <span><strong>Enviado em:</strong> {formatDateTime(item.sentAt)}</span> : null}

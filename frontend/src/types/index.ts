@@ -45,6 +45,14 @@ export interface Contact {
   notes?: string;
 }
 
+export interface WhatsAppGroup {
+  id: string;
+  name: string;
+  whatsappGroupId: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface MessageTemplateVariant {
   id: string;
   templateId: string;
@@ -88,6 +96,8 @@ export interface CampaignItem {
   campaignId?: string | null;
   campaignName?: string;
   deviceId: string;
+  recipientType?: 'contact' | 'group';
+  recipientId?: string;
   recipientNumber: string;
   contactName?: string;
   status: string;
@@ -119,8 +129,10 @@ export interface ContactGroup {
 }
 
 export interface ComposeRecipient {
+  type?: 'contact' | 'group';
+  id?: string;
   name: string;
-  number: string;
+  number?: string;
   listName?: string;
   paciente?: string;
   profissional?: string;
@@ -142,6 +154,11 @@ export interface ComposePayload {
   scheduleAt: string | null;
   recipients: ComposeRecipient[];
   files: File[];
+}
+
+export interface CreateWhatsAppGroupPayload {
+  name: string;
+  contactIds: string[];
 }
 
 export interface ContactDraft {

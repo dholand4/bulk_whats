@@ -9,6 +9,7 @@ import {
   SummaryValue,
 } from '../../components/AppShell/styled';
 import { useApp } from '../../providers/AppProvider';
+import { getCampaignRecipientLabel } from '../../utils/campaigns';
 import { formatDateTime } from '../../utils/format';
 import { PreviewCard, PreviewList, PreviewMeta } from './styled';
 
@@ -48,7 +49,7 @@ export function HomeView() {
           <PreviewList>
             {queuePreview.length ? queuePreview.map((item) => (
               <PreviewCard key={item.id}>
-                <strong>{item.campaignName || item.contactName || item.recipientNumber}</strong>
+                <strong>{item.campaignName || getCampaignRecipientLabel(item)}</strong>
                 <PreviewMeta>
                   {getDeviceName(item.deviceId)} - {formatDateTime(item.scheduleAt)} - {item.status}
                 </PreviewMeta>

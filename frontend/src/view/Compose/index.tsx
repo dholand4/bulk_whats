@@ -61,6 +61,7 @@ export function ComposeView() {
   const {
     devices,
     contacts,
+    whatsappGroups,
     templates,
     contactGroups,
     selectedContactListNames,
@@ -68,6 +69,7 @@ export function ComposeView() {
     selectAllComposeLists,
     clearComposeLists,
     submitCompose,
+    refreshWhatsAppGroups,
     parseComposeRecipientsFromSpreadsheet,
   } = useApp();
   const [guideOpen, setGuideOpen] = useState(false);
@@ -80,6 +82,7 @@ export function ComposeView() {
   const [message, setMessage] = useState('');
   const [scheduleAt, setScheduleAt] = useState('');
   const [files, setFiles] = useState<File[]>([]);
+  const [selectedWhatsAppGroupIds, setSelectedWhatsAppGroupIds] = useState<Set<string>>(new Set());
   const [spreadsheetRecipients, setSpreadsheetRecipients] = useState<Array<{
     name: string;
     number: string;
@@ -111,6 +114,12 @@ export function ComposeView() {
       setPreviewListName('');
     }
   }, [contactGroups, previewListName]);
+
+  useEffect(() => {
+    setSelectedWhatsAppGroupIds((current) => new Set(
+      Array.from(current).filter((groupId) => whatsappGroups.some((group) => group.whatsappGroupId === groupId)),
+    ));
+  }, [whatsappGroups]);
 
   const selectedGroups = useMemo(
     () => contactGroups.filter((group) => selectedContactListNames.has(group.listName)),
@@ -151,10 +160,27 @@ export function ComposeView() {
     [excludedContactIds, selectedGroups],
   );
 
+  const selectedWhatsAppGroups = useMemo(
+    () => whatsappGroups.filter((group) => selectedWhatsAppGroupIds.has(group.whatsappGroupId)),
+    [selectedWhatsAppGroupIds, whatsappGroups],
+  );
+
+  const recipientsFromWhatsAppGroups = useMemo(
+    () => selectedWhatsAppGroups.map((group) => ({
+      type: 'group' as const,
+      id: group.whatsappGroupId,
+      name: group.name,
+      number: group.whatsappGroupId,
+    })),
+    [selectedWhatsAppGroups],
+  );
+
   const recipients = useMemo(() => {
     const uniqueRecipients = new Map<string, {
+      type?: 'contact' | 'group';
+      id?: string;
       name: string;
-      number: string;
+      number?: string;
       listName?: string;
       paciente?: string;
       profissional?: string;
@@ -190,13 +216,22 @@ export function ComposeView() {
       }
 
       uniqueRecipients.set(normalizedNumber, {
+        type: 'contact',
         ...recipient,
         number: normalizedNumber,
       });
     });
 
+    recipientsFromWhatsAppGroups.forEach((group) => {
+      if (!group.id || uniqueRecipients.has(group.id)) {
+        return;
+      }
+
+      uniqueRecipients.set(group.id, group);
+    });
+
     return [...Array.from(uniqueRecipients.values()), ...allowedDuplicateRecipients];
-  }, [recipientsFromLists, spreadsheetRecipients]);
+  }, [recipientsFromLists, spreadsheetRecipients, recipientsFromWhatsAppGroups]);
 
   const previewGroup = useMemo(
     () => contactGroups.find((group) => group.listName === previewListName) || null,
@@ -279,6 +314,18 @@ export function ComposeView() {
     clearComposeLists();
     setExcludedContactIds(new Set());
     setPreviewListName('');
+  }
+
+  function toggleWhatsAppGroupSelection(groupId: string, checked: boolean) {
+    setSelectedWhatsAppGroupIds((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(groupId);
+      } else {
+        next.delete(groupId);
+      }
+      return next;
+    });
   }
 
   function toggleExcludedContact(contactId: string) {
@@ -379,6 +426,16 @@ export function ComposeView() {
       clearSpreadsheetRecipients();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Falha ao enviar campanha.');
+    }
+  }
+
+  async function handleRefreshWhatsAppGroups() {
+    try {
+      setStatus('Sincronizando grupos do WhatsApp...');
+      await refreshWhatsAppGroups();
+      setStatus('Grupos do WhatsApp atualizados com sucesso.');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Falha ao atualizar grupos do WhatsApp.');
     }
   }
 
@@ -597,6 +654,75 @@ export function ComposeView() {
             <ComposeHeader>
               <div>
                 <p style={{ margin: 0, color: 'var(--muted)', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.18em' }}>
+                  Grupos
+                </p>
+                <h3 style={{ margin: '6px 0 0' }}>Grupos do WhatsApp</h3>
+              </div>
+              <InlineActions>
+                <GhostButton type="button" onClick={() => void handleRefreshWhatsAppGroups()}>
+                  Atualizar grupos
+                </GhostButton>
+              </InlineActions>
+            </ComposeHeader>
+
+            <UploadPanel>
+              <div>
+                <SectionLabel>Grupos sincronizados</SectionLabel>
+                <p style={{ margin: 0, color: 'var(--muted)' }}>
+                  Selecione aqui apenas os grupos que ja existem no WhatsApp. O envio usa sempre o ID `@g.us`.
+                </p>
+                <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
+                  {selectedWhatsAppGroupIds.size
+                    ? `${selectedWhatsAppGroupIds.size} grupo(s) selecionado(s) para esta campanha.`
+                    : 'Nenhum grupo selecionado ainda.'}
+                </p>
+              </div>
+
+              {whatsappGroups.length === 0 ? (
+                <EmptyState>Conecte o WhatsApp e clique em Atualizar grupos para carregar os grupos disponiveis.</EmptyState>
+              ) : (
+                <ListsStrip>
+                  {whatsappGroups.map((group) => {
+                    const active = selectedWhatsAppGroupIds.has(group.whatsappGroupId);
+
+                    return (
+                      <ListItem
+                        key={group.whatsappGroupId}
+                        $active={active}
+                        onClick={() => toggleWhatsAppGroupSelection(group.whatsappGroupId, !active)}
+                      >
+                        <ListItemHeader>
+                          <ListCardMain>
+                            <ListCardTitleRow>
+                              <strong>{group.name}</strong>
+                            </ListCardTitleRow>
+                            <ListMeta>{group.whatsappGroupId}</ListMeta>
+                            <ListMeta>
+                              {active ? 'Grupo incluido nesta campanha.' : 'Clique para incluir este grupo no envio.'}
+                            </ListMeta>
+                          </ListCardMain>
+
+                          <ListCardBadges>
+                            {active ? <Badge>Selecionado</Badge> : null}
+                          </ListCardBadges>
+                        </ListItemHeader>
+                      </ListItem>
+                    );
+                  })}
+                </ListsStrip>
+              )}
+
+              <div>
+                <SectionLabel>Cadastro de grupos</SectionLabel>
+                <p style={{ margin: 0, color: 'var(--muted)' }}>Apenas grupos sincronizados aparecem aqui para selecao.</p>
+              </div>
+            </UploadPanel>
+          </ComposeCard>
+
+          <ComposeCard>
+            <ComposeHeader>
+              <div>
+                <p style={{ margin: 0, color: 'var(--muted)', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.18em' }}>
                   Planilha
                 </p>
                 <h3 style={{ margin: '6px 0 0' }}>Envio por Planilha</h3>
@@ -609,12 +735,17 @@ export function ComposeView() {
                 <p style={{ margin: 0, color: 'var(--muted)' }}>
                   Suba uma planilha `.xlsx`, `.xls` ou `.csv` e envie sem salvar esses contatos no banco.
                 </p>
-                <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
-                  {spreadsheetRecipients.length > 0
-                    ? `${spreadsheetRecipients.length} contato(s) temporario(s) pronto(s) para este envio.`
-                    : 'Nenhuma planilha carregada ainda.'}
-                </p>
-              </div>
+                  <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
+                    {spreadsheetRecipients.length > 0
+                      ? `${spreadsheetRecipients.length} contato(s) temporario(s) pronto(s) para este envio.`
+                      : 'Nenhuma planilha carregada ainda.'}
+                  </p>
+                  {selectedWhatsAppGroupIds.size > 0 ? (
+                    <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
+                      {selectedWhatsAppGroupIds.size} grupo(s) tambem serao incluidos nesta campanha.
+                    </p>
+                  ) : null}
+                </div>
 
               <SpreadsheetDropzone>
                 <strong>{spreadsheetFileName || 'Selecionar planilha para envio temporario'}</strong>
@@ -697,7 +828,7 @@ export function ComposeView() {
             <UploadPanel>
               <div>
                 <SectionLabel>Arquivos da campanha</SectionLabel>
-                <p style={{ margin: 0, color: 'var(--muted)' }}>A legenda vai no primeiro anexo.</p>
+                <p style={{ margin: 0, color: 'var(--muted)' }}>A legenda vai no primeiro anexo, inclusive em envios para grupos.</p>
               </div>
 
               <UploadDropzone>
@@ -745,7 +876,7 @@ export function ComposeView() {
             <InputGroup>
               <span>Ritmo do envio</span>
               <p style={{ margin: 0, color: 'var(--muted)' }}>
-                Automatico: 15-30 segundos entre mensagens e pausas aleatorias de 1-3 minutos a cada 5-15 contatos.
+                Automatico: 15-30 segundos entre mensagens e pausas aleatorias de 1-3 minutos a cada 5-15 destinatarios.
               </p>
             </InputGroup>
           </FooterGrid>

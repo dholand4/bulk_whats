@@ -23,6 +23,43 @@ export const CreateListForm = styled.form`
   gap: 14px;
 `;
 
+export const GroupPanel = styled(Panel)`
+  display: grid;
+  gap: 16px;
+`;
+
+export const GroupGrid = styled.div`
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.2fr);
+  gap: 16px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const GroupList = styled.div`
+  display: grid;
+  gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+`;
+
+export const GroupCard = styled.article`
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.48);
+  border-radius: 18px;
+  padding: 14px;
+  display: grid;
+  gap: 6px;
+`;
+
+export const GroupHint = styled.p`
+  margin: 0;
+  color: var(--muted);
+`;
+
 export const ListsOverview = styled(ContactListStrip)`
   grid-template-columns: repeat(2, minmax(0, 1fr));
   max-height: 540px;

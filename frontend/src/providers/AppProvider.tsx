@@ -10,12 +10,14 @@ import {
   Contact,
   ContactDraft,
   ContactGroup,
+  CreateWhatsAppGroupPayload,
   Device,
   MessageTemplate,
   MessageTemplateDraft,
   MessageTemplateVariantDraft,
   SpreadsheetParseResult,
   Summary,
+  WhatsAppGroup,
 } from '../types';
 import { getActiveListContacts, getContactGroups, groupCampaignItems } from '../utils/campaigns';
 
@@ -27,6 +29,7 @@ interface AppContextValue {
   queue: CampaignItem[];
   history: CampaignItem[];
   contacts: Contact[];
+  whatsappGroups: WhatsAppGroup[];
   templates: MessageTemplate[];
   users: AdminUser[];
   draftContactLists: string[];
@@ -49,6 +52,8 @@ interface AppContextValue {
   connectDevice: (deviceId: string) => Promise<void>;
   disconnectDevice: (deviceId: string) => Promise<string>;
   submitCompose: (payload: ComposePayload) => Promise<string>;
+  refreshWhatsAppGroups: () => Promise<void>;
+  createWhatsAppGroup: (payload: CreateWhatsAppGroupPayload) => Promise<string>;
   cancelQueueItem: (itemId: string) => Promise<void>;
   cancelCampaign: (groupKey: string) => Promise<void>;
   createDraftList: (listName: string) => string;
@@ -170,6 +175,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [queue, setQueue] = useState<CampaignItem[]>([]);
   const [history, setHistory] = useState<CampaignItem[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [whatsappGroups, setWhatsAppGroups] = useState<WhatsAppGroup[]>([]);
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [draftContactLists, setDraftContactLists] = useState<string[]>([]);
@@ -339,13 +345,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const [me, summaryData, devicesData, queueData, historyData, contactsData, templatesData] = await Promise.all([
+      const [me, summaryData, devicesData, queueData, historyData, contactsData, whatsappGroupsData, templatesData] = await Promise.all([
         apiRequest<{ user: AuthUser }>('/api/auth/me', {}, authToken),
         apiRequest<{ summary: Summary }>('/api/dashboard/summary', {}, authToken),
         apiRequest<{ devices: Device[] }>('/api/devices', {}, authToken),
         apiRequest<{ items: CampaignItem[] }>('/api/queue', {}, authToken),
         apiRequest<{ items: CampaignItem[] }>('/api/history', {}, authToken),
         apiRequest<{ contacts: Contact[] }>('/api/contacts', {}, authToken),
+        apiRequest<{ groups: WhatsAppGroup[] }>('/api/whatsapp/groups', {}, authToken),
         apiRequest<{ templates: MessageTemplate[] }>('/api/templates', {}, authToken),
       ]);
 
@@ -361,6 +368,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setQueue(queueData.items);
       setHistory(historyData.items);
       setContacts(contactsData.contacts);
+      setWhatsAppGroups(whatsappGroupsData.groups);
       setTemplates(templatesData.templates);
       setUsers(usersData?.users || []);
       setIsAuthChecking(false);
@@ -425,6 +433,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setQueue([]);
     setHistory([]);
     setContacts([]);
+    setWhatsAppGroups([]);
     setTemplates([]);
     setUsers([]);
     setDraftContactLists([]);
@@ -537,6 +546,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await refreshData();
       return data;
     });
+    return response.message;
+  }
+
+  async function refreshWhatsAppGroups() {
+    await runWithGlobalLoading('Atualizando grupos do WhatsApp...', async () => {
+      const data = await apiRequest<{ groups: WhatsAppGroup[] }>('/api/whatsapp/groups', {}, token);
+      setWhatsAppGroups(data.groups);
+    });
+  }
+
+  async function createWhatsAppGroup(payload: CreateWhatsAppGroupPayload) {
+    const response = await runWithGlobalLoading('Criando grupo no WhatsApp...', async () => {
+      const data = await apiRequest<{ message: string; groups?: WhatsAppGroup[] }>(
+        '/api/whatsapp/groups',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
+        token,
+      );
+
+      await refreshData();
+      return data;
+    });
+
     return response.message;
   }
 
@@ -865,6 +900,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         queue,
         history,
         contacts,
+        whatsappGroups,
         templates,
         users,
         draftContactLists,
@@ -887,6 +923,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         connectDevice,
         disconnectDevice,
         submitCompose,
+        refreshWhatsAppGroups,
+        createWhatsAppGroup,
         cancelQueueItem,
         cancelCampaign,
         createDraftList,

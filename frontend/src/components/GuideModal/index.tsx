@@ -26,10 +26,11 @@ const guideContentByVariant: Record<GuideModalVariant, { title: string; steps: A
         ],
       },
       {
-        title: '2. Escolha de onde saem os contatos',
+        title: '2. Escolha os destinatarios',
         bullets: [
-          'Selecione uma ou mais listas em Listas selecionadas para usar os contatos ja cadastrados.',
+          'Selecione uma ou mais listas para usar os contatos ja cadastrados.',
           'Se precisar, abra Ver contatos para remover pessoas apenas deste envio.',
+          'Na secao de grupos, selecione os grupos do WhatsApp que deseja incluir na campanha.',
         ],
       },
       {
@@ -44,11 +45,18 @@ const guideContentByVariant: Record<GuideModalVariant, { title: string; steps: A
           'hora',
         ],
         bullets: [
-          'Esses contatos entram so neste disparo e nao ficam salvos nas listas.',
+          'Os contatos da planilha entram so neste disparo e nao ficam salvos nas listas.',
         ],
       },
       {
-        title: '4. Escreva a mensagem com variaveis',
+        title: '4. Sincronize os grupos antes de enviar',
+        bullets: [
+          'Use Atualizar grupos para recarregar os grupos existentes na sessao conectada do WhatsApp.',
+          'Somente grupos realmente criados no WhatsApp aparecem para selecao.',
+        ],
+      },
+      {
+        title: '5. Escreva a mensagem com variaveis',
         description: 'No campo Mensagem, voce pode personalizar o texto com:',
         code: ['{nome}', '{paciente}', '{profissional}', '{data}', '{hora}'],
         bullets: [
@@ -56,14 +64,14 @@ const guideContentByVariant: Record<GuideModalVariant, { title: string; steps: A
         ],
       },
       {
-        title: '5. Anexe arquivos quando precisar',
+        title: '6. Anexe arquivos quando precisar',
         bullets: [
           'Use Arquivos da campanha para enviar imagens, documentos, audios ou videos.',
           'A legenda da mensagem vai no primeiro anexo enviado.',
         ],
       },
       {
-        title: '6. Escolha entre agendar ou enviar na hora',
+        title: '7. Escolha entre agendar ou enviar na hora',
         bullets: [
           'Preencha Agendar para se quiser definir data e hora.',
           'Use Adicionar na fila para deixar programado.',
@@ -73,7 +81,7 @@ const guideContentByVariant: Record<GuideModalVariant, { title: string; steps: A
     ],
   },
   contacts: {
-    title: 'Como organizar seus contatos',
+    title: 'Como organizar contatos e grupos',
     steps: [
       {
         title: '1. Cadastre uma lista',
@@ -95,6 +103,14 @@ const guideContentByVariant: Record<GuideModalVariant, { title: string; steps: A
           'Com a lista aberta, clique em Importar contatos.',
           'Use uma planilha .xlsx, .xls ou .csv com colunas como nome, telefone, paciente, profissional, data, hora e observacoes.',
           'Os contatos importados entram direto na lista selecionada.',
+        ],
+      },
+      {
+        title: '4. Crie grupos com os contatos da lista ativa',
+        bullets: [
+          'Na area Grupos do WhatsApp, selecione a lista que sera usada como origem dos participantes.',
+          'Se houver contatos marcados na lista, o grupo sera criado apenas com eles.',
+          'Depois de criar, use Atualizar grupos para sincronizar a lista exibida na tela.',
         ],
       },
     ],

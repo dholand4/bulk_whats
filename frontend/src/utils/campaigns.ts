@@ -104,3 +104,19 @@ export function buildStatusSummary(items: CampaignItem[]) {
     .map(([status, count]) => `${count} ${formatCampaignStatus(status)}`)
     .join(' | ');
 }
+
+export function getCampaignRecipientLabel(item: CampaignItem) {
+  if (item.recipientType === 'group') {
+    return item.contactName || 'Grupo';
+  }
+
+  return item.contactName || 'Contato';
+}
+
+export function getCampaignRecipientValue(item: CampaignItem) {
+  if (item.recipientType === 'group') {
+    return item.recipientId || item.recipientNumber;
+  }
+
+  return item.recipientNumber;
+}

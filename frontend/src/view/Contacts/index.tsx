@@ -25,6 +25,10 @@ import {
 import {
   ContactsSection,
   CreateListForm,
+  GroupCard,
+  GroupGrid,
+  GroupList,
+  GroupPanel,
   HeroHeader,
   HeroPanel,
   HiddenFileInput,
@@ -78,6 +82,7 @@ export function ContactsView() {
     activeContactListName,
     activeListContacts,
     selectedContactIds,
+    whatsappGroups,
     createDraftList,
     setActiveContactListName,
     removeContactList,
@@ -86,6 +91,8 @@ export function ContactsView() {
     deleteContact,
     deleteContacts,
     importContactsFromSpreadsheet,
+    refreshWhatsAppGroups,
+    createWhatsAppGroup,
     toggleContactSelection,
     selectContactIds,
     clearSelectedContacts,
@@ -97,6 +104,8 @@ export function ContactsView() {
   const [createListStatus, setCreateListStatus] = useState('');
   const [guideOpen, setGuideOpen] = useState(false);
   const [importStatus, setImportStatus] = useState('');
+  const [groupStatus, setGroupStatus] = useState('');
+  const [newGroupName, setNewGroupName] = useState('');
   const [contactListsPage, setContactListsPage] = useState(1);
   const [listSearchTerm, setListSearchTerm] = useState('');
   const [selectedListNames, setSelectedListNames] = useState<Set<string>>(new Set());
@@ -276,6 +285,51 @@ export function ContactsView() {
     }
   }
 
+  async function handleRefreshGroups() {
+    try {
+      setGroupStatus('Atualizando grupos do WhatsApp...');
+      await refreshWhatsAppGroups();
+      setGroupStatus('Grupos do WhatsApp atualizados com sucesso.');
+    } catch (error) {
+      setGroupStatus(error instanceof Error ? error.message : 'Falha ao atualizar grupos do WhatsApp.');
+    }
+  }
+
+  async function handleCreateGroupFromActiveList(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!activeContactListName) {
+      setGroupStatus('Selecione uma lista antes de cadastrar um grupo.');
+      return;
+    }
+
+    if (!newGroupName.trim()) {
+      setGroupStatus('Informe o nome do grupo.');
+      return;
+    }
+
+    const sourceContacts = selectedContactIds.size > 0
+      ? activeListContacts.filter((contact) => selectedContactIds.has(contact.id))
+      : activeListContacts;
+
+    if (sourceContacts.length === 0) {
+      setGroupStatus('Essa lista nao possui contatos para criar o grupo.');
+      return;
+    }
+
+    try {
+      setGroupStatus('Criando grupo no WhatsApp...');
+      const message = await createWhatsAppGroup({
+        name: newGroupName.trim(),
+        contactIds: sourceContacts.map((contact) => contact.id),
+      });
+      setNewGroupName('');
+      setGroupStatus(message);
+    } catch (error) {
+      setGroupStatus(error instanceof Error ? error.message : 'Falha ao criar grupo.');
+    }
+  }
+
   function handleRemoveList() {
     if (selectedListNames.size === 0) {
       return;
@@ -351,7 +405,7 @@ export function ContactsView() {
             </p>
             <h2 style={{ margin: '8px 0 4px' }}>Listas de contatos</h2>
             <p style={{ margin: 0, color: 'var(--muted)' }}>
-              Crie uma lista primeiro e depois adicione contatos manualmente ou por planilha.
+              Crie listas, cadastre contatos e tambem gerencie grupos do WhatsApp a partir daqui.
             </p>
           </div>
           <InlineActions>
@@ -388,6 +442,82 @@ export function ContactsView() {
 
         {createListStatus ? <StatusText>{createListStatus}</StatusText> : null}
       </HeroPanel>
+
+      <GroupPanel>
+        <HeroHeader>
+          <div>
+            <p style={{ margin: 0, color: 'var(--muted)', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.18em' }}>
+              Grupos
+            </p>
+            <h3 style={{ margin: '8px 0 4px' }}>Grupos do WhatsApp</h3>
+          </div>
+          <InlineActions>
+            <GhostButton type="button" onClick={() => void handleRefreshGroups()}>
+              Atualizar grupos
+            </GhostButton>
+          </InlineActions>
+        </HeroHeader>
+
+        <GroupGrid>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div>
+              <FieldLabel>Grupos sincronizados</FieldLabel>
+              <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>
+                {whatsappGroups.length > 0
+                  ? `${whatsappGroups.length} grupo(s) encontrados na sessao conectada.`
+                  : 'Nenhum grupo sincronizado ainda.'}
+              </p>
+            </div>
+
+            <GroupList>
+              {whatsappGroups.length === 0 ? (
+                <EmptyState>Conecte o WhatsApp no menu Dispositivo e clique em Atualizar grupos.</EmptyState>
+              ) : whatsappGroups.map((group) => (
+                <GroupCard key={group.whatsappGroupId}>
+                  <strong>{group.name}</strong>
+                  <span>{group.whatsappGroupId}</span>
+                </GroupCard>
+              ))}
+            </GroupList>
+          </div>
+
+          <form onSubmit={handleCreateGroupFromActiveList} style={{ display: 'grid', gap: 14 }}>
+            <div>
+              <FieldLabel>Cadastrar novo grupo</FieldLabel>
+              <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>
+                O grupo sera criado com os contatos da lista ativa. Se houver contatos selecionados nessa lista, uso apenas eles.
+              </p>
+            </div>
+
+            <SelectedBanner>
+              <FieldLabel>Origem dos participantes</FieldLabel>
+              <strong>{activeContactListName || 'Nenhuma lista selecionada'}</strong>
+              <span>
+                {activeContactListName
+                  ? `${selectedContactIds.size > 0 ? activeListContacts.filter((contact) => selectedContactIds.has(contact.id)).length : activeListContacts.length} contato(s) prontos para entrar no grupo.`
+                  : 'Selecione uma lista abaixo para habilitar o cadastro.'}
+              </span>
+            </SelectedBanner>
+
+            <InputGroup>
+              <span>Nome do grupo</span>
+              <input
+                type="text"
+                value={newGroupName}
+                maxLength={80}
+                placeholder="Ex.: Equipe Comercial"
+                onChange={(event) => setNewGroupName(event.target.value)}
+              />
+            </InputGroup>
+
+            <InlineActions>
+              <button type="submit">Cadastrar grupo no WhatsApp</button>
+            </InlineActions>
+          </form>
+        </GroupGrid>
+
+        {groupStatus ? <StatusText>{groupStatus}</StatusText> : null}
+      </GroupPanel>
 
       <Panel>
         {contactGroups.length === 0 && !createListOpen ? (
