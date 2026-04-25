@@ -97,25 +97,12 @@ export function ComposeView() {
   const [status, setStatus] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const messageSelectionRef = useRef({ start: 0, end: 0 });
-  const hasSyncedGroupsOnOpenRef = useRef(false);
 
   useEffect(() => {
     if (!deviceId && devices.length > 0) {
       setDeviceId(devices[0].id);
     }
   }, [deviceId, devices]);
-
-  useEffect(() => {
-    if (hasSyncedGroupsOnOpenRef.current) {
-      return;
-    }
-
-    hasSyncedGroupsOnOpenRef.current = true;
-
-    void refreshWhatsAppGroups().catch(() => {
-      // Mantem a tela utilizavel mesmo se a sincronizacao falhar ao abrir.
-    });
-  }, [refreshWhatsAppGroups]);
 
   useEffect(() => {
     setExcludedContactIds((current) => new Set(

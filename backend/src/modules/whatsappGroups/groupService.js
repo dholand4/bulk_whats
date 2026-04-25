@@ -93,101 +93,35 @@ function isCurrentUserInGroup(chat, ownIds) {
     });
 }
 
-async function queryFreshConnectedGroups(client) {
-    return client.pupPage.evaluate(async () => {
-        const normalizeId = (value) => String(value || '').trim().toLowerCase();
-        const ownIds = new Set();
-        const meWid = window.Store?.User?.getMaybeMePnUser?.() || window.Store?.User?.getMaybeMeLidUser?.();
-        const serializedMeWid = normalizeId(meWid?._serialized);
-
-        if (serializedMeWid) {
-            ownIds.add(serializedMeWid);
-
-            const numericPart = serializedMeWid.split('@')[0];
-            if (numericPart) {
-                ownIds.add(`${numericPart}@c.us`);
-                ownIds.add(`${numericPart}@s.whatsapp.net`);
-                ownIds.add(`${numericPart}@lid`);
-            }
-        }
-
-        const chatModels = window.Store.Chat?.getModelsArray?.() || [];
-        const groups = [];
-
-        for (const chatModel of chatModels) {
-            const groupId = chatModel?.id?._serialized;
-            const isGroup = Boolean(chatModel?.isGroup || chatModel?.groupMetadata);
-
-            if (!isGroup || !groupId || !groupId.endsWith('@g.us')) {
-                continue;
-            }
-
-            try {
-                await window.Store.GroupQueryAndUpdate({ id: groupId });
-            } catch (_error) {
-                // Se a atualizacao falhar, ainda tentamos ler o modelo local.
-            }
-
-            const refreshedChat = window.Store.Chat.get(chatModel.id) || chatModel;
-            const participants = refreshedChat?.groupMetadata?.participants;
-            const participantModels = participants?.getModelsArray?.() || participants?._models || [];
-
-            const isCurrentUserStillInGroup = participantModels.length === 0
-                ? true
-                : participantModels.some((participant) => {
-                    const participantId = normalizeId(
-                        participant?.id?._serialized
-                        || participant?.id?.user
-                        || participant?.id
-                        || participant,
-                    );
-
-                    if (!participantId) {
-                        return false;
-                    }
-
-                    if (ownIds.has(participantId)) {
-                        return true;
-                    }
-
-                    const numericPart = participantId.split('@')[0];
-                    return ownIds.has(`${numericPart}@c.us`)
-                        || ownIds.has(`${numericPart}@s.whatsapp.net`)
-                        || ownIds.has(`${numericPart}@lid`);
-                });
-
-            if (!isCurrentUserStillInGroup) {
-                continue;
-            }
-
-            groups.push({
-                name: String(refreshedChat?.formattedTitle || refreshedChat?.name || 'Grupo sem nome').trim(),
-                whatsappGroupId: groupId,
-            });
-        }
-
-        return groups;
-    });
-}
-
 async function syncConnectedGroups(auth) {
     const client = getConnectedClientOrThrow(auth.email);
-    let groups = [];
+    const chats = await client.getChats();
+    const refreshedChats = [];
 
-    try {
-        groups = await queryFreshConnectedGroups(client);
-    } catch (_error) {
-        const chats = await client.getChats();
-        const ownIds = buildConnectedParticipantIds(client);
-        groups = chats
-            .filter((chat) => chat?.isGroup && chat?.id?._serialized)
-            .filter((chat) => isCurrentUserInGroup(chat, ownIds))
-            .map((chat) => ({
-                name: normalizeText(chat.name) || 'Grupo sem nome',
-                whatsappGroupId: chat.id._serialized,
-            }))
-            .filter((group) => group.whatsappGroupId.endsWith('@g.us'));
+    for (const chat of chats) {
+        if (!chat?.isGroup || !chat?.id?._serialized) {
+            refreshedChats.push(chat);
+            continue;
+        }
+
+        try {
+            // eslint-disable-next-line no-await-in-loop
+            const refreshedChat = await client.getChatById(chat.id._serialized);
+            refreshedChats.push(refreshedChat || chat);
+        } catch (_error) {
+            refreshedChats.push(chat);
+        }
     }
+
+    const ownIds = buildConnectedParticipantIds(client);
+    const groups = refreshedChats
+        .filter((chat) => chat?.isGroup && chat?.id?._serialized)
+        .filter((chat) => isCurrentUserInGroup(chat, ownIds))
+        .map((chat) => ({
+            name: normalizeText(chat.name) || 'Grupo sem nome',
+            whatsappGroupId: chat.id._serialized,
+        }))
+        .filter((group) => group.whatsappGroupId.endsWith('@g.us'));
 
     return groupRepository.syncGroups(auth.email, groups);
 }
@@ -196,10 +130,14 @@ async function listGroups(auth, options = {}) {
     const forceSync = options.forceSync === true;
     let groups = await groupRepository.listGroups(auth.email);
 
-    try {
-        groups = await syncConnectedGroups(auth);
-    } catch (error) {
-        if (forceSync || !isGroupsSyncUnavailableError(error)) {
+    if (forceSync) {
+        try {
+            groups = await syncConnectedGroups(auth);
+        } catch (error) {
+            if (!isGroupsSyncUnavailableError(error)) {
+                throw error;
+            }
+
             throw error;
         }
     }
