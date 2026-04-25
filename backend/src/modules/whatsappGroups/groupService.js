@@ -96,8 +96,25 @@ function isCurrentUserInGroup(chat, ownIds) {
 async function syncConnectedGroups(auth) {
     const client = getConnectedClientOrThrow(auth.email);
     const chats = await client.getChats();
+    const refreshedChats = [];
+
+    for (const chat of chats) {
+        if (!chat?.isGroup || !chat?.id?._serialized) {
+            refreshedChats.push(chat);
+            continue;
+        }
+
+        try {
+            // eslint-disable-next-line no-await-in-loop
+            const refreshedChat = await client.getChatById(chat.id._serialized);
+            refreshedChats.push(refreshedChat || chat);
+        } catch (_error) {
+            refreshedChats.push(chat);
+        }
+    }
+
     const ownIds = buildConnectedParticipantIds(client);
-    const groups = chats
+    const groups = refreshedChats
         .filter((chat) => chat?.isGroup && chat?.id?._serialized)
         .filter((chat) => isCurrentUserInGroup(chat, ownIds))
         .map((chat) => ({
