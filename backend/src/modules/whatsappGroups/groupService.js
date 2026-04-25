@@ -130,14 +130,10 @@ async function listGroups(auth, options = {}) {
     const forceSync = options.forceSync === true;
     let groups = await groupRepository.listGroups(auth.email);
 
-    if (forceSync) {
-        try {
-            groups = await syncConnectedGroups(auth);
-        } catch (error) {
-            if (!isGroupsSyncUnavailableError(error)) {
-                throw error;
-            }
-
+    try {
+        groups = await syncConnectedGroups(auth);
+    } catch (error) {
+        if (forceSync || !isGroupsSyncUnavailableError(error)) {
             throw error;
         }
     }
