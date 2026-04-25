@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import {
   Badge,
@@ -85,6 +85,7 @@ export function TemplatesView() {
   const [status, setStatus] = useState('');
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
+  const variantTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const filteredTemplates = useMemo(() => {
     const normalized = searchTerm.trim().toLocaleLowerCase('pt-BR');
@@ -216,6 +217,31 @@ export function TemplatesView() {
     }
   }
 
+  function insertVariantPlaceholder(token: string) {
+    const textarea = variantTextareaRef.current;
+    if (!textarea) {
+      setVariantDraft((current) => ({ ...current, body: `${current.body}${token}` }));
+      return;
+    }
+
+    const start = textarea.selectionStart || 0;
+    const end = textarea.selectionEnd || 0;
+
+    setVariantDraft((current) => {
+      const currentBody = current.body || '';
+      return {
+        ...current,
+        body: `${currentBody.slice(0, start)}${token}${currentBody.slice(end)}`,
+      };
+    });
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const cursor = start + token.length;
+      textarea.setSelectionRange(cursor, cursor);
+    });
+  }
+
   function renderTemplateForm(submitLabel: string) {
     return (
       <Stack>
@@ -266,6 +292,7 @@ export function TemplatesView() {
         <InputGroup>
           <span>Mensagem da variacao</span>
           <textarea
+            ref={variantTextareaRef}
             rows={8}
             placeholder="Use {nome}, {paciente}, {profissional}, {data}, {hora}."
             value={variantDraft.body}
@@ -278,7 +305,7 @@ export function TemplatesView() {
             <MiniButton
               type="button"
               key={token}
-              onClick={() => setVariantDraft((current) => ({ ...current, body: `${current.body}${token}` }))}
+              onClick={() => insertVariantPlaceholder(token)}
             >
               {token}
             </MiniButton>
