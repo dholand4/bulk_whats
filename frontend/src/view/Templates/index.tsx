@@ -86,6 +86,7 @@ export function TemplatesView() {
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
   const variantTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const variantSelectionRef = useRef({ start: 0, end: 0 });
 
   const filteredTemplates = useMemo(() => {
     const normalized = searchTerm.trim().toLocaleLowerCase('pt-BR');
@@ -217,6 +218,18 @@ export function TemplatesView() {
     }
   }
 
+  function syncVariantSelection() {
+    const textarea = variantTextareaRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    variantSelectionRef.current = {
+      start: textarea.selectionStart || 0,
+      end: textarea.selectionEnd || 0,
+    };
+  }
+
   function insertVariantPlaceholder(token: string) {
     const textarea = variantTextareaRef.current;
     if (!textarea) {
@@ -224,8 +237,9 @@ export function TemplatesView() {
       return;
     }
 
-    const start = textarea.selectionStart || 0;
-    const end = textarea.selectionEnd || 0;
+    const isTextareaFocused = document.activeElement === textarea;
+    const start = isTextareaFocused ? (textarea.selectionStart || 0) : variantSelectionRef.current.start;
+    const end = isTextareaFocused ? (textarea.selectionEnd || 0) : variantSelectionRef.current.end;
 
     setVariantDraft((current) => {
       const currentBody = current.body || '';
@@ -239,6 +253,7 @@ export function TemplatesView() {
       textarea.focus();
       const cursor = start + token.length;
       textarea.setSelectionRange(cursor, cursor);
+      variantSelectionRef.current = { start: cursor, end: cursor };
     });
   }
 
@@ -297,6 +312,9 @@ export function TemplatesView() {
             placeholder="Use {nome}, {paciente}, {profissional}, {data}, {hora}."
             value={variantDraft.body}
             onChange={(event) => setVariantDraft((current) => ({ ...current, body: event.target.value }))}
+            onSelect={syncVariantSelection}
+            onClick={syncVariantSelection}
+            onKeyUp={syncVariantSelection}
             required
           />
         </InputGroup>
@@ -305,6 +323,8 @@ export function TemplatesView() {
             <MiniButton
               type="button"
               key={token}
+              onMouseDown={(event) => event.preventDefault()}
+              onPointerDown={(event) => event.preventDefault()}
               onClick={() => insertVariantPlaceholder(token)}
             >
               {token}

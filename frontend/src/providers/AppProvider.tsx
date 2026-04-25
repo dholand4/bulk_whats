@@ -551,7 +551,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   async function refreshWhatsAppGroups() {
     await runWithGlobalLoading('Atualizando grupos do WhatsApp...', async () => {
-      const data = await apiRequest<{ groups: WhatsAppGroup[] }>('/api/whatsapp/groups', {}, token);
+      const data = await apiRequest<{ groups: WhatsAppGroup[] }>('/api/whatsapp/groups?sync=true', {}, token);
       setWhatsAppGroups(data.groups);
     });
   }

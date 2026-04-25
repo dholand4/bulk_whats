@@ -2,7 +2,9 @@ const groupService = require('../modules/whatsappGroups/groupService');
 
 async function listGroups(req, res, next) {
     try {
-        const result = await groupService.listGroups(req.auth);
+        const result = await groupService.listGroups(req.auth, {
+            forceSync: ['1', 'true', 'yes'].includes(String(req.query.sync || '').toLowerCase()),
+        });
         res.status(result.statusCode).json(result.body);
     } catch (error) {
         next(error);

@@ -96,6 +96,7 @@ export function ComposeView() {
   const [excludedContactIds, setExcludedContactIds] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const messageSelectionRef = useRef({ start: 0, end: 0 });
 
   useEffect(() => {
     if (!deviceId && devices.length > 0) {
@@ -353,6 +354,18 @@ export function ComposeView() {
     });
   }
 
+  function syncMessageSelection() {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    messageSelectionRef.current = {
+      start: textarea.selectionStart || 0,
+      end: textarea.selectionEnd || 0,
+    };
+  }
+
   function insertPlaceholder(token: string) {
     const textarea = textareaRef.current;
     if (!textarea) {
@@ -360,8 +373,9 @@ export function ComposeView() {
       return;
     }
 
-    const start = textarea.selectionStart || 0;
-    const end = textarea.selectionEnd || 0;
+    const isTextareaFocused = document.activeElement === textarea;
+    const start = isTextareaFocused ? (textarea.selectionStart || 0) : messageSelectionRef.current.start;
+    const end = isTextareaFocused ? (textarea.selectionEnd || 0) : messageSelectionRef.current.end;
     const nextValue = `${message.slice(0, start)}${token}${message.slice(end)}`;
     setMessage(nextValue);
 
@@ -369,6 +383,7 @@ export function ComposeView() {
       textarea.focus();
       const cursor = start + token.length;
       textarea.setSelectionRange(cursor, cursor);
+      messageSelectionRef.current = { start: cursor, end: cursor };
     });
   }
 
@@ -814,12 +829,20 @@ export function ComposeView() {
                 placeholder={templateId ? 'Opcional quando um template esta selecionado.' : 'Use {nome}, {paciente}, {profissional}, {data}, {hora}.'}
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
+                onSelect={syncMessageSelection}
+                onClick={syncMessageSelection}
+                onKeyUp={syncMessageSelection}
               />
             </InputGroup>
 
             <PlaceholderRow>
               {placeholderTokens.map((token) => (
-                <PlaceholderChip key={token} onClick={() => insertPlaceholder(token)}>
+                <PlaceholderChip
+                  key={token}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onPointerDown={(event) => event.preventDefault()}
+                  onClick={() => insertPlaceholder(token)}
+                >
                   {token}
                 </PlaceholderChip>
               ))}
