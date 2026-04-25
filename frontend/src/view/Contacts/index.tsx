@@ -92,6 +92,7 @@ export function ContactsView() {
     deleteContacts,
     importContactsFromSpreadsheet,
     refreshWhatsAppGroups,
+    syncWhatsAppGroupsSilently,
     createWhatsAppGroup,
     toggleContactSelection,
     selectContactIds,
@@ -199,6 +200,18 @@ export function ContactsView() {
         setGroupStatus(error instanceof Error ? error.message : 'Falha ao atualizar grupos do WhatsApp.');
       });
   }, [refreshWhatsAppGroups]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      void syncWhatsAppGroupsSilently().catch(() => {
+        // Mantem a tela utilizavel se a sincronizacao em segundo plano falhar.
+      });
+    }, 8000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [syncWhatsAppGroupsSilently]);
 
   function resetDraft() {
     setDraft(emptyDraft);
