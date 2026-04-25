@@ -118,6 +118,7 @@ export function ContactsView() {
   const [draft, setDraft] = useState(emptyDraft);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
+  const hasSyncedGroupsOnOpenRef = useRef(false);
 
   const listPageSize = 6;
   const contactsPageSize = 10;
@@ -181,6 +182,23 @@ export function ContactsView() {
       Array.from(current).filter((listName) => contactGroups.some((group) => group.listName === listName)),
     ));
   }, [contactGroups]);
+
+  useEffect(() => {
+    if (hasSyncedGroupsOnOpenRef.current) {
+      return;
+    }
+
+    hasSyncedGroupsOnOpenRef.current = true;
+    setGroupStatus('Atualizando grupos do WhatsApp...');
+
+    void refreshWhatsAppGroups()
+      .then(() => {
+        setGroupStatus('Grupos do WhatsApp atualizados com sucesso.');
+      })
+      .catch((error) => {
+        setGroupStatus(error instanceof Error ? error.message : 'Falha ao atualizar grupos do WhatsApp.');
+      });
+  }, [refreshWhatsAppGroups]);
 
   function resetDraft() {
     setDraft(emptyDraft);

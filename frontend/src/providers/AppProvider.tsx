@@ -52,6 +52,7 @@ interface AppContextValue {
   connectDevice: (deviceId: string) => Promise<void>;
   disconnectDevice: (deviceId: string) => Promise<string>;
   submitCompose: (payload: ComposePayload) => Promise<string>;
+  loadWhatsAppGroups: () => Promise<void>;
   refreshWhatsAppGroups: () => Promise<void>;
   createWhatsAppGroup: (payload: CreateWhatsAppGroupPayload) => Promise<string>;
   cancelQueueItem: (itemId: string) => Promise<void>;
@@ -549,6 +550,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return response.message;
   }
 
+  async function loadWhatsAppGroups() {
+    const data = await apiRequest<{ groups: WhatsAppGroup[] }>('/api/whatsapp/groups', {}, token);
+    setWhatsAppGroups(data.groups);
+  }
+
   async function refreshWhatsAppGroups() {
     await runWithGlobalLoading('Atualizando grupos do WhatsApp...', async () => {
       const data = await apiRequest<{ groups: WhatsAppGroup[] }>('/api/whatsapp/groups?sync=true', {}, token);
@@ -923,6 +929,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         connectDevice,
         disconnectDevice,
         submitCompose,
+        loadWhatsAppGroups,
         refreshWhatsAppGroups,
         createWhatsAppGroup,
         cancelQueueItem,

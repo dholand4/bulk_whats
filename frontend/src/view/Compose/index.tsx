@@ -69,6 +69,7 @@ export function ComposeView() {
     selectAllComposeLists,
     clearComposeLists,
     submitCompose,
+    loadWhatsAppGroups,
     refreshWhatsAppGroups,
     parseComposeRecipientsFromSpreadsheet,
   } = useApp();
@@ -97,12 +98,25 @@ export function ComposeView() {
   const [status, setStatus] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const messageSelectionRef = useRef({ start: 0, end: 0 });
+  const hasLoadedStoredGroupsOnOpenRef = useRef(false);
 
   useEffect(() => {
     if (!deviceId && devices.length > 0) {
       setDeviceId(devices[0].id);
     }
   }, [deviceId, devices]);
+
+  useEffect(() => {
+    if (hasLoadedStoredGroupsOnOpenRef.current) {
+      return;
+    }
+
+    hasLoadedStoredGroupsOnOpenRef.current = true;
+
+    void loadWhatsAppGroups().catch(() => {
+      // Mantem a tela utilizavel mesmo se a leitura inicial falhar.
+    });
+  }, [loadWhatsAppGroups]);
 
   useEffect(() => {
     setExcludedContactIds((current) => new Set(
