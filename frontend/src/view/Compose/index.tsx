@@ -105,6 +105,12 @@ export function ComposeView() {
   }, [deviceId, devices]);
 
   useEffect(() => {
+    void refreshWhatsAppGroups().catch(() => {
+      // Mantem a tela utilizavel mesmo se a sincronizacao falhar ao abrir.
+    });
+  }, [refreshWhatsAppGroups]);
+
+  useEffect(() => {
     setExcludedContactIds((current) => new Set(
       Array.from(current).filter((contactId) => contacts.some((contact) => contact.id === contactId)),
     ));
