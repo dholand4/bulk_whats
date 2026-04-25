@@ -37,11 +37,69 @@ function getConnectedClientOrThrow(deviceId) {
     return client;
 }
 
+function normalizeParticipantId(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase();
+}
+
+function buildConnectedParticipantIds(client) {
+    const ownIds = new Set();
+    const serializedWid = normalizeParticipantId(client?.info?.wid?._serialized);
+
+    if (serializedWid) {
+        ownIds.add(serializedWid);
+
+        const numericPart = serializedWid.split('@')[0];
+        if (numericPart) {
+            ownIds.add(`${numericPart}@c.us`);
+            ownIds.add(`${numericPart}@s.whatsapp.net`);
+            ownIds.add(`${numericPart}@lid`);
+        }
+    }
+
+    return ownIds;
+}
+
+function isCurrentUserInGroup(chat, ownIds) {
+    const participants = Array.isArray(chat?.groupMetadata?.participants)
+        ? chat.groupMetadata.participants
+        : [];
+
+    if (participants.length === 0) {
+        return true;
+    }
+
+    return participants.some((participant) => {
+        const participantId = normalizeParticipantId(
+            participant?.id?._serialized
+            || participant?.id?.user
+            || participant?.id
+            || participant,
+        );
+
+        if (!participantId) {
+            return false;
+        }
+
+        if (ownIds.has(participantId)) {
+            return true;
+        }
+
+        const numericPart = participantId.split('@')[0];
+        return ownIds.has(`${numericPart}@c.us`)
+            || ownIds.has(`${numericPart}@s.whatsapp.net`)
+            || ownIds.has(`${numericPart}@lid`);
+    });
+}
+
 async function syncConnectedGroups(auth) {
     const client = getConnectedClientOrThrow(auth.email);
     const chats = await client.getChats();
+    const ownIds = buildConnectedParticipantIds(client);
     const groups = chats
         .filter((chat) => chat?.isGroup && chat?.id?._serialized)
+        .filter((chat) => isCurrentUserInGroup(chat, ownIds))
         .map((chat) => ({
             name: normalizeText(chat.name) || 'Grupo sem nome',
             whatsappGroupId: chat.id._serialized,
