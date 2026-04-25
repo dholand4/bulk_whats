@@ -9,12 +9,15 @@ interface GuideModalProps {
   variant: GuideModalVariant;
 }
 
-const guideContentByVariant: Record<GuideModalVariant, { title: string; steps: Array<{
+const guideContentByVariant: Record<GuideModalVariant, {
   title: string;
-  description?: string;
-  bullets?: string[];
-  code?: string[];
-}> }> = {
+  steps: Array<{
+    title: string;
+    description?: string;
+    bullets?: string[];
+    code?: string[];
+  }>;
+}> = {
   compose: {
     title: 'Como montar um envio',
     steps: [
@@ -22,51 +25,44 @@ const guideContentByVariant: Record<GuideModalVariant, { title: string; steps: A
         title: '1. Dê um nome para a campanha',
         bullets: [
           'Preencha o campo Nome da campanha para identificar esse envio depois.',
-          'Use nomes simples como lembrete-consulta, cobranca ou convite-evento.',
+          'Use nomes simples como lembrete-consulta, cobrança ou convite-evento.',
         ],
       },
       {
-        title: '2. Escolha os destinatarios',
+        title: '2. Escolha os destinatários',
         bullets: [
-          'Selecione uma ou mais listas para usar os contatos ja cadastrados.',
+          'Selecione uma ou mais listas para usar os contatos já cadastrados.',
           'Se precisar, abra Ver contatos para remover pessoas apenas deste envio.',
-          'Na secao de grupos, selecione os grupos do WhatsApp que deseja incluir na campanha.',
+          'Na seção de grupos, selecione os grupos do WhatsApp que deseja incluir na campanha.',
         ],
       },
       {
-        title: '3. Use planilha quando quiser envio temporario',
+        title: '3. Use planilha quando quiser envio temporário',
         description: 'A planilha pode ser .xlsx, .xls ou .csv e deve ter colunas com estes nomes:',
-        code: [
-          'nome',
-          'telefone',
-          'paciente',
-          'profissional',
-          'data',
-          'hora',
-        ],
+        code: ['nome', 'telefone', 'paciente', 'profissional', 'data', 'hora'],
         bullets: [
-          'Os contatos da planilha entram so neste disparo e nao ficam salvos nas listas.',
+          'Os contatos da planilha entram só neste disparo e não ficam salvos nas listas.',
         ],
       },
       {
         title: '4. Sincronize os grupos antes de enviar',
         bullets: [
-          'Use Atualizar grupos para recarregar os grupos existentes na sessao conectada do WhatsApp.',
-          'Somente grupos realmente criados no WhatsApp aparecem para selecao.',
+          'Use Atualizar grupos para recarregar os grupos existentes na sessão conectada do WhatsApp.',
+          'Somente grupos realmente criados no WhatsApp aparecem para seleção.',
         ],
       },
       {
-        title: '5. Escreva a mensagem com variaveis',
-        description: 'No campo Mensagem, voce pode personalizar o texto com:',
+        title: '5. Escreva a mensagem com variáveis',
+        description: 'No campo Mensagem, você pode personalizar o texto com:',
         code: ['{nome}', '{paciente}', '{profissional}', '{data}', '{hora}'],
         bullets: [
-          'Exemplo: Ola {nome}, sua consulta com {profissional} esta marcada para {data} as {hora}.',
+          'Exemplo: Olá {nome}, sua consulta com {profissional} está marcada para {data} às {hora}.',
         ],
       },
       {
         title: '6. Anexe arquivos quando precisar',
         bullets: [
-          'Use Arquivos da campanha para enviar imagens, documentos, audios ou videos.',
+          'Use Arquivos da campanha para enviar imagens, documentos, áudios ou vídeos.',
           'A legenda da mensagem vai no primeiro anexo enviado.',
         ],
       },
@@ -86,30 +82,30 @@ const guideContentByVariant: Record<GuideModalVariant, { title: string; steps: A
       {
         title: '1. Cadastre uma lista',
         bullets: [
-          'Clique no botao + para criar uma nova lista.',
-          'Dê um nome claro para separar seus grupos, como pacientes-manha ou leads-evento.',
+          'Clique no botão + para criar uma nova lista.',
+          'Dê um nome claro para separar seus grupos, como pacientes-manhã ou leads-evento.',
         ],
       },
       {
         title: '2. Adicione contatos manualmente',
         bullets: [
           'Selecione a lista desejada e clique em Novo contato.',
-          'Preencha nome, numero WhatsApp e, se quiser, dados como paciente, profissional, data, hora e observacoes.',
+          'Preencha nome, número do WhatsApp e, se quiser, dados como paciente, profissional, data, hora e observações.',
         ],
       },
       {
         title: '3. Importe contatos por planilha',
         bullets: [
           'Com a lista aberta, clique em Importar contatos.',
-          'Use uma planilha .xlsx, .xls ou .csv com colunas como nome, telefone, paciente, profissional, data, hora e observacoes.',
+          'Use uma planilha .xlsx, .xls ou .csv com colunas como nome, telefone, paciente, profissional, data, hora e observações.',
           'Os contatos importados entram direto na lista selecionada.',
         ],
       },
       {
         title: '4. Crie grupos com os contatos da lista ativa',
         bullets: [
-          'Na area Grupos do WhatsApp, selecione a lista que sera usada como origem dos participantes.',
-          'Se houver contatos marcados na lista, o grupo sera criado apenas com eles.',
+          'Na área Grupos do WhatsApp, selecione a lista que será usada como origem dos participantes.',
+          'Se houver contatos marcados na lista, o grupo será criado apenas com eles.',
           'Depois de criar, use Atualizar grupos para sincronizar a lista exibida na tela.',
         ],
       },
@@ -128,7 +124,7 @@ export function GuideModal({ open, onClose, variant }: GuideModalProps) {
     <Overlay onClick={onClose}>
       <ModalCard onClick={(event) => event.stopPropagation()}>
         <PanelHeading>
-          <h3>Guia rapido</h3>
+          <h3>Guia rápido</h3>
           <GhostButton type="button" onClick={onClose}>
             Fechar
           </GhostButton>

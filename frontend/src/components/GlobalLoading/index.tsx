@@ -17,7 +17,7 @@ export function GlobalLoading({ message }: GlobalLoadingProps) {
           style={{ width: 150, height: 150 }}
         />
         <LoadingTitle>Aguarde</LoadingTitle>
-        <LoadingText>{message || 'Aguarde enquanto buscamos as informacoes.'}</LoadingText>
+        <LoadingText>{message || 'Aguarde enquanto buscamos as informações.'}</LoadingText>
       </LoadingCard>
     </LoadingOverlay>
   );

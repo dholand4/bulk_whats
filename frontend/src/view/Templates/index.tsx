@@ -189,10 +189,10 @@ export function TemplatesView() {
         await saveTemplateVariant(activeTemplate.id, variantDraft, editingVariantId);
       }
 
-      setStatus('Alteracoes salvas com sucesso.');
+      setStatus('Alterações salvas com sucesso.');
       closeModal();
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Falha ao salvar alteracoes.');
+      setStatus(error instanceof Error ? error.message : 'Falha ao salvar alterações.');
     }
   }
 
@@ -272,7 +272,7 @@ export function TemplatesView() {
           />
         </InputGroup>
         <InputGroup>
-          <span>Descricao</span>
+            <span>Descrição</span>
           <textarea
             rows={3}
             placeholder="Opcional"
@@ -305,7 +305,7 @@ export function TemplatesView() {
     return (
       <Stack>
         <InputGroup>
-          <span>Mensagem da variacao</span>
+            <span>Mensagem da variação</span>
           <textarea
             ref={variantTextareaRef}
             rows={8}
@@ -337,10 +337,10 @@ export function TemplatesView() {
             checked={variantDraft.active}
             onChange={(event) => setVariantDraft((current) => ({ ...current, active: event.target.checked }))}
           />
-          Variacao ativa
+              Variação ativa
         </ActiveLabel>
         <InlineActions>
-          <button type="submit">Salvar variacao</button>
+          <button type="submit">Salvar variação</button>
           <GhostButton type="button" onClick={closeModal}>
             Cancelar
           </GhostButton>
@@ -355,11 +355,11 @@ export function TemplatesView() {
         <HeroHeader>
           <div>
             <p style={{ margin: 0, color: 'var(--muted)', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.18em' }}>
-              Templates
+        Modelos
             </p>
-            <h2 style={{ margin: '8px 0 4px' }}>Templates de mensagens</h2>
+          <h2 style={{ margin: '8px 0 4px' }}>Modelos de mensagens</h2>
             <p style={{ margin: 0, color: 'var(--muted)' }}>
-              Crie templates e cadastre variacoes para sortear mensagens em cada campanha.
+            Crie modelos e cadastre variações para sortear mensagens em cada campanha.
             </p>
           </div>
           <IconButton type="button" onClick={() => (createOpen ? setCreateOpen(false) : openCreateTemplate())}>
@@ -384,7 +384,7 @@ export function TemplatesView() {
                 <span>Buscar template</span>
                 <input
                   type="text"
-                  placeholder="Pesquisar por nome ou descricao"
+              placeholder="Pesquisar por nome ou descrição"
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
                 />
@@ -409,11 +409,11 @@ export function TemplatesView() {
                       <CardHeader>
                         <CardMain>
                           <strong>{template.name}</strong>
-                          <CardMeta>{template.description || 'Sem descricao'}</CardMeta>
+                    <CardMeta>{template.description || 'Sem descrição'}</CardMeta>
                         </CardMain>
                       </CardHeader>
                       <BadgeRow>
-                        <Badge>{template.variants.length} variacao(oes)</Badge>
+                      <Badge>{template.variants.length} variação(ões)</Badge>
                         <Badge>{activeVariants} ativa(s)</Badge>
                         <Badge>{template.active ? 'Ativo' : 'Inativo'}</Badge>
                       </BadgeRow>
@@ -434,7 +434,7 @@ export function TemplatesView() {
                 <div>
                   <h3 style={{ margin: 0 }}>{activeTemplate.name}</h3>
                   <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>
-                    {activeTemplate.description || 'Sem descricao cadastrada.'}
+                  {activeTemplate.description || 'Sem descrição cadastrada.'}
                   </p>
                 </div>
                 <VariantActions>
@@ -445,7 +445,7 @@ export function TemplatesView() {
                     type="button"
                     onClick={() => setConfirmState({
                       title: 'Apagar template',
-                      description: `Tem certeza que deseja apagar "${activeTemplate.name}" e todas as variacoes dele?`,
+                      description: `Tem certeza que deseja apagar "${activeTemplate.name}" e todas as variações dele?`,
                       confirmLabel: 'Apagar template',
                       action: 'delete-template',
                       templateId: activeTemplate.id,
@@ -454,19 +454,19 @@ export function TemplatesView() {
                     Excluir
                   </DangerButton>
                   <button type="button" onClick={openCreateVariant}>
-                    Nova variacao
+                  Nova variação
                   </button>
                 </VariantActions>
               </DetailHeader>
 
               <BadgeRow>
                 <Badge>{activeTemplate.active ? 'Template ativo' : 'Template inativo'}</Badge>
-                <Badge>{activeTemplate.variants.length} variacao(oes)</Badge>
+                <Badge>{activeTemplate.variants.length} variação(ões)</Badge>
                 <Badge>{activeTemplate.variants.filter((variant) => variant.active).length} ativa(s)</Badge>
               </BadgeRow>
 
               {activeTemplate.variants.length === 0 ? (
-                <EmptyState>Esse template ainda nao possui variacoes.</EmptyState>
+                <EmptyState>Esse modelo ainda não possui variações.</EmptyState>
               ) : (
                 <VariantList>
                   {activeTemplate.variants.map((variant) => (
@@ -482,9 +482,9 @@ export function TemplatesView() {
                         <DangerButton
                           type="button"
                           onClick={() => setConfirmState({
-                            title: 'Apagar variacao',
-                            description: 'Tem certeza que deseja apagar esta variacao?',
-                            confirmLabel: 'Apagar variacao',
+                        title: 'Apagar variação',
+                        description: 'Tem certeza que deseja apagar esta variação?',
+                        confirmLabel: 'Apagar variação',
                             action: 'delete-variant',
                             templateId: activeTemplate.id,
                             variantId: variant.id,
@@ -511,13 +511,13 @@ export function TemplatesView() {
                   {modalMode === 'edit-template'
                     ? 'Editar template'
                     : modalMode === 'edit-variant'
-                      ? 'Editar variacao'
-                      : 'Nova variacao'}
+                    ? 'Editar variação'
+                    : 'Nova variação'}
                 </h3>
                 <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>
                   {modalMode.includes('variant')
-                    ? 'Cada campanha sorteara uma variacao ativa para cada destinatario.'
-                    : 'Apenas voce vera e usara este template.'}
+                  ? 'Cada campanha sorteará uma variação ativa para cada destinatário.'
+                  : 'Apenas você verá e usará este modelo.'}
                 </p>
               </div>
               <GhostButton type="button" onClick={closeModal}>

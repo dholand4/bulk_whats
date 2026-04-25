@@ -1,9 +1,9 @@
 export const navigationItems = [
-  { label: 'Home', path: '/home' },
+  { label: 'Início', path: '/home' },
   { label: 'Dispositivo', path: '/dispositivo' },
   { label: 'Contatos e Grupos', path: '/contato' },
-  { label: 'Templates', path: '/templates' },
+  { label: 'Modelos', path: '/templates' },
   { label: 'Envios', path: '/envios' },
   { label: 'Agendamentos', path: '/agendamentos' },
-  { label: 'Historico', path: '/historico' },
+  { label: 'Histórico', path: '/historico' },
 ];

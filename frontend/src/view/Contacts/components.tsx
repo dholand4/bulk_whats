@@ -166,14 +166,14 @@ export function ContactsToolbar({
           checked={allVisibleSelected}
           onChange={(event) => onToggleSelectAll(event.target.checked)}
         />
-        Selecionar todos visiveis ({visibleCount})
+        Selecionar todos visíveis ({visibleCount})
       </BulkSelectLabel>
 
       <ToolbarSearch>
         <span>Buscar contato</span>
         <input
           type="text"
-          placeholder="Pesquisar por nome, numero, paciente, profissional ou observacao"
+          placeholder="Pesquisar por nome, número, paciente, profissional ou observação"
           value={searchTerm}
           onChange={(event) => onSearchChange(event.target.value)}
         />
@@ -198,7 +198,7 @@ export function ContactsSelectionBar({
 
       <ContactActions>
         <GhostButton type="button" onClick={onClearSelection}>
-          Limpar selecao
+          Limpar seleção
         </GhostButton>
         <GhostButton type="button" onClick={onBulkEdit}>
           Editar
@@ -285,7 +285,7 @@ export function ContactsList({
     <ContactsListShell>
       <ContactsListHeader>
         <span>Clique em um item para selecionar.</span>
-        <span>Acoes rapidas ficam no canto direito de cada contato.</span>
+        <span>Ações rápidas ficam no canto direito de cada contato.</span>
       </ContactsListHeader>
 
       {contacts.map((contact) => (
@@ -313,9 +313,9 @@ export function ContactsPagination({
       <GhostButton type="button" onClick={onPrev}>
         Anterior
       </GhostButton>
-      <CompactPageInfo>Pagina {page} de {pageCount}</CompactPageInfo>
+      <CompactPageInfo>Página {page} de {pageCount}</CompactPageInfo>
       <GhostButton type="button" onClick={onNext}>
-        Proxima
+        Próxima
       </GhostButton>
     </CompactPagination>
   );
@@ -368,7 +368,7 @@ export function ContactListsSection({
           <ListsSelectionSummary>{selectedListNames.size} lista(s) selecionada(s)</ListsSelectionSummary>
           <ListsActions>
             <GhostButton type="button" onClick={onClearSelection}>
-              Limpar selecao
+              Limpar seleção
             </GhostButton>
             <DangerButton type="button" onClick={onDeleteSelected}>
               Apagar selecionadas

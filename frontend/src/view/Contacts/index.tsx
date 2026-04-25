@@ -344,7 +344,7 @@ export function ContactsView() {
       : activeListContacts;
 
     if (sourceContacts.length === 0) {
-      setGroupStatus('Essa lista nao possui contatos para criar o grupo.');
+      setGroupStatus('Essa lista não possui contatos para criar o grupo.');
       return;
     }
 
@@ -368,7 +368,7 @@ export function ContactsView() {
 
     setConfirmState({
       title: 'Apagar listas selecionadas',
-      description: `Tem certeza que deseja apagar ${selectedListNames.size} lista(s) selecionada(s)? Essa acao remove as listas e todos os contatos delas.`,
+      description: `Tem certeza que deseja apagar ${selectedListNames.size} lista(s) selecionada(s)? Essa ação remove as listas e todos os contatos delas.`,
       confirmLabel: 'Apagar listas',
       action: 'delete-selected-lists',
     });
@@ -495,7 +495,7 @@ export function ContactsView() {
               <FieldLabel>Grupos sincronizados</FieldLabel>
               <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>
                 {whatsappGroups.length > 0
-                  ? `${whatsappGroups.length} grupo(s) encontrados na sessao conectada.`
+          ? `${whatsappGroups.length} grupo(s) encontrados na sessão conectada.`
                   : 'Nenhum grupo sincronizado ainda.'}
               </p>
             </div>
@@ -516,7 +516,7 @@ export function ContactsView() {
             <div>
               <FieldLabel>Cadastrar novo grupo</FieldLabel>
               <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>
-                O grupo sera criado com os contatos da lista ativa. Se houver contatos selecionados nessa lista, uso apenas eles.
+            O grupo será criado com os contatos da lista ativa. Se houver contatos selecionados nessa lista, uso apenas eles.
               </p>
             </div>
 
@@ -682,7 +682,7 @@ export function ContactsView() {
                 <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>
                   {contactModalMode === 'bulk-edit'
                     ? `${selectedContactIds.size} contato(s) serao atualizados em lote.`
-                    : 'Os dados serao adicionados na lista ativa.'}
+                : 'Os dados serão adicionados na lista ativa.'}
                 </p>
               </div>
               <GhostButton type="button" onClick={() => setContactModalOpen(false)}>
@@ -699,7 +699,7 @@ export function ContactsView() {
 
                 {contactModalMode === 'bulk-edit' ? (
                   <EmptyState>
-                    Na edicao em lote, voce pode alterar apenas data e observacoes para todos os contatos selecionados.
+              Na edição em lote, você pode alterar apenas data e observações para todos os contatos selecionados.
                   </EmptyState>
                 ) : (
                   <>
@@ -713,7 +713,7 @@ export function ContactsView() {
                       />
                     </InputGroup>
                     <InputGroup>
-                      <span>Numero WhatsApp</span>
+                  <span>Número do WhatsApp</span>
                       <input
                         type="text"
                         inputMode="numeric"

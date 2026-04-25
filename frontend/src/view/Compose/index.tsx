@@ -498,7 +498,7 @@ export function ComposeView() {
               <span>Dispositivo</span>
               <select value={deviceId} onChange={(event) => setDeviceId(event.target.value)} required>
                 {devices.length === 0 ? (
-                  <option value="">Dispositivo do usuario indisponivel</option>
+              <option value="">Dispositivo do usuário indisponível</option>
                 ) : (
                   devices.map((device) => (
                     <option key={device.id} value={device.id}>
@@ -582,7 +582,7 @@ export function ComposeView() {
                     <SelectionSummary>{selectedContactListNames.size} lista(s) selecionada(s)</SelectionSummary>
                     <InlineActions>
                       <GhostButton type="button" onClick={handleClearComposeLists}>
-                        Limpar selecao
+                Limpar seleção
                       </GhostButton>
                     </InlineActions>
                   </SelectionBar>
@@ -591,7 +591,7 @@ export function ComposeView() {
                 {contactGroups.length === 0 ? (
                   spreadsheetRecipients.length > 0 ? (
                     <EmptyState>
-                      Sua planilha ja esta pronta para uso. Se quiser, voce ainda pode combinar esse envio com listas salvas.
+              Sua planilha já está pronta para uso. Se quiser, você ainda pode combinar esse envio com listas salvas.
                     </EmptyState>
                   ) : (
                     <EmptyState>Cadastre listas e contatos na aba Contatos para montar campanhas.</EmptyState>
@@ -665,12 +665,12 @@ export function ComposeView() {
                       <GhostButton type="button" onClick={() => setListsPage((current) => Math.max(1, current - 1))}>
                         Anterior
                       </GhostButton>
-                      <PaginationSummary>Pagina {listsPage} de {listsPageCount}</PaginationSummary>
+              <PaginationSummary>Página {listsPage} de {listsPageCount}</PaginationSummary>
                       <GhostButton
                         type="button"
                         onClick={() => setListsPage((current) => Math.min(listsPageCount, current + 1))}
                       >
-                        Proxima
+                Próxima
                       </GhostButton>
                     </PaginationRow>
                   </>
@@ -698,7 +698,7 @@ export function ComposeView() {
               <div>
                 <SectionLabel>Grupos sincronizados</SectionLabel>
                 <p style={{ margin: 0, color: 'var(--muted)' }}>
-                  Selecione aqui apenas os grupos que ja existem no WhatsApp. O envio usa sempre o ID `@g.us`.
+              Selecione aqui apenas os grupos que já existem no WhatsApp. O envio usa sempre o ID `@g.us`.
                 </p>
                 <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
                   {selectedWhatsAppGroupIds.size
@@ -727,7 +727,7 @@ export function ComposeView() {
                             </ListCardTitleRow>
                             <ListMeta>{group.whatsappGroupId}</ListMeta>
                             <ListMeta>
-                              {active ? 'Grupo incluido nesta campanha.' : 'Clique para incluir este grupo no envio.'}
+                  {active ? 'Grupo incluído nesta campanha.' : 'Clique para incluir este grupo no envio.'}
                             </ListMeta>
                           </ListCardMain>
 
@@ -743,7 +743,7 @@ export function ComposeView() {
 
               <div>
                 <SectionLabel>Cadastro de grupos</SectionLabel>
-                <p style={{ margin: 0, color: 'var(--muted)' }}>Apenas grupos sincronizados aparecem aqui para selecao.</p>
+            <p style={{ margin: 0, color: 'var(--muted)' }}>Apenas grupos sincronizados aparecem aqui para seleção.</p>
               </div>
             </UploadPanel>
           </ComposeCard>
@@ -771,7 +771,7 @@ export function ComposeView() {
                   </p>
                   {selectedWhatsAppGroupIds.size > 0 ? (
                     <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
-                      {selectedWhatsAppGroupIds.size} grupo(s) tambem serao incluidos nesta campanha.
+            {selectedWhatsAppGroupIds.size} grupo(s) também serão incluídos nesta campanha.
                     </p>
                   ) : null}
                 </div>
@@ -818,7 +818,7 @@ export function ComposeView() {
                 <option value="">Sem template, usar mensagem manual</option>
                 {usableTemplates.map((template) => (
                   <option key={template.id} value={template.id}>
-                    {template.name} ({template.variants.filter((variant) => variant.active).length} variacao(oes))
+                    {template.name} ({template.variants.filter((variant) => variant.active).length} variação(ões))
                   </option>
                 ))}
               </select>
@@ -829,7 +829,7 @@ export function ComposeView() {
                 <div>
                   <SectionLabel>{selectedTemplate.name}</SectionLabel>
                   <p style={{ margin: 0, color: 'var(--muted)' }}>
-                    Uma das {selectedTemplate.variants.filter((variant) => variant.active).length} variacao(oes) ativas sera sorteada para cada destinatario.
+                Uma das {selectedTemplate.variants.filter((variant) => variant.active).length} variação(ões) ativas será sorteada para cada destinatário.
                   </p>
                 </div>
               </UploadPanel>
@@ -840,7 +840,7 @@ export function ComposeView() {
               <textarea
                 ref={textareaRef}
                 rows={10}
-                placeholder={templateId ? 'Opcional quando um template esta selecionado.' : 'Use {nome}, {paciente}, {profissional}, {data}, {hora}.'}
+              placeholder={templateId ? 'Opcional quando um modelo está selecionado.' : 'Use {nome}, {paciente}, {profissional}, {data}, {hora}.'}
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 onSelect={syncMessageSelection}
@@ -871,7 +871,7 @@ export function ComposeView() {
               <UploadDropzone>
                 <strong>{files.length ? `${files.length} arquivo(s) selecionado(s)` : 'Selecionar arquivos da campanha'}</strong>
                 <AttachmentHint>
-                  Envie imagens, documentos, audios ou videos. Voce pode selecionar varios arquivos de uma vez.
+            Envie imagens, documentos, áudios ou vídeos. Você pode selecionar vários arquivos de uma vez.
                 </AttachmentHint>
                 <HiddenFileInput type="file" multiple onChange={handleFiles} />
               </UploadDropzone>
@@ -957,7 +957,7 @@ export function ComposeView() {
             </InlineActions>
 
             {previewGroup.contacts.length === 0 ? (
-              <EmptyState>Essa lista ainda nao possui contatos.</EmptyState>
+          <EmptyState>Essa lista ainda não possui contatos.</EmptyState>
             ) : (
               <ContactsPreviewList>
                 {previewGroup.contacts.map((contact) => {

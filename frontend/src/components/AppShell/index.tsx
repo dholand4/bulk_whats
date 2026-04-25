@@ -51,7 +51,7 @@ export function AppShell() {
   };
 
   const roleLabel =
-    user?.role === 'admin' ? 'Admin' : formatExpirationDate(user?.dataExpiracao);
+    user?.role === 'admin' ? 'Administrador' : formatExpirationDate(user?.dataExpiracao);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(min-width: 981px)');
@@ -101,7 +101,7 @@ export function AppShell() {
           <span />
         </MobileCloseButton>
         <SidebarHeader>
-          <Eyebrow>Gestao</Eyebrow>
+          <Eyebrow>Gestão</Eyebrow>
           <SidebarTitle>Bulk Whats</SidebarTitle>
           <SidebarMuted title={user?.email || undefined}>
             {user ? `${emailLabel} - ${roleLabel}` : ''}
@@ -116,7 +116,7 @@ export function AppShell() {
           ))}
           {user?.role === 'admin' ? (
             <NavButton to="/admin" onClick={() => setIsMobileSidebarOpen(false)}>
-              Admin
+              Administração
             </NavButton>
           ) : null}
         </NavList>

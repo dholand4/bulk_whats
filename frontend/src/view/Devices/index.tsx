@@ -9,11 +9,11 @@ export function DevicesView() {
   return (
     <Panel>
       <PanelHeading>
-        <h3>Dispositivo do usuario</h3>
+        <h3>Dispositivo do usuário</h3>
       </PanelHeading>
       <HeroText>
-        Quando o dispositivo ja estiver autenticado, a tela mostra que ele esta pronto para enviar. Se ainda precisar
-        conectar, o QR Code sera exibido para escanear.
+        Quando o dispositivo já estiver autenticado, a tela mostra que ele está pronto para enviar. Se ainda precisar
+        conectar, o QR Code será exibido para escanear.
       </HeroText>
       <DeviceListSection>
         <DeviceCardList

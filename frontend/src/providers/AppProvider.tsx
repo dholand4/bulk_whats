@@ -377,7 +377,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao atualizar dados.';
 
-      if (message.includes('Sessao invalida')) {
+      if (message.includes('Sessão inválida')) {
         await logout();
         return;
       }
@@ -490,7 +490,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ? {
           ...device,
           status: 'resetting_session',
-          lastKnownStatus: 'Aguarde, apagando ultimos registros para gerar um novo QR Code.',
+        lastKnownStatus: 'Aguarde, apagando últimos registros para gerar um novo QR Code.',
           connectedNumber: null,
           qrCode: undefined,
           pairingCode: undefined,
@@ -504,7 +504,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         : device
     )));
 
-    const response = await runWithGlobalLoading('Aguarde, apagando ultimos registros para gerar novo QR Code...', async () => {
+    const response = await runWithGlobalLoading('Aguarde, apagando últimos registros para gerar novo QR Code...', async () => {
       const data = await apiRequest<{ message: string }>(`/api/devices/${deviceId}/disconnect`, { method: 'POST' }, token);
       await apiRequest(`/api/devices/${deviceId}/auth`, {}, token);
       await refreshData();
@@ -809,7 +809,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       : `/api/templates/${templateId}/variants`;
     const method = variantId ? 'PUT' : 'POST';
 
-    await runWithGlobalLoading(variantId ? 'Atualizando variacao...' : 'Salvando variacao...', async () => {
+    await runWithGlobalLoading(variantId ? 'Atualizando variação...' : 'Salvando variação...', async () => {
       await apiRequest(
         path,
         {
@@ -825,7 +825,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   async function deleteTemplateVariant(templateId: string, variantId: string) {
-    await runWithGlobalLoading('Excluindo variacao...', async () => {
+    await runWithGlobalLoading('Excluindo variação...', async () => {
       await apiRequest(`/api/templates/${templateId}/variants/${variantId}`, { method: 'DELETE' }, token);
       await refreshData();
     });
@@ -835,7 +835,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const path = currentEmail ? `/api/admin/users/${encodeURIComponent(currentEmail)}` : '/api/admin/users';
     const method = currentEmail ? 'PUT' : 'POST';
 
-    await runWithGlobalLoading('Salvando usuario...', async () => {
+    await runWithGlobalLoading('Salvando usuário...', async () => {
       await apiRequest(
         path,
         {
@@ -851,7 +851,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   async function deleteAdminUser(email: string) {
-    await runWithGlobalLoading('Excluindo usuario...', async () => {
+    await runWithGlobalLoading('Excluindo usuário...', async () => {
       await apiRequest(`/api/admin/users/${encodeURIComponent(email)}`, { method: 'DELETE' }, token);
       await refreshData();
     });

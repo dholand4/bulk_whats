@@ -14,7 +14,7 @@ export function HistoryView() {
     <HistoryWrap>
       <Panel>
         <PanelHeading>
-          <h3>Historico</h3>
+          <h3>Histórico</h3>
         </PanelHeading>
         <CampaignGroupList groups={historyGroups} getDeviceName={getDeviceName} mode="history" />
       </Panel>

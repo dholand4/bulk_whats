@@ -1,6 +1,5 @@
 import {
   EmptyState,
-  Badge,
   Panel,
   PanelGrid,
   PanelHeading,
@@ -9,13 +8,10 @@ import {
   SummaryLabel,
 } from '../../components/AppShell/styled';
 import { useApp } from '../../providers/AppProvider';
-import { getCampaignRecipientLabel } from '../../utils/campaigns';
+import { formatCampaignStatus, getCampaignRecipientLabel } from '../../utils/campaigns';
+import { formatDeviceStatus, isDeviceConnectedStatus } from '../../utils/deviceStatus';
 import { formatDateTime } from '../../utils/format';
-import { DeviceDetails, PreviewCard, PreviewList, PreviewMeta, StatusValue, SummaryHint } from './styled';
-
-function isDeviceReady(status: string, hasClient?: boolean) {
-  return ['connected', 'authenticated'].includes(status) && hasClient !== false;
-}
+import { DeviceDetails, PreviewCard, PreviewList, PreviewMeta, StatusValue } from './styled';
 
 export function HomeView() {
   const { queue, history, devices } = useApp();
@@ -23,7 +19,7 @@ export function HomeView() {
   const queuePreview = queue.slice(0, 5);
   const historyPreview = history.slice(0, 5);
   const getDeviceName = (deviceId: string) => devices.find((device) => device.id === deviceId)?.name || deviceId;
-  const readyDevices = devices.filter((device) => isDeviceReady(device.status, device.runtime?.hasClient));
+  const readyDevices = devices.filter((device) => isDeviceConnectedStatus(device.status, device.runtime?.hasClient));
   const primaryDevice = readyDevices[0] || devices[0] || null;
 
   return (
@@ -31,9 +27,9 @@ export function HomeView() {
       <SummaryGrid>
         <SummaryCard>
           <SummaryLabel>Status do dispositivo</SummaryLabel>
-          <StatusValue $connected={Boolean(primaryDevice && isDeviceReady(primaryDevice.status, primaryDevice.runtime?.hasClient))}>
+          <StatusValue $connected={Boolean(primaryDevice && isDeviceConnectedStatus(primaryDevice.status, primaryDevice.runtime?.hasClient))}>
             {primaryDevice
-              ? isDeviceReady(primaryDevice.status, primaryDevice.runtime?.hasClient)
+              ? isDeviceConnectedStatus(primaryDevice.status, primaryDevice.runtime?.hasClient)
                 ? 'Conectado'
                 : 'Desconectado'
               : 'Sem dispositivo'}
@@ -42,8 +38,8 @@ export function HomeView() {
             <DeviceDetails>
               <span>ID: {primaryDevice.id}</span>
               <span>Criado em: {formatDateTime(primaryDevice.createdAt)}</span>
-              <span>Ultimo status: {primaryDevice.lastKnownStatus || primaryDevice.status || '-'}</span>
-              <span>Numero conectado: {primaryDevice.connectedNumber || '-'}</span>
+              <span>Último status: {formatDeviceStatus(primaryDevice.lastKnownStatus || primaryDevice.status)}</span>
+              <span>Número conectado: {primaryDevice.connectedNumber || '-'}</span>
             </DeviceDetails>
           ) : null}
         </SummaryCard>
@@ -52,14 +48,14 @@ export function HomeView() {
       <PanelGrid>
         <Panel>
           <PanelHeading>
-            <h3>Proximos itens da fila</h3>
+            <h3>Próximos itens da fila</h3>
           </PanelHeading>
           <PreviewList>
             {queuePreview.length ? queuePreview.map((item) => (
               <PreviewCard key={item.id}>
                 <strong>{item.campaignName || getCampaignRecipientLabel(item)}</strong>
                 <PreviewMeta>
-                  {getDeviceName(item.deviceId)} - {formatDateTime(item.scheduleAt)} - {item.status}
+                  {getDeviceName(item.deviceId)} - {formatDateTime(item.scheduleAt)} - {formatCampaignStatus(item.status)}
                 </PreviewMeta>
               </PreviewCard>
             )) : <EmptyState>Nenhum item na fila.</EmptyState>}
@@ -68,17 +64,17 @@ export function HomeView() {
 
         <Panel>
           <PanelHeading>
-            <h3>Historico</h3>
+            <h3>Histórico</h3>
           </PanelHeading>
           <PreviewList>
             {historyPreview.length ? historyPreview.map((item) => (
               <PreviewCard key={item.id}>
                 <strong>{item.campaignName || getCampaignRecipientLabel(item)}</strong>
                 <PreviewMeta>
-                  {getDeviceName(item.deviceId)} - {formatDateTime(item.sentAt || item.updatedAt)} - {item.status}
+                  {getDeviceName(item.deviceId)} - {formatDateTime(item.sentAt || item.updatedAt)} - {formatCampaignStatus(item.status)}
                 </PreviewMeta>
               </PreviewCard>
-            )) : <EmptyState>Nenhum envio no historico.</EmptyState>}
+            )) : <EmptyState>Nenhum envio no histórico.</EmptyState>}
           </PreviewList>
         </Panel>
       </PanelGrid>

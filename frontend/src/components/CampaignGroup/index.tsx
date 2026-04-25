@@ -63,7 +63,7 @@ export function CampaignGroupList({
   onCancelCampaign,
 }: CampaignGroupListProps) {
   if (groups.length === 0) {
-    return <GroupEmpty>{mode === 'queue' ? 'Nenhuma campanha na fila.' : 'Sem historico ainda.'}</GroupEmpty>;
+    return <GroupEmpty>{mode === 'queue' ? 'Nenhuma campanha na fila.' : 'Sem histórico ainda.'}</GroupEmpty>;
   }
 
   return (
@@ -77,21 +77,21 @@ export function CampaignGroupList({
             <GroupCard key={group.key}>
               <GroupSummary>
                 <SummaryMain>
-                  <Badge>{group.items.length} {mode === 'queue' ? 'destinatario(s)' : 'registro(s)'}</Badge>
+                  <Badge>{group.items.length} {mode === 'queue' ? 'destinatário(s)' : 'registro(s)'}</Badge>
                   <h4 style={{ margin: 0, fontSize: 20 }}>{group.campaignName}</h4>
                   <MutedText>
                     {getDeviceName(group.deviceId)} |{' '}
                     {mode === 'history'
-                      ? `ultima atualizacao em ${formatDateTime(group.updatedAt)}`
+                      ? `última atualização em ${formatDateTime(group.updatedAt)}`
                       : formatDateTime(group.scheduleAt)}
                   </MutedText>
                 </SummaryMain>
 
                 <SummarySide>
-                  {mode === 'queue' ? <span><strong>Ritmo:</strong> Aleatorio</span> : null}
+                  {mode === 'queue' ? <span><strong>Ritmo:</strong> Aleatório</span> : null}
                   <span><strong>Status:</strong> {buildStatusSummary(group.items)}</span>
                   {mode === 'queue' ? (
-                    <span><strong>Duracao media:</strong> {formatDurationEstimate(estimatedDurationSeconds)}</span>
+                    <span><strong>Duração média:</strong> {formatDurationEstimate(estimatedDurationSeconds)}</span>
                   ) : null}
                   {mode === 'queue' && onCancelCampaign ? (
                     <InlineActions>
@@ -127,10 +127,10 @@ export function CampaignGroupList({
                     </p>
                     {mode === 'queue' ? (
                       <>
-                        <p><strong>Ritmo:</strong> 8-22 segundos com pausas aleatorias de 1-3 minutos a cada 5-15 contatos.</p>
-                        <p><strong>Duracao media apos iniciar:</strong> {formatDurationEstimate(estimatedDurationSeconds)}</p>
-                        <p><strong>Previsao media de termino:</strong> {estimatedEndDate ? formatDateTime(estimatedEndDate.toISOString()) : '-'}</p>
-                        <p><strong>Observacao:</strong> essa previsao pode terminar antes ou depois porque o ritmo do envio e randomico.</p>
+                        <p><strong>Ritmo:</strong> 8-22 segundos com pausas aleatórias de 1-3 minutos a cada 5-15 contatos.</p>
+                        <p><strong>Duração média após iniciar:</strong> {formatDurationEstimate(estimatedDurationSeconds)}</p>
+                        <p><strong>Previsão média de término:</strong> {estimatedEndDate ? formatDateTime(estimatedEndDate.toISOString()) : '-'}</p>
+                        <p><strong>Observação:</strong> essa previsão pode terminar antes ou depois porque o ritmo do envio é aleatório.</p>
                       </>
                     ) : null}
                   </NoteCard>

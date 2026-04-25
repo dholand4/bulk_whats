@@ -37,11 +37,11 @@ export function AdminView() {
         },
         editingUserEmail,
       );
-      setStatus('Usuario salvo com sucesso.');
+      setStatus('Usuário salvo com sucesso.');
       setEditingUserEmail(null);
       setForm({ email: '', role: 'user', dataExpiracao: '', password: '' });
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Falha ao salvar usuario.');
+      setStatus(error instanceof Error ? error.message : 'Falha ao salvar usuário.');
     }
   }
 
@@ -49,7 +49,7 @@ export function AdminView() {
     <PanelGrid $narrowLeft>
       <Panel>
         <PanelHeading>
-          <h3>Gestao de usuarios</h3>
+          <h3>Gestão de usuários</h3>
         </PanelHeading>
 
         <form onSubmit={handleSubmit}>
@@ -70,8 +70,8 @@ export function AdminView() {
                 value={form.role}
                 onChange={(event) => setForm((current) => ({ ...current, role: event.target.value }))}
               >
-                <option value="user">Usuario</option>
-                <option value="admin">Admin</option>
+                <option value="user">Usuário</option>
+                <option value="admin">Administrador</option>
               </select>
             </InputGroup>
 
@@ -86,7 +86,7 @@ export function AdminView() {
             </InputGroup>
 
             <InputGroup>
-              <span>{editingUserEmail ? 'Senha provisoria' : 'Senha inicial'}</span>
+              <span>{editingUserEmail ? 'Senha provisória' : 'Senha inicial'}</span>
               <input
                 type="password"
                 value={form.password}
@@ -107,7 +107,7 @@ export function AdminView() {
                     setStatus('');
                   }}
                 >
-                  Cancelar edicao
+                  Cancelar edição
                 </GhostButton>
               ) : null}
             </FormActions>
@@ -119,11 +119,11 @@ export function AdminView() {
 
       <Panel>
         <PanelHeading>
-          <h3>Usuarios cadastrados</h3>
+          <h3>Usuários cadastrados</h3>
         </PanelHeading>
 
         {users.length === 0 ? (
-          <EmptyState>Nenhum usuario cadastrado.</EmptyState>
+          <EmptyState>Nenhum usuário cadastrado.</EmptyState>
         ) : (
           <UsersList>
             {users.map((user) => (

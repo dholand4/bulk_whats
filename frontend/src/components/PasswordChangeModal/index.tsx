@@ -49,7 +49,7 @@ export function PasswordChangeModal() {
         </PanelHeading>
 
         <Lead>
-          Este acesso esta usando uma senha provisoria. Antes de continuar, informe a senha atual e defina sua nova senha.
+        Este acesso está usando uma senha provisória. Antes de continuar, informe a senha atual e defina sua nova senha.
         </Lead>
 
         <form onSubmit={handleSubmit}>
