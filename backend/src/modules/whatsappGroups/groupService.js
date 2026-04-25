@@ -48,18 +48,7 @@ async function syncConnectedGroups(auth) {
         }))
         .filter((group) => group.whatsappGroupId.endsWith('@g.us'));
 
-    const persistedGroups = [];
-    for (const group of groups) {
-        // eslint-disable-next-line no-await-in-loop
-        const persisted = await groupRepository.upsertGroup({
-            ownerEmail: auth.email,
-            name: group.name,
-            whatsappGroupId: group.whatsappGroupId,
-        });
-        persistedGroups.push(persisted);
-    }
-
-    return persistedGroups;
+    return groupRepository.syncGroups(auth.email, groups);
 }
 
 async function listGroups(auth) {

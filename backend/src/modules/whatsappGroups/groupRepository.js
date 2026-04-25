@@ -40,6 +40,46 @@ async function upsertGroup({ ownerEmail, name, whatsappGroupId }) {
     return mapGroup(result.rows[0]);
 }
 
+async function syncGroups(ownerEmail, groups) {
+    return postgres.withTransaction(async (client) => {
+        for (const group of groups) {
+            // eslint-disable-next-line no-await-in-loop
+            await client.query(`
+                INSERT INTO whatsapp_groups (owner_email, name, whatsapp_group_id)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (owner_email, whatsapp_group_id)
+                DO UPDATE SET
+                    name = EXCLUDED.name,
+                    updated_at = NOW()
+            `, [ownerEmail, group.name, group.whatsappGroupId]);
+        }
+
+        const groupIds = groups.map((group) => group.whatsappGroupId);
+
+        if (groupIds.length > 0) {
+            await client.query(`
+                DELETE FROM whatsapp_groups
+                WHERE owner_email = $1
+                  AND whatsapp_group_id <> ALL($2::text[])
+            `, [ownerEmail, groupIds]);
+        } else {
+            await client.query(`
+                DELETE FROM whatsapp_groups
+                WHERE owner_email = $1
+            `, [ownerEmail]);
+        }
+
+        const result = await client.query(`
+            SELECT id, owner_email, name, whatsapp_group_id, created_at, updated_at
+            FROM whatsapp_groups
+            WHERE owner_email = $1
+            ORDER BY name ASC, created_at DESC
+        `, [ownerEmail]);
+
+        return result.rows.map(mapGroup);
+    });
+}
+
 async function getGroupByWhatsappId(ownerEmail, whatsappGroupId) {
     const result = await postgres.query(`
         SELECT id, owner_email, name, whatsapp_group_id, created_at, updated_at
@@ -54,5 +94,6 @@ async function getGroupByWhatsappId(ownerEmail, whatsappGroupId) {
 module.exports = {
     listGroups,
     upsertGroup,
+    syncGroups,
     getGroupByWhatsappId,
 };
