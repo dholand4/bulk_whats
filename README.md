@@ -1,196 +1,170 @@
 # Bulk Whats
 
-## Indice
+<p align="center">
+  <img src="https://img.shields.io/badge/Node.js-22.x-339933?style=for-the-badge&logo=node.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
+  <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Docker-ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
+</p>
+
+> Painel **self-hosted** para disparos em massa via WhatsApp Web. Gerencie contatos, monte campanhas personalizadas com placeholders dinâmicos, envie imediatamente ou agende — tudo em uma interface web simples e sem dependência de APIs pagas.
+
+---
+
+## Índice
 
 - [Sobre](#sobre)
-- [Estrutura do projeto](#estrutura-do-projeto)
-- [Tecnologias utilizadas](#tecnologias-utilizadas)
 - [Funcionalidades](#funcionalidades)
-- [Pre-requisitos](#pre-requisitos)
-- [Como rodar o projeto](#como-rodar-o-projeto)
-- [Configuracao do banco de dados](#configuracao-do-banco-de-dados)
-- [Variaveis de ambiente](#variaveis-de-ambiente)
-- [Scripts uteis](#scripts-uteis)
+- [Arquitetura](#arquitetura)
+- [Tecnologias](#tecnologias)
+- [Pré-requisitos](#pré-requisitos)
+- [Como rodar](#como-rodar)
+- [Banco de dados](#banco-de-dados)
+- [Variáveis de ambiente](#variáveis-de-ambiente)
+- [Deploy com Docker](#deploy-com-docker)
+- [Scripts úteis](#scripts-úteis)
+- [Contribuindo](#contribuindo)
+- [Licença](#licença)
 
 ---
 
 ## Sobre
 
-Projeto **Bulk Whats**, um painel para operacao de envios em massa via WhatsApp Web.
+O **Bulk Whats** é uma solução self-hosted para equipes que precisam disparar mensagens em massa via WhatsApp Web sem depender de APIs pagas ou serviços externos.
 
-O sistema permite:
-
-- autenticar usuarios por email
-- conectar uma sessao WhatsApp por usuario
-- cadastrar e importar listas de contatos
-- criar campanhas com mensagem personalizada
-- enviar imediatamente ou agendar envios
-- acompanhar fila, historico e administracao de acessos
-
----
-
-## Estrutura do projeto
-
-```
-bulk_whats/
-|-- backend/   # API em Node.js + Express + PostgreSQL + WhatsApp Web
-`-- frontend/  # Interface em React + TypeScript + Vite + Styled-Components
-```
-
----
-
-## Tecnologias utilizadas
-
-### Backend
-
-- Node.js
-- Express
-- PostgreSQL
-- `pg`
-- `dotenv`
-- `multer`
-- `qrcode`
-- `whatsapp-web.js`
-
-### Frontend
-
-- React
-- TypeScript
-- Vite
-- Styled-Components
-- React Router DOM
-- XLSX
+O sistema conecta o WhatsApp do usuário via QR Code, importa listas de contatos por planilha, monta campanhas com mensagens personalizadas e gerencia toda a fila de envio — com acompanhamento em tempo real e histórico completo de campanhas.
 
 ---
 
 ## Funcionalidades
 
-- Login por email
-- Controle de usuarios e perfis
-- Conexao de dispositivo WhatsApp por usuario
-- Geracao e exibicao de QR Code para autenticacao
-- Cadastro manual de contatos
-- Importacao de contatos por planilha
-- Organizacao de contatos por listas
-- Montagem de campanhas com placeholders dinamicos
-- Upload de anexos
-- Envio imediato ou agendado
-- Acompanhamento de fila de processamento
-- Visualizacao de historico de campanhas
+- 🔐 Autenticação por e-mail
+- 📱 Conexão do WhatsApp via QR Code (por usuário)
+- 👥 Cadastro manual e importação de contatos por planilha (`.xlsx`)
+- 📋 Organização de contatos em listas
+- ✉️ Campanhas com placeholders dinâmicos (ex: `{{nome}}`)
+- 📎 Upload de anexos nas campanhas
+- ⏱️ Envio imediato ou agendado
+- 📊 Acompanhamento de fila de processamento
+- 🗂️ Histórico de campanhas
+- 🛡️ Administração de usuários e perfis
 
 ---
 
-## Pre-requisitos
-
-Antes de iniciar, voce precisa ter instalado na maquina:
-
-- Node.js 22.x
-- npm
-- PostgreSQL
-- Google Chrome ou Microsoft Edge
-
----
-
-## Como rodar o projeto
-
-### 1. Clonar o repositorio
+## Arquitetura
 
 ```
+┌─────────────────────────────────────────────┐
+│                  Usuário                    │
+└─────────────────────┬───────────────────────┘
+                      │ HTTP (porta 5173 em dev)
+┌─────────────────────▼───────────────────────┐
+│           Frontend (React + Vite)           │
+│  Proxy → backend em 127.0.0.1:3000          │
+└─────────────────────┬───────────────────────┘
+                      │ REST API
+┌─────────────────────▼───────────────────────┐
+│         Backend (Node.js + Express)         │
+│                                             │
+│  ┌──────────────┐   ┌─────────────────────┐ │
+│  │  PostgreSQL  │   │  whatsapp-web.js    │ │
+│  │  (pg driver) │   │  (Puppeteer/Chrome) │ │
+│  └──────────────┘   └─────────────────────┘ │
+└─────────────────────────────────────────────┘
+```
+
+**Fluxo principal:**
+1. Usuário faz login e escaneia o QR Code para conectar o WhatsApp
+2. Importa ou cadastra contatos e os organiza em listas
+3. Cria uma campanha com mensagem, placeholders e anexos opcionais
+4. Dispara imediatamente ou agenda o envio
+5. Acompanha a fila e consulta o histórico
+
+---
+
+## Tecnologias
+
+### Backend
+| Tecnologia | Uso |
+|---|---|
+| Node.js 22 | Runtime |
+| Express | API REST |
+| PostgreSQL + `pg` | Banco de dados |
+| `whatsapp-web.js` | Automação do WhatsApp via Puppeteer |
+| `multer` | Upload de arquivos |
+| `qrcode` | Geração do QR Code |
+| `dotenv` | Variáveis de ambiente |
+
+### Frontend
+| Tecnologia | Uso |
+|---|---|
+| React 18 | Interface |
+| TypeScript | Tipagem estática |
+| Vite | Bundler e dev server |
+| Styled-Components | Estilização |
+| React Router DOM | Roteamento |
+| XLSX | Leitura de planilhas |
+
+---
+
+## Pré-requisitos
+
+- [Node.js 22.x](https://nodejs.org/)
+- [npm](https://www.npmjs.com/)
+- [PostgreSQL](https://www.postgresql.org/)
+- Google Chrome ou Microsoft Edge instalado na máquina
+
+---
+
+## Como rodar
+
+### 1. Clone o repositório
+
+```bash
 git clone <URL_DO_REPOSITORIO>
 cd bulk_whats
 ```
 
-### 2. Instalar dependencias do backend
+### 2. Configure o backend
 
-```
+```bash
 cd backend
+cp .env.example .env
+# edite o .env com suas credenciais
 npm install
-```
-
-### 3. Instalar dependencias do frontend
-
-```
-cd ../frontend
-npm install
-```
-
-### 4. Rodar o backend
-
-Em um terminal:
-
-```
-cd backend
 npm start
 ```
 
-O backend sobe na porta `3000`.
+O backend sobe na porta `3000` e cria as tabelas automaticamente na primeira execução.
 
-### 5. Rodar o frontend
+### 3. Configure o frontend
 
 Em outro terminal:
 
-```
+```bash
 cd frontend
+npm install
 npm run dev
 ```
 
-O frontend roda localmente, em geral, na porta `5173`.
+Acesse `http://127.0.0.1:5173` no navegador.
 
-Abra no navegador o endereco mostrado pelo Vite no terminal. Normalmente sera:
-
-```
-http://127.0.0.1:5173
-```
-
-Observacoes:
-
-- `127.0.0.1` aponta para a propria maquina de quem estiver rodando o projeto
-- na maioria dos casos o Vite usa a porta `5173`, mas se ela estiver ocupada pode usar outra
-- em desenvolvimento, o frontend usa proxy do Vite para falar com a API em `127.0.0.1:3000`
-- o frontend depende do backend rodando para login, contatos, dispositivos, fila e historico
+> **Nota:** o frontend usa proxy do Vite para se comunicar com a API em `127.0.0.1:3000`. O backend precisa estar rodando antes de usar o frontend.
 
 ---
 
-## Configuracao do banco de dados
+## Banco de dados
 
-### 1. Criar o banco no PostgreSQL
+### Criar o banco
 
-Exemplo usando `psql`:
-
-```
+```sql
 CREATE DATABASE bulk_whats;
 ```
 
-### 2. Configurar o `.env` do backend
+### Tabelas
 
-Crie o arquivo `backend/.env` com base em `backend/.env.example`.
-
-Exemplo:
-
-```
-PORT=3000
-PGHOST=localhost
-PGPORT=5432
-PGDATABASE=bulk_whats
-PGUSER=postgres
-PGPASSWORD=sua_senha
-CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
-```
-
-Observacoes:
-
-- voce pode deixar no `.env` apenas o que quiser sobrescrever
-- se preferir, pode usar apenas `PGPASSWORD` e `CHROME_PATH` no ambiente local
-- o administrador inicial deve ser criado diretamente no banco de dados
-- em producao com Docker, o navegador costuma ser configurado por `PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium`
-
-### 3. Criar as tabelas
-
-O backend executa automaticamente o schema ao iniciar, usando o arquivo:
-
-- [backend/src/modules/storage/schema.sql](/C:/Daniel/Projetos/bulk_whats/backend/src/modules/storage/schema.sql)
-
-Esse schema cria estruturas como:
+O schema é executado automaticamente pelo backend na inicialização. As tabelas criadas são:
 
 - `app_state`
 - `users`
@@ -198,28 +172,13 @@ Esse schema cria estruturas como:
 - `whatsapp_sessions`
 - `contacts`
 
-Ou seja: basta configurar o banco e iniciar o backend.
+> O administrador inicial deve ser criado diretamente no banco de dados.
 
 ---
 
-## Variaveis de ambiente
+## Variáveis de ambiente
 
-### Backend
-
-Arquivo base: `backend/.env.example`
-
-- `PORT`: porta da API
-- `PGHOST`: host do PostgreSQL
-- `PGPORT`: porta do PostgreSQL
-- `PGDATABASE`: nome do banco
-- `PGUSER`: usuario do banco
-- `PGPASSWORD`: senha do banco
-- `PGSSLMODE`: use `require` quando o banco exigir SSL
-- `DATABASE_URL`: string unica de conexao com o PostgreSQL
-- `CHROME_PATH`: caminho do executavel do Chrome
-- `PUPPETEER_EXECUTABLE_PATH`: caminho do Chromium/Chrome no ambiente Linux ou container
-
-Modelo recomendado para projeto compartilhado:
+### Backend — `backend/.env`
 
 ```env
 PORT=3000
@@ -231,30 +190,30 @@ PGPASSWORD=sua_senha
 CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
 ```
 
-Minimo recomendado para ambiente local:
+| Variável | Descrição |
+|---|---|
+| `PORT` | Porta da API |
+| `PGHOST` | Host do PostgreSQL |
+| `PGPORT` | Porta do PostgreSQL |
+| `PGDATABASE` | Nome do banco |
+| `PGUSER` | Usuário do banco |
+| `PGPASSWORD` | Senha do banco |
+| `PGSSLMODE` | Use `require` quando o banco exigir SSL |
+| `DATABASE_URL` | String única de conexão (alternativa às variáveis acima) |
+| `CHROME_PATH` | Caminho do Chrome no Windows/Mac |
+| `PUPPETEER_EXECUTABLE_PATH` | Caminho do Chromium em Linux/Docker |
 
-```env
-PGPASSWORD=sua_senha
-CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
-```
+> **Mínimo para rodar localmente:** `PGPASSWORD` e `CHROME_PATH`
 
 ### Frontend
 
-No estado atual, o frontend nao exige `.env` para rodar localmente.
+Não requer `.env` para rodar localmente.
 
-### Producao com Docker
+---
 
-Arquivo base na raiz: `.env.production.example`
+## Deploy com Docker
 
-- `APP_DEPLOY_ROOT`: pasta do repositorio clonado na VM
-- `APP_STORAGE_ROOT`: pasta persistente no host da VM para banco, sessoes e arquivos locais
-- `FRONTEND_PORT`: porta publicada pela aplicacao na VM
-- `TZ`: timezone dos containers
-- `POSTGRES_DB`: nome do banco do compose
-- `POSTGRES_USER`: usuario do banco do compose
-- `POSTGRES_PASSWORD`: senha do banco do compose
-
-Exemplo:
+### Variáveis de produção — `.env.production`
 
 ```env
 APP_DEPLOY_ROOT=/opt/bulk_whats/app
@@ -263,61 +222,53 @@ FRONTEND_PORT=80
 TZ=America/Sao_Paulo
 POSTGRES_DB=bulk_whats
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=troque_esta_senha_forte
+POSTGRES_PASSWORD=senha_forte_aqui
 ```
 
-Caminho recomendado de deploy na VM:
+### Persistência em produção
 
-- codigo da aplicacao: `/opt/bulk_whats/app`
-- persistencia: `/opt/bulk_whats/storage`
+| Dado | Caminho no host |
+|---|---|
+| PostgreSQL | `${APP_STORAGE_ROOT}/postgres` |
+| Sessões WhatsApp | `${APP_STORAGE_ROOT}/backend/data` |
+| Uploads | `${APP_STORAGE_ROOT}/backend/uploads` |
 
-Guia de deploy:
+> Manter `backend/data` persistente evita reautenticações desnecessárias do WhatsApp.
 
-- [docs/deploy-digitalocean.md](/C:/Daniel/Projetos/bulk_whats/docs/deploy-digitalocean.md)
-
-Persistencia em producao:
-
-- PostgreSQL: `${APP_STORAGE_ROOT}/postgres`
-- sessoes locais do WhatsApp Web: `${APP_STORAGE_ROOT}/backend/data`
-- arquivos locais do backend: `${APP_STORAGE_ROOT}/backend/uploads`
-
-Observacao importante:
-
-- os anexos de campanhas ja sao salvos no PostgreSQL
-- as sessoes do WhatsApp tambem sao arquivadas no PostgreSQL, mas manter `backend/data` persistente acelera recuperacao e evita reautenticacoes desnecessarias
+Consulte o guia completo em [`docs/deploy-digitalocean.md`](docs/deploy-digitalocean.md).
 
 ---
 
-## Scripts uteis
+## Scripts úteis
 
 ### Backend
 
-```
-npm start
+```bash
+npm start       # inicia o servidor
 ```
 
 ### Frontend
 
-```
-npm run dev
-npm run build
-npm run preview
+```bash
+npm run dev      # dev server com hot reload
+npm run build    # build de produção
+npm run preview  # preview do build local
 ```
 
 ---
 
-## Fluxo recomendado de desenvolvimento
+## Contribuindo
 
-1. subir o PostgreSQL
-2. configurar o `backend/.env`
-3. iniciar o backend
-4. iniciar o frontend
-5. acessar o endereco local informado pelo Vite no terminal, normalmente `http://127.0.0.1:5173`
+Contribuições são bem-vindas! Para contribuir:
+
+1. Fork o repositório
+2. Crie uma branch: `git checkout -b feat/minha-feature`
+3. Commit suas mudanças: `git commit -m "feat: minha feature"`
+4. Push para a branch: `git push origin feat/minha-feature`
+5. Abra um Pull Request
 
 ---
 
-## Observacoes importantes
+## Licença
 
-- a autenticacao do WhatsApp depende do Chrome ou Edge instalado
-- sessoes do WhatsApp e arquivos locais do backend nao devem ser versionados
-- o projeto foi organizado para desenvolvimento com frontend e backend rodando separadamente
+Distribuído sob a licença MIT. Veja [`LICENSE`](LICENSE) para mais informações.
