@@ -256,19 +256,3 @@ npm run preview  # preview do build local
 ```
 
 ---
-
-## Contribuindo
-
-Contribuições são bem-vindas! Para contribuir:
-
-1. Fork o repositório
-2. Crie uma branch: `git checkout -b feat/minha-feature`
-3. Commit suas mudanças: `git commit -m "feat: minha feature"`
-4. Push para a branch: `git push origin feat/minha-feature`
-5. Abra um Pull Request
-
----
-
-## Licença
-
-Distribuído sob a licença MIT. Veja [`LICENSE`](LICENSE) para mais informações.
