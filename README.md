@@ -24,8 +24,6 @@
 - [Variáveis de ambiente](#variáveis-de-ambiente)
 - [Deploy com Docker](#deploy-com-docker)
 - [Scripts úteis](#scripts-úteis)
-- [Contribuindo](#contribuindo)
-- [Licença](#licença)
 
 ---
 
